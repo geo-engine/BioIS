@@ -1,0 +1,15 @@
+version: 7.11.0
+generator-cli:
+  version: 7.11.0
+  generators:
+    typescript-axios:
+      inputSpec: ../openapi/openapi.json
+      output: ./src
+      generatorName: typescript-axios
+      additionalProperties:
+        npmName: "@biois/bindings"
+        npmVersion: "0.1.0"
+        supportsES6: "true"
+        withSeparateModelsAndApi: "true"
+        apiPackage: "api"
+        modelPackage: "models"

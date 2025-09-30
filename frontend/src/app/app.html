@@ -1,0 +1,52 @@
+<div class="container">
+  <h1>{{ title() }}</h1>
+  
+  <div class="card">
+    <h2>Calculate Biodiversity Indicator</h2>
+    
+    <div class="form-group">
+      <label for="indicator">Select Indicator:</label>
+      <select 
+        id="indicator" 
+        [(ngModel)]="selectedIndicator"
+        (ngModelChange)="selectedIndicator.set($event)">
+        @for (indicator of indicators(); track indicator.name) {
+          <option [value]="indicator.name">
+            {{ indicator.name }} - {{ indicator.description }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="bbox">Bounding Box (bbox):</label>
+      <input 
+        id="bbox" 
+        type="text" 
+        [(ngModel)]="bbox"
+        (ngModelChange)="bbox.set($event)"
+        placeholder="-180,-90,180,90" />
+    </div>
+
+    <button 
+      (click)="calculateIndicator()" 
+      [disabled]="loading() || !selectedIndicator()">
+      {{ loading() ? 'Calculating...' : 'Calculate' }}
+    </button>
+
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+
+    @if (result()) {
+      <div class="result">
+        <h3>Result</h3>
+        <p><strong>Indicator Type:</strong> {{ result()!.indicator_type }}</p>
+        <p><strong>Value:</strong> {{ result()!.value }}</p>
+        <p><strong>Bounding Box:</strong> {{ result()!.bbox }}</p>
+      </div>
+    }
+  </div>
+  
+  <router-outlet />
+</div>

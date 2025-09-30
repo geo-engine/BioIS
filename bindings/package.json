@@ -1,0 +1,22 @@
+{
+  "name": "@biois/bindings",
+  "version": "0.1.0",
+  "description": "TypeScript bindings for BioIS service",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "generate": "openapi-typescript ../openapi/openapi.json -o src/schema.ts",
+    "build": "npm run generate && tsc",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": ["biois", "biodiversity", "openapi"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "openapi-typescript": "^7.4.3",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.13.7"
+  }
+}

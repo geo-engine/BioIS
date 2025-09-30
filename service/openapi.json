@@ -1,0 +1,156 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "biois-service",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [],
+        "summary": "Health check endpoint",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/indicators": {
+      "get": {
+        "tags": [],
+        "summary": "Get available biodiversity indicators",
+        "operationId": "get_indicators",
+        "responses": {
+          "200": {
+            "description": "List of available indicators",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Indicator"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/indicators/calculate": {
+      "post": {
+        "tags": [],
+        "summary": "Calculate a biodiversity indicator for a given area",
+        "operationId": "calculate_indicator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndicatorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Calculated indicator value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicatorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Indicator": {
+        "type": "object",
+        "required": [
+          "name",
+          "description"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "IndicatorRequest": {
+        "type": "object",
+        "required": [
+          "bbox",
+          "indicator_type"
+        ],
+        "properties": {
+          "bbox": {
+            "type": "string",
+            "description": "Geographic bounding box coordinates",
+            "example": "-180,-90,180,90"
+          },
+          "indicator_type": {
+            "type": "string",
+            "description": "Indicator type to calculate",
+            "example": "species_richness"
+          }
+        }
+      },
+      "IndicatorResponse": {
+        "type": "object",
+        "required": [
+          "indicator_type",
+          "value",
+          "bbox"
+        ],
+        "properties": {
+          "bbox": {
+            "type": "string"
+          },
+          "indicator_type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    }
+  }
+}
