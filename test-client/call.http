@@ -1,0 +1,63 @@
+GET http://localhost:4040/processes/ndvi
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [9.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 3
+    },
+    "response": "document"
+}
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [9.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 5
+    },
+    "response": "document"
+}
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [10.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 5
+    },
+    "response": "document"
+}
+
+###

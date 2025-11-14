@@ -6,7 +6,7 @@ port = 4040
 [database]
 host = "localhost"
 port = 5432
-database = "geoengine"
+database = "biois"
 schema = "geoengine"
 user = "geoengine"
 password = "geoengine"
@@ -14,3 +14,6 @@ password = "geoengine"
 # If this parameter is set to `false` at the first start, subsequent changes to `true` will result in an error.
 # This helps to protect production environments from unwanted data loss.
 clear_database_on_start = false
+
+[geoengine]
+base_url = "http://localhost:3030/api"

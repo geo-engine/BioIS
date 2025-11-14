@@ -8,6 +8,7 @@ pub static CONFIG: LazyLock<Config> = LazyLock::new(|| get_config().expect("conf
 pub struct Config {
     pub server: Server,
     pub database: Database,
+    pub geoengine: GeoEngineInstance,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]
@@ -36,6 +37,11 @@ impl Database {
         ))
         .context("failed to parse database connection string")
     }
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct GeoEngineInstance {
+    pub base_url: Url,
 }
 
 fn get_config() -> anyhow::Result<Config> {

@@ -55,17 +55,17 @@ axum-extra = { version = "0.10.1" }
 clap = { version = "4.5", features = ["derive"] }
 clap_derive = "4.5"
 config = "0.15"
-ogcapi = { version = "0.3.1", features = [
+geoengine-openapi-client = { git = "https://github.com/geo-engine/openapi-client", branch = "rust" }
+ogcapi = { git = "https://github.com/georust/ogcapi", branch = "changes-along-the-way", features = [
     "services",
     "common",
     "processes",
-    "greeter",
     "types",
 ] }
-schemars = "1.0"
+schemars = "1.1"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.48", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = "2.4"

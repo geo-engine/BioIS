@@ -1,12 +1,9 @@
 use axum::routing::get;
 use config::CONFIG;
 use ogcapi::{processes as ogcapi_processes, services as ogcapi_services};
-use processes::HelloProcess;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_axum::router::OpenApiRouter;
-
-use crate::processes::Echo;
 
 mod config;
 mod processes;
@@ -34,9 +31,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Register processes/processors
     let ogcapi_state = ogcapi_state.processors(vec![
-        Box::new(ogcapi_processes::greeter::Greeter),
-        Box::new(HelloProcess),
-        Box::new(Echo),
+        Box::new(ogcapi_processes::echo::Echo),
+        Box::new(processes::NDVIProcess),
+        // Box::new(HelloProcess),
+        // Box::new(Echo),
         // Box::new(GeoJsonLoader),
         // Box::new(GdalLoader),
     ]);
