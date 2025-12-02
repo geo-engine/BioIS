@@ -7,6 +7,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 mod config;
 mod processes;
+mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

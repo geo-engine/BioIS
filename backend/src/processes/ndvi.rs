@@ -1,14 +1,28 @@
 use anyhow::{Context, Result};
+use geoengine_datatypes::{
+    dataset::NamedData,
+    primitives::{Coordinate2D, Measurement},
+    raster::RasterDataType,
+};
 use geoengine_openapi_client::{
     apis::{
         configuration::Configuration, ogcwfs_api::wfs_feature_handler,
         session_api::anonymous_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
     },
-    models::{
-        GeoJson, GetFeatureRequest, SpatialPartition2D, TypedOperatorOperator, WfsService,
-        Workflow, workflow::Type as WorkflowType,
+    models::{GeoJson, GetFeatureRequest, SpatialPartition2D, WfsService},
+};
+use geoengine_operators::{
+    engine::{
+        RasterBandDescriptor, RasterOperator, SingleVectorMultipleRasterSources, TypedOperator,
+        VectorOperator,
     },
+    mock::{MockPointSource, MockPointSourceParams},
+    processing::{
+        ColumnNames, Expression, ExpressionParams, FeatureAggregationMethod, RasterVectorJoin,
+        RasterVectorJoinParams, TemporalAggregationMethod,
+    },
+    source::{GdalSource, GdalSourceParameters},
 };
 use ogcapi::{
     processes::Processor,
@@ -25,7 +39,7 @@ use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::config::CONFIG;
+use crate::{config::CONFIG, util::to_api_workflow};
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
 #[derive(Debug, Clone)]
@@ -135,6 +149,10 @@ impl Processor for NDVIProcess {
         "0.1.0"
     }
 
+    #[allow(
+        clippy::too_many_lines,
+        reason = "description is long but better understood this way"
+    )]
     fn process(&self) -> Result<Process> {
         let mut settings = SchemaSettings::default();
         settings.meta_schema = None;
@@ -316,18 +334,21 @@ async fn compute_ndvi(
 
     // TODO: upload data instead of mocking it
     // let upload_data_id: String = upload_data(&configuration, coordinate)?;
-    let vector_source = serde_json::json!({
-        "type": "MockPointSource",
-        "params": {
-            "points": [coordinate]
-        }
-    });
+    let vector_source = MockPointSource {
+        params: MockPointSourceParams {
+            points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
+        },
+    }
+    .boxed();
 
-    let (names, inputs): (Vec<&str>, Vec<serde_json::Value>) =
+    let (names, inputs): (Vec<String>, Vec<Box<dyn RasterOperator>>) =
         match (should_compute_ndvi, should_compute_k_ndvi) {
-            (true, true) => (vec![NDVI, K_NDVI], vec![ndvi_source(), k_ndvi_source()]),
-            (true, false) => (vec![NDVI], vec![ndvi_source()]),
-            (false, true) => (vec![K_NDVI], vec![k_ndvi_source()]),
+            (true, true) => (
+                vec![NDVI.into(), K_NDVI.into()],
+                vec![ndvi_source(), k_ndvi_source()],
+            ),
+            (true, false) => (vec![NDVI.into()], vec![ndvi_source()]),
+            (false, true) => (vec![K_NDVI.into()], vec![k_ndvi_source()]),
             (false, false) => {
                 return Ok(NDVIProcessOutputs {
                     ndvi: None,
@@ -335,43 +356,22 @@ async fn compute_ndvi(
                 });
             }
         };
-    let workflow = Workflow {
-        operator: Box::new(TypedOperatorOperator {
-            params: Some(serde_json::json!({
-                "names": {
-                    "type": "names",
-                    "values": names,
-                },
-                "featureAggregation": "first",
-                "temporalAggregation": "none",
-                "featureAggregationIgnoreNoData": true,
-                "temporalAggregationIgnoreNoData": true
-            })),
-            sources: Some(serde_json::json!({
-            //   "vector": {
-            //     "type": "OgrSource",
-            //     "params": {
-            //       "data": upload_data_id
-            //     }
-            //   },
-              "vector": vector_source,
-              "rasters": [{
-                "type": "RasterStacker",
-                "params": {
-                    "renameBands": {
-                    "type": "rename",
-                    "values": names
-                    }
-                },
-                "sources": {
-                    "rasters": inputs
-                }
-              }]
-            })),
-            r#type: "RasterVectorJoin".into(),
-        }),
-        r#type: WorkflowType::Vector,
-    };
+    let workflow = to_api_workflow(&TypedOperator::Vector(
+        RasterVectorJoin {
+            params: RasterVectorJoinParams {
+                names: ColumnNames::Names(names),
+                feature_aggregation: FeatureAggregationMethod::First,
+                feature_aggregation_ignore_no_data: true,
+                temporal_aggregation: TemporalAggregationMethod::None,
+                temporal_aggregation_ignore_no_data: true,
+            },
+            sources: SingleVectorMultipleRasterSources {
+                vector: vector_source,
+                rasters: inputs,
+            },
+        }
+        .boxed(),
+    ))?;
 
     // eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
 
@@ -457,54 +457,49 @@ fn outputs_from_feature_collection(
     Ok(result)
 }
 
-fn ndvi_source() -> serde_json::Value {
-    serde_json::json!({
-      "type": "Expression",
-      "params": {
-        "expression": "min((A / (127.50)) - 1, 1)",
-        "outputType": "F64",
-        "outputBand": {
-          "name": "kNDVI",
-          "measurement": {
-            "type": "unitless"
-          }
+fn ndvi_source() -> Box<dyn RasterOperator> {
+    Expression {
+        params: ExpressionParams {
+            expression: "min((A / (127.50)) - 1, 1)".into(),
+            output_type: RasterDataType::F64,
+            output_band: Some(RasterBandDescriptor {
+                name: "NDVI".into(),
+                measurement: Measurement::Unitless,
+            }),
+            map_no_data: false,
         },
-        "mapNoData": false
-      },
-      "sources": {
-        "raster": ndvi_u8_source()
-      }
-    })
+        sources: ndvi_u8_source().into(),
+    }
+    .boxed()
 }
 
-fn ndvi_u8_source() -> serde_json::Value {
-    serde_json::json!( {
-        "type": "GdalSource",
-        "params": {
-            "data": "ndvi"
-        }
-    })
+fn ndvi_u8_source() -> Box<dyn RasterOperator> {
+    GdalSource {
+        params: GdalSourceParameters {
+            data: NamedData::with_system_name("ndvi"),
+        },
+    }
+    .boxed()
 }
 
-fn k_ndvi_source() -> serde_json::Value {
-    serde_json::json!({
-      "type": "Expression",
-      "params": {
-        "expression": "let ndvi = min((A / (127.50)) - 1, 1);\
-            tanh(pow(ndvi, 2))",
-        "outputType": "F64",
-        "outputBand": {
-          "name": "kNDVI",
-          "measurement": {
-            "type": "unitless"
-          }
+fn k_ndvi_source() -> Box<dyn RasterOperator> {
+    Expression {
+        params: ExpressionParams {
+            expression: indoc::indoc! {"
+                let ndvi = min((A / (127.50)) - 1, 1);
+                tanh(pow(ndvi, 2))
+            "}
+            .into(),
+            output_type: RasterDataType::F64,
+            output_band: Some(RasterBandDescriptor {
+                name: "kNDVI".into(),
+                measurement: Measurement::Unitless,
+            }),
+            map_no_data: false,
         },
-        "mapNoData": false
-      },
-      "sources": {
-        "raster": ndvi_u8_source()
-      }
-    })
+        sources: ndvi_u8_source().into(),
+    }
+    .boxed()
 }
 
 async fn configuration() -> Result<Configuration> {
