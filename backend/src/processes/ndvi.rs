@@ -6,8 +6,7 @@ use geoengine_datatypes::{
 };
 use geoengine_openapi_client::{
     apis::{
-        configuration::Configuration, ogcwfs_api::wfs_feature_handler,
-        session_api::anonymous_handler, uploads_api::upload_handler,
+        configuration::Configuration, ogcwfs_api::wfs_feature_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
     },
     models::{GeoJson, GetFeatureRequest, SpatialPartition2D, WfsService},
@@ -39,7 +38,7 @@ use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::{config::CONFIG, util::to_api_workflow};
+use crate::{auth::User, config::CONFIG, util::to_api_workflow};
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
 #[derive(Debug, Clone)]
@@ -141,6 +140,8 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
 
 #[async_trait::async_trait]
 impl Processor for NDVIProcess {
+    type User = User;
+
     fn id(&self) -> &'static str {
         "ndvi"
     }
@@ -282,7 +283,7 @@ impl Processor for NDVIProcess {
         })
     }
 
-    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
+    async fn execute(&self, execute: Execute, user: &Self::User) -> Result<ExecuteResults> {
         let value = serde_json::to_value(execute.inputs)?;
         let inputs: NDVIProcessInputs = serde_json::from_value(value)?;
 
@@ -298,7 +299,10 @@ impl Processor for NDVIProcess {
             }
         }
 
+        let configuration = configuration(user);
+
         compute_ndvi(
+            &configuration,
             &inputs.coordinate.value.coordinates,
             inputs.year,
             inputs.month,
@@ -321,6 +325,7 @@ fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
 }
 
 async fn compute_ndvi(
+    configuration: &Configuration,
     coordinate: &Coordinate,
     Year(year): Year,
     Month(month): Month,
@@ -329,8 +334,6 @@ async fn compute_ndvi(
 ) -> Result<NDVIProcessOutputs> {
     const NDVI: &str = "NDVI";
     const K_NDVI: &str = "kNDVI";
-
-    let configuration = configuration().await?;
 
     // TODO: upload data instead of mocking it
     // let upload_data_id: String = upload_data(&configuration, coordinate)?;
@@ -375,7 +378,7 @@ async fn compute_ndvi(
 
     // eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
 
-    let workflow_id = register_workflow_handler(&configuration, workflow).await?;
+    let workflow_id = register_workflow_handler(configuration, workflow).await?;
     let workflow_id = workflow_id.id.to_string();
 
     // eprintln!("Registered workflow with ID: {workflow_id}");
@@ -392,7 +395,7 @@ async fn compute_ndvi(
     );
 
     let feature_collection = wfs_feature_handler(
-        &configuration,
+        configuration,
         &workflow_id,
         WfsService::Wfs,
         GetFeatureRequest::GetFeature,
@@ -502,14 +505,13 @@ fn k_ndvi_source() -> Box<dyn RasterOperator> {
     .boxed()
 }
 
-async fn configuration() -> Result<Configuration> {
+fn configuration(user: &User) -> Configuration {
     let mut configuration = Configuration::new();
     configuration.base_path = CONFIG.geoengine.base_url.to_string();
 
-    let session = anonymous_handler(&configuration).await?;
-    configuration.bearer_access_token = Some(session.id.to_string());
+    configuration.bearer_access_token = Some(user.session_token.to_string());
 
-    Ok(configuration)
+    configuration
 }
 
 #[cfg(test)]

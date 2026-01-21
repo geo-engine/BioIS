@@ -1,4 +1,7 @@
+use std::ops::Deref;
+
 use anyhow::{Context, Result};
+use tracing::error;
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
 pub fn to_api_workflow(
@@ -36,6 +39,57 @@ pub fn to_api_workflow(
             TypedOperator::Plot(..) => WorkflowType::Plot,
         },
     })
+}
+
+/// Helper function to read-lock a `RwLock`, recovering from poisoning if necessary.
+pub(crate) fn read_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockReadGuard<'_, T> {
+    match mutex.read() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            error!("Mutex was poisoned, attempting to recover.");
+            poisoned.into_inner()
+        }
+    }
+}
+
+/// Helper function to write-lock a `RwLock`, recovering from poisoning if necessary.
+pub(crate) fn write_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockWriteGuard<'_, T> {
+    match mutex.write() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            error!("Mutex was poisoned, attempting to recover.");
+            poisoned.into_inner()
+        }
+    }
+}
+
+/// A wrapper type to hide sensitive information in Debug implementations.
+pub struct Secret<T>(pub T);
+
+impl<T> std::fmt::Debug for Secret<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "********")
+    }
+}
+
+impl<T> Deref for Secret<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: Clone> Clone for Secret<T> {
+    fn clone(&self) -> Self {
+        Secret(self.0.clone())
+    }
+}
+
+impl<T> From<T> for Secret<T> {
+    fn from(value: T) -> Self {
+        Secret(value)
+    }
 }
 
 #[cfg(test)]

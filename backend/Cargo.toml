@@ -50,16 +50,22 @@ multiple_crate_versions = { level = "allow", priority = 1 }
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-axum = { version = "0.8.4", features = ["multipart"] }
-axum-extra = { version = "0.10.1" }
+axum = { version = "0.8", features = ["multipart"] }
+axum-extra = { version = "0.10" }
+chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive"] }
 clap_derive = "4.5"
 config = "0.15"
+diesel = { version = "2.3", features = ["postgres", "chrono", "uuid", "r2d2", "serde_json"] }
+diesel-derive-enum = { version = "3.0.0-beta.1", features = ["postgres"] }
+diesel_migrations = "2.3"
+futures = "0.3"
 geoengine-datatypes = { git = "https://github.com/geo-engine/geoengine", branch = "main" }
 geoengine-operators = { git = "https://github.com/geo-engine/geoengine", branch = "main" }
 geoengine-openapi-client = { git = "https://github.com/geo-engine/openapi-client", branch = "rust" }
-indoc = "2"
-ogcapi = { git = "https://github.com/georust/ogcapi", branch = "changes-along-the-way", features = [
+indoc = "2.0"
+nom = "8.0"
+ogcapi = { path = "../../../ogcapi/ogcapi", features = [
     "services",
     "common",
     "processes",
@@ -75,5 +81,6 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = "2.4"
 utoipa = "5.3"
 utoipa-axum = "0.2"
+uuid = { version = "1.19", features = ["v7"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["compression-gzip", "catch-panic", "cors", "request-id", "sensitive-headers", "trace", "util"] }
