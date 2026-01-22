@@ -3,7 +3,11 @@
 
 [print_schema]
 file = "src/db/schema.rs"
-custom_type_derives = ["diesel::query_builder::QueryId", "Clone"]
+import_types = []
+custom_type_derives = ["Debug"]
+with_docs = true
+allow_tables_to_appear_in_same_query_config = "fk_related_tables"
+filter = { except_tables = ["_sqlx_migrations", "spatial_ref_sys"] }
 
 [migrations_directory]
 dir = "migrations"

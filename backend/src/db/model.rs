@@ -18,7 +18,7 @@ pub struct NewJob<'a> {
     pub process_id: Option<&'a str>,
     pub status: StatusCode,
     pub message: Option<&'a str>,
-    pub type_: JobType,
+    pub job_type: JobType,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     pub progress: Option<i16>,
@@ -64,7 +64,7 @@ pub struct StatusInfo {
     pub process_id: Option<String>,
     pub status: StatusCode,
     pub message: Option<String>,
-    pub type_: JobType,
+    pub job_type: JobType,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
     pub finished: Option<DateTime<Utc>>,
@@ -74,13 +74,13 @@ pub struct StatusInfo {
 }
 
 #[derive(Debug, Deserialize, DbEnum, SqlType)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::Jobtype")]
+#[db_enum(existing_type_path = "crate::db::schema::sql_types::JobType")]
 pub enum JobType {
     Process,
 }
 
 #[derive(Debug, Deserialize, DbEnum, SqlType)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::Statuscode")]
+#[db_enum(existing_type_path = "crate::db::schema::sql_types::StatusCode")]
 pub enum StatusCode {
     Accepted,
     Running,

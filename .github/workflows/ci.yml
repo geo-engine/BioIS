@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+    lint-backend:
+        name: Lint Backend
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        defaults:
+            run:
+                working-directory: ./backend
+        
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - name: Init rustup toolchain
+              run: rustup show
+            - name: setup rust build cache
+              uses: Swatinem/rust-cache@v2
+              with:
+                # An explicit cache key that is used instead of the automatic `job`-based
+                # cache key and is thus stable across jobs.
+                # Default: empty
+                shared-key: ""
+    
+                # An additional cache key that is added alongside the automatic `job`-based
+                # cache key and can be used to further differentiate jobs.
+                # Default: empty
+                key: ci_test_
+            - name: Rustfmt
+              run: ./lint.sh rustfmt
+            - name: Clippy
+              run: ./lint.sh clippy
+            - name: SQLFluff
+              run: ./lint.sh sqlfluff
+            - name: Diesel Check
+              run: |
+                service postgresql start
+                ./lint.sh diesel_cli --with-install

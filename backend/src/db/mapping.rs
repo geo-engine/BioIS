@@ -97,7 +97,7 @@ impl From<StatusInfo> for OgcApiStatusInfo {
     fn from(status: StatusInfo) -> Self {
         OgcApiStatusInfo {
             process_id: status.process_id,
-            r#type: status.type_.into(),
+            r#type: status.job_type.into(),
             job_id: status.job_id,
             status: status.status.into(),
             message: status.message,

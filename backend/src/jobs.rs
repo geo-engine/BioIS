@@ -44,7 +44,7 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             process_id: job.process_id.as_deref(),
             status: job.status.clone().into(),
             message: job.message.as_deref(),
-            type_: job.r#type.clone().into(),
+            job_type: job.r#type.clone().into(),
             created: job.created.unwrap_or_else(Utc::now),
             updated: job.updated.unwrap_or_else(Utc::now),
             progress: job.progress.map(Into::into),
