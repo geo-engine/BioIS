@@ -9,7 +9,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "axum",
- "axum-extra",
+ "axum-extra 0.10.3",
  "chrono",
  "clap",
  "clap_derive",
@@ -626,6 +626,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-extra"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbfe9f610fe4e99cf0cfcd03ccf8c63c28c616fe714d80475ef731f3b13dd21b"
+dependencies = [
+ "axum",
+ "axum-core",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "http",
+ "http-body",
+ "http-body-util",
+ "mime",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
 name = "axum-macros"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1107,6 +1128,20 @@ dependencies = [
  "darling_core",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "dashmap"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5041cc499144891f3790297212f32a74fb938e5136a14943f338ef9e0ae276cf"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+ "hashbrown 0.14.5",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -3104,6 +3139,7 @@ dependencies = [
 [[package]]
 name = "ogcapi"
 version = "0.3.1"
+source = "git+https://github.com/georust/ogcapi?branch=user-auth#cbbc81f91b2c327ddb6bdca8e90cb644233e113e"
 dependencies = [
  "ogcapi-client",
  "ogcapi-drivers",
@@ -3115,6 +3151,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-client"
 version = "0.3.0"
+source = "git+https://github.com/georust/ogcapi?branch=user-auth#cbbc81f91b2c327ddb6bdca8e90cb644233e113e"
 dependencies = [
  "geojson",
  "log",
@@ -3130,6 +3167,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-drivers"
 version = "0.3.0"
+source = "git+https://github.com/georust/ogcapi?branch=user-auth#cbbc81f91b2c327ddb6bdca8e90cb644233e113e"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3144,6 +3182,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-processes"
 version = "0.3.0"
+source = "git+https://github.com/georust/ogcapi?branch=user-auth#cbbc81f91b2c327ddb6bdca8e90cb644233e113e"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3160,11 +3199,13 @@ dependencies = [
 [[package]]
 name = "ogcapi-services"
 version = "0.3.0"
+source = "git+https://github.com/georust/ogcapi?branch=user-auth#cbbc81f91b2c327ddb6bdca8e90cb644233e113e"
 dependencies = [
  "anyhow",
  "axum",
- "axum-extra",
+ "axum-extra 0.12.2",
  "clap",
+ "dashmap",
  "dotenvy",
  "dyn-clone",
  "futures",
@@ -3174,6 +3215,7 @@ dependencies = [
  "ogcapi-processes",
  "ogcapi-types",
  "openapiv3",
+ "reqwest",
  "schemars 1.1.0",
  "serde",
  "serde_json",
@@ -3194,6 +3236,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-types"
 version = "0.3.0"
+source = "git+https://github.com/georust/ogcapi?branch=user-auth#cbbc81f91b2c327ddb6bdca8e90cb644233e113e"
 dependencies = [
  "chrono",
  "geojson",

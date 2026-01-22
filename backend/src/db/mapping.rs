@@ -49,6 +49,8 @@ impl From<Link> for OgcApiLink {
             hreflang: link.hreflang,
             title: link.title,
             length: link.length,
+            templated: None,
+            var_base: None,
         }
     }
 }

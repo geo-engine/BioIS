@@ -65,7 +65,7 @@ geoengine-operators = { git = "https://github.com/geo-engine/geoengine", branch 
 geoengine-openapi-client = { git = "https://github.com/geo-engine/openapi-client", branch = "rust" }
 indoc = "2.0"
 nom = "8.0"
-ogcapi = { path = "../../../ogcapi/ogcapi", features = [
+ogcapi = { git = "https://github.com/georust/ogcapi", branch = "user-auth", features = [
     "services",
     "common",
     "processes",

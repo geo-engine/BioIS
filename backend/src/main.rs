@@ -21,7 +21,6 @@ async fn main() -> anyhow::Result<()> {
         host: CONFIG.server.host.clone(),
         port: CONFIG.server.port,
         openapi: None,
-        database_url: CONFIG.database.connection_string()?,
     };
 
     let db_pool = setup_db(&CONFIG.database)?;
@@ -32,10 +31,9 @@ async fn main() -> anyhow::Result<()> {
     ] as [BoxedProcessor; _]);
 
     // Build & run with hyper
-    let ogcapi_service = ogcapi_services::Service::new_with(&ogcapi_config, ogcapi_state)
-        .await
-        .with_processes()
-        .await;
+    let ogcapi_service = ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state)
+        .await?
+        .with_processes();
 
     ogcapi_service.serve().await;
 
