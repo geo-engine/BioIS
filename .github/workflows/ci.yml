@@ -47,3 +47,56 @@ jobs:
               run: |
                 service postgresql start
                 ./lint.sh diesel_cli --with-install
+
+    test-backend:
+        name: Test Backend
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        defaults:
+            run:
+                working-directory: ./backend
+        
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - name: Init rustup toolchain
+              run: rustup show
+
+            - name: Start PostgreSQL
+              run: service postgresql start
+            - name: setup rust build cache
+              uses: Swatinem/rust-cache@v2
+              with:
+                # An explicit cache key that is used instead of the automatic `job`-based
+                # cache key and is thus stable across jobs.
+                # Default: empty
+                shared-key: ""
+    
+                # An additional cache key that is added alongside the automatic `job`-based
+                # cache key and can be used to further differentiate jobs.
+                # Default: empty
+                key: ci_test_
+            - name: Test
+              run: |
+                cargo install --locked cargo-llvm-cov
+
+                cargo llvm-cov \
+                    --locked \
+                    --all-features \
+                    --profile ci \
+                    --lcov \
+                    --output-path lcov.info
+
+                # Doc-tests are not covered by llvm-cov, so we run them separately
+                # cf. https://github.com/taiki-e/cargo-llvm-cov/issues/2
+                cargo test --doc --all-features --locked
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
+                file: lcov.info
