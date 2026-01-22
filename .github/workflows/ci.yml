@@ -47,6 +47,8 @@ jobs:
               run: |
                 service postgresql start
                 ./lint.sh diesel_cli --with-install
+              env:
+                DIESEL_DATABASE_URL: postgresql://geoengine@geoengine/biois
 
     test-backend:
         name: Test Backend
@@ -88,7 +90,6 @@ jobs:
                 cargo llvm-cov \
                     --locked \
                     --all-features \
-                    --profile ci \
                     --lcov \
                     --output-path lcov.info
 
