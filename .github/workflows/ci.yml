@@ -48,7 +48,7 @@ jobs:
                 service postgresql start
                 ./lint.sh diesel_cli --with-install
               env:
-                DIESEL_DATABASE_URL: postgresql://geoengine@geoengine/biois
+                DATABASE_URL: postgresql://geoengine@geoengine/biois
 
     test-backend:
         name: Test Backend
