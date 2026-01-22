@@ -43,10 +43,12 @@ jobs:
               run: ./lint.sh clippy
             - name: SQLFluff
               run: ./lint.sh sqlfluff
-            - name: Diesel Check
+            - name: Start PostgreSQL
               run: |
                 service postgresql start
-                ./lint.sh diesel_cli --with-install
+                psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
+            - name: Diesel Check
+              run: ./lint.sh diesel_cli --with-install
               env:
                 DATABASE_URL: postgres://geoengine:geoengine@localhost/biois
 
@@ -70,7 +72,9 @@ jobs:
               run: rustup show
 
             - name: Start PostgreSQL
-              run: service postgresql start
+              run: |
+                service postgresql start
+                psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
             - name: setup rust build cache
               uses: Swatinem/rust-cache@v2
               with:
