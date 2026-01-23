@@ -124,9 +124,9 @@ jobs:
               uses: actions/download-artifact@v7
               with:
                 artifact-ids: ${{ needs.test-backend.outputs.coverage-artifact-id }}
-                path: lcov-backend.info
+                path: coverages/backend/
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
-                file: lcov-backend.info
+                file: coverages/backend/lcov-backend.info
