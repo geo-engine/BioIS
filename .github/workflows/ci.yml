@@ -98,12 +98,12 @@ jobs:
                     --locked \
                     --all-features \
                     --lcov \
-                    --output-path lcov.info
+                    --output-path /lcov.info
             - id: upload-artifact
               uses: actions/upload-artifact@v6
               with:
                 name: lcov-report-backend-${{ github.run_id }}-${{ github.run_attempt }}
-                path: lcov.info
+                path: /lcov.info
                 compression-level: 9
                 retention-days: 1
                 if-no-files-found: error
