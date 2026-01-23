@@ -72,6 +72,12 @@ impl<T> std::fmt::Debug for Secret<T> {
     }
 }
 
+impl<T> std::fmt::Display for Secret<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "********")
+    }
+}
+
 impl<T> Deref for Secret<T> {
     type Target = T;
 
@@ -143,5 +149,12 @@ mod tests {
                 }
             })
         );
+    }
+
+    #[test]
+    fn it_hides_secret_in_debug_and_display() {
+        let secret = Secret("my_password".to_string());
+        assert_eq!(format!("{:?}", secret), "********");
+        assert_eq!(format!("{}", secret), "********");
     }
 }
