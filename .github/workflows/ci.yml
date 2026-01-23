@@ -120,6 +120,8 @@ jobs:
             - test-backend
 
         steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
             - name: Download Backend Coverage Report
               uses: actions/download-artifact@v7
               with:
