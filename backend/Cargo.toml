@@ -84,3 +84,6 @@ utoipa-axum = "0.2"
 uuid = { version = "1.19", features = ["v7"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["compression-gzip", "catch-panic", "cors", "request-id", "sensitive-headers", "trace", "util"] }
+
+[dev-dependencies]
+httptest = "0.16"

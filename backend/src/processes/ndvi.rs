@@ -517,7 +517,12 @@ fn configuration(user: &User) -> Configuration {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use geoengine_openapi_client::apis::configuration::Configuration as ApiConfiguration;
+    use httptest::matchers::*;
+    use httptest::responders::*;
+    use httptest::{Expectation, Server};
     use ogcapi::types::processes::Input;
+    use serde_json::json;
 
     #[test]
     fn it_deserializes_the_input() {
@@ -538,5 +543,82 @@ mod tests {
         let json = serde_json::to_value(&inputs).unwrap();
 
         let _inputs: NDVIProcessInputs = serde_json::from_value(json).unwrap();
+    }
+
+    #[tokio::test]
+    async fn compute_ndvi_integration_with_mock_backend() {
+        // Start httptest server and mock the external Geo Engine endpoints
+        let server = Server::run();
+
+        // Mock workflow registration (POST /workflow -> { id: "..." })
+        server.expect(
+            Expectation::matching(request::method("POST")).respond_with(json_encoded(
+                json!({ "id": "00000000-0000-0000-0000-000000000003" }),
+            )),
+        );
+
+        // Mock WFS feature handler (GET /wfs/{workflow} -> GeoJSON with NDVI properties)
+        server.expect(
+            Expectation::matching(request::method("GET")).respond_with(json_encoded(json!({
+                "type": "FeatureCollection",
+                "features": [
+                    { "type": "Feature", "properties": { "NDVI": 0.123, "kNDVI": 0.456 } }
+                ]
+            }))),
+        );
+
+        // Build API configuration pointing to the mock server
+        let mut api_config = ApiConfiguration::new();
+        api_config.base_path = server.url_str("");
+
+        // Call compute_ndvi with both outputs requested
+        let coord: Coordinate = [12.34, 56.78];
+
+        let outputs = compute_ndvi(&api_config, &coord, Year(2014), Month(1), true, true)
+            .await
+            .expect("compute_ndvi should succeed");
+
+        assert!(outputs.ndvi.is_some());
+        assert!(outputs.k_ndvi.is_some());
+        let ndvi = outputs.ndvi.unwrap();
+        let k_ndvi = outputs.k_ndvi.unwrap();
+        assert!((ndvi - 0.123).abs() < 1e-12);
+        assert!((k_ndvi - 0.456).abs() < 1e-12);
+    }
+
+    #[test]
+    fn process_summary_has_expected_inputs_and_outputs() {
+        let p = NDVIProcess;
+        let process = p.process().expect("to produce process description");
+
+        // summary id / version
+        assert_eq!(process.summary.id, "ndvi");
+        assert_eq!(process.summary.version, "0.1.0");
+
+        // job control options contain sync and async execute
+        let mut has_sync = false;
+        let mut has_async = false;
+        for opt in &process.summary.job_control_options {
+            match opt {
+                JobControlOptions::SyncExecute => has_sync = true,
+                JobControlOptions::AsyncExecute => has_async = true,
+                JobControlOptions::Dismiss => todo!(),
+            }
+        }
+        assert!(has_sync, "expected SyncExecute in job_control_options");
+        assert!(has_async, "expected AsyncExecute in job_control_options");
+
+        // inputs contain coordinate, year, month
+        assert!(process.inputs.contains_key("coordinate"));
+        assert!(process.inputs.contains_key("year"));
+        assert!(process.inputs.contains_key("month"));
+
+        // outputs contain ndvi and k_ndvi
+        assert!(process.outputs.contains_key("ndvi"));
+        assert!(process.outputs.contains_key("k_ndvi"));
+
+        // some basic checks for descriptions and schema presence
+        let ndvi_output = &process.outputs["ndvi"];
+        assert!(ndvi_output.schema.is_object());
     }
 }

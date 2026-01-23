@@ -170,3 +170,38 @@ pub enum Response {
     Raw,
     Document,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialize_jobtype_from_string() {
+        let v: JobType = serde_json::from_str("\"Process\"").expect("to deserialize JobType");
+        assert!(matches!(v, JobType::Process));
+    }
+
+    #[test]
+    fn deserialize_statuscode_variants() {
+        let s = serde_json::from_str::<StatusCode>("\"Accepted\"").expect("accepted");
+        assert!(matches!(s, StatusCode::Accepted));
+
+        let s = serde_json::from_str::<StatusCode>("\"Running\"").expect("running");
+        assert!(matches!(s, StatusCode::Running));
+
+        let s = serde_json::from_str::<StatusCode>("\"Successful\"").expect("successful");
+        assert!(matches!(s, StatusCode::Successful));
+
+        let s = serde_json::from_str::<StatusCode>("\"Failed\"").expect("failed");
+        assert!(matches!(s, StatusCode::Failed));
+
+        let s = serde_json::from_str::<StatusCode>("\"Dismissed\"").expect("dismissed");
+        assert!(matches!(s, StatusCode::Dismissed));
+    }
+
+    #[test]
+    fn deserialize_response_enum() {
+        let r: Response = serde_json::from_str("\"Raw\"").expect("raw");
+        assert!(matches!(r, Response::Raw));
+    }
+}

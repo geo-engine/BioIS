@@ -44,6 +44,10 @@ impl GeoEngineAuthMiddleware {
     pub fn new() -> Self {
         let mut configuration = configuration::Configuration::new();
         configuration.base_path = CONFIG.geoengine.base_url.to_string();
+        Self::from_configuration(configuration)
+    }
+
+    fn from_configuration(configuration: configuration::Configuration) -> Self {
         Self {
             configuration,
             whitelisted_paths: WhitelistedPaths {
@@ -131,6 +135,12 @@ fn uuid_parser(input: &str) -> IResult<&str, Uuid> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::body::Body;
+    use axum::http::Request as HttpRequest;
+    use httptest::matchers::*;
+    use httptest::responders::*;
+    use httptest::{Expectation, Server};
+    use serde_json::json;
 
     #[test]
     fn it_parses_bearer_tokens() {
@@ -177,5 +187,71 @@ mod tests {
 
         // not whitelisted
         assert!(!middleware.path_is_whitelisted("/private"));
+    }
+
+    #[tokio::test]
+    async fn authorize_returns_unauthorized_for_missing_header() {
+        let mut middleware = GeoEngineAuthMiddleware::new();
+
+        let http_req: HttpRequest<Body> = HttpRequest::builder()
+            .uri("/private")
+            .body(Body::empty())
+            .expect("to build http request");
+
+        let result = middleware.authorize(http_req).await;
+
+        assert!(
+            result.is_err(),
+            "expected an Err(Response) when header missing"
+        );
+        let resp = result.unwrap_err();
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn authorize_with_valid_header_inserts_user_extension() {
+        // start mock auth service using `httptest`
+        let server = Server::run();
+
+        // Respond with a valid session for any GET (works regardless of path formatting)
+        server.expect(
+            Expectation::matching(request::method("GET"))
+                .respond_with(json_encoded(json!({
+                    "id": "00000000-0000-0000-0000-000000000002",
+                    "user": { "id": "00000000-0000-0000-0000-000000000001", "email": null, "realName": null },
+                    "created": "2021-01-01T00:00:00Z",
+                    "validUntil": "2022-01-01T00:00:00Z",
+                    "project": null,
+                    "view": null,
+                    "roles": []
+                })))
+        );
+
+        let mut configuration = configuration::Configuration::new();
+        configuration.base_path = server.url_str("");
+        let mut middleware = GeoEngineAuthMiddleware::from_configuration(configuration);
+
+        let token = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
+        let header_value = format!("Bearer {token}");
+
+        let http_req: HttpRequest<Body> = HttpRequest::builder()
+            .uri("/private")
+            .header("Authorization", header_value)
+            .body(Body::empty())
+            .expect("to build http request");
+
+        let result = middleware.authorize(http_req).await;
+        assert!(result.is_ok(), "expected Ok(Request) for valid session");
+
+        let req = result.unwrap();
+        let user = req.extensions().get::<User>().expect("user in extensions");
+
+        let expected_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+        let expected_session_id = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
+
+        assert_eq!(user.id, expected_user_id);
+        assert_eq!(*user.session_token, expected_session_id);
+
+        // `httptest::Server` stops when dropped at test end
     }
 }
