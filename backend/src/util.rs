@@ -103,6 +103,7 @@ mod tests {
 
     use super::*;
     use pretty_assertions::assert_eq;
+    use std::sync::{Arc, RwLock};
 
     #[test]
     fn it_converts_operator_to_api_workflow() {
@@ -156,5 +157,66 @@ mod tests {
         let secret = Secret("my_password".to_string());
         assert_eq!(format!("{:?}", secret), "********");
         assert_eq!(format!("{}", secret), "********");
+    }
+
+    #[test]
+    fn it_recovers_from_poisoned_read_lock() {
+        let lock = Arc::new(RwLock::new(42));
+
+        // Poison the lock by panicking while holding a write lock
+        {
+            let lock = Arc::clone(&lock);
+            let _ = std::thread::spawn(move || {
+                let _guard = lock.write().unwrap();
+                panic!("poison!");
+            })
+            .join();
+        }
+
+        // Should recover and read the value
+        let value = *read_lock(&lock);
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn it_recovers_from_poisoned_write_lock() {
+        let lock = Arc::new(RwLock::new(100));
+
+        // Poison the lock by panicking while holding a write lock
+        {
+            let lock = Arc::clone(&lock);
+            let _ = std::thread::spawn(move || {
+                let _guard = lock.write().unwrap();
+                panic!("poison!");
+            })
+            .join();
+        }
+
+        // Should recover and allow writing
+        {
+            let mut guard = write_lock(&lock);
+            *guard = 200;
+        }
+        assert_eq!(*read_lock(&lock), 200);
+    }
+
+    #[test]
+    fn it_reads_and_writes_with_unpoisoned_lock() {
+        let lock = RwLock::new(5);
+
+        {
+            let guard = read_lock(&lock);
+            assert_eq!(*guard, 5);
+        }
+
+        {
+            let mut guard = write_lock(&lock);
+            *guard = 10;
+        }
+
+        {
+            let guard = read_lock(&lock);
+            assert_eq!(*guard, 10);
+        }
     }
 }

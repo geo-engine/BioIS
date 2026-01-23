@@ -139,4 +139,43 @@ mod tests {
         let parsed_token = parse_bearer_token(&header_value).expect("to parse token");
         assert_eq!(parsed_token, token);
     }
+
+    #[test]
+    fn it_parses_bearer_case_insensitive() {
+        let token = Uuid::new_v4();
+        let header_value = format!("bearer {token}");
+        let parsed_token = parse_bearer_token(&header_value).expect("to parse token");
+        assert_eq!(parsed_token, token);
+    }
+
+    #[test]
+    fn parse_fails_on_invalid_token() {
+        let header_value = "Bearer not-a-uuid";
+        let err = parse_bearer_token(header_value).unwrap_err();
+        assert!(err.to_string().contains("Failed to parse bearer token"));
+    }
+
+    #[test]
+    fn uuid_parser_rejects_short_input() {
+        let input = "123";
+        let res = uuid_parser(input);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn whitelisted_paths_match_exact_and_prefix() {
+        let middleware = GeoEngineAuthMiddleware::new();
+
+        // exact
+        assert!(middleware.path_is_whitelisted("/"));
+        assert!(middleware.path_is_whitelisted("/health"));
+        assert!(middleware.path_is_whitelisted("/processes/echo"));
+
+        // prefix
+        assert!(middleware.path_is_whitelisted("/api/some/resource"));
+        assert!(middleware.path_is_whitelisted("/swagger/index.html"));
+
+        // not whitelisted
+        assert!(!middleware.path_is_whitelisted("/private"));
+    }
 }
