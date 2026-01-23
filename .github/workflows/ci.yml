@@ -61,6 +61,9 @@ jobs:
         permissions:
             contents: read
 
+        outputs:
+            coverage-artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
+
         defaults:
             run:
                 working-directory: ./backend
@@ -96,8 +99,34 @@ jobs:
                     --all-features \
                     --lcov \
                     --output-path lcov.info
+            - id: upload-artifact
+              uses: actions/upload-artifact@v6
+              with:
+                name: lcov-report-backend-${{ github.run_id }}-${{ github.run_attempt }}
+                path: lcov.info
+                compression-level: 9
+                retention-days: 1
+                if-no-files-found: error
+            
+    upload-coverage:
+        name: Upload Coverage Report
+
+        runs-on: ubuntu-24.04
+
+        permissions:
+            contents: read
+
+        needs:
+            - test-backend
+
+        steps:
+            - name: Download Backend Coverage Report
+              uses: actions/download-artifact@v7
+              with:
+                artifact-ids: ${{ needs.test-backend.outputs.coverage-artifact-id }}
+                path: lcov-backend.info
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
-                file: lcov.info
+                file: lcov-backend.info
