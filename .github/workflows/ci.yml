@@ -127,8 +127,14 @@ jobs:
               with:
                 artifact-ids: ${{ needs.test-backend.outputs.coverage-artifact-id }}
                 path: coverages/backend/
+            - name: Debug ls
+              run: |
+                ls -la
+                ls -la coverages/backend/
+                ls -la backend/
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
                 file: coverages/backend/lcov.info
+                base-path: ./backend
