@@ -129,6 +129,7 @@ jobs:
                 path: backend/
             - name: Debug ls
               run: |
+                pwd
                 ls -la
                 ls -la backend/
             - name: Upload coverage to Coveralls
