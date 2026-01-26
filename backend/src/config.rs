@@ -1,6 +1,9 @@
 use anyhow::Context;
+use geoengine_openapi_client::apis::configuration::Configuration;
 use std::sync::LazyLock;
 use url::Url;
+
+use crate::auth::User;
 
 pub static CONFIG: LazyLock<Config> = LazyLock::new(|| get_config().expect("config can be loaded"));
 
@@ -42,6 +45,19 @@ impl Database {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct GeoEngineInstance {
     pub base_url: Url,
+}
+
+impl GeoEngineInstance {
+    pub fn api_config(&self, user_session: Option<&User>) -> Configuration {
+        let mut configuration = Configuration::new();
+        configuration.base_path = self.base_url.to_string();
+
+        if let Some(user) = user_session {
+            configuration.bearer_access_token = Some(user.session_token.to_string());
+        }
+
+        configuration
+    }
 }
 
 fn get_config() -> anyhow::Result<Config> {

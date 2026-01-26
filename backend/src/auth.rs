@@ -42,9 +42,7 @@ impl WhitelistedPaths {
 
 impl GeoEngineAuthMiddleware {
     pub fn new() -> Self {
-        let mut configuration = configuration::Configuration::new();
-        configuration.base_path = CONFIG.geoengine.base_url.to_string();
-        Self::from_configuration(configuration)
+        Self::from_configuration(CONFIG.geoengine.api_config(None))
     }
 
     fn from_configuration(configuration: configuration::Configuration) -> Self {

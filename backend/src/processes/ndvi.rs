@@ -299,10 +299,8 @@ impl Processor for NDVIProcess {
             }
         }
 
-        let configuration = configuration(user);
-
         compute_ndvi(
-            &configuration,
+            &CONFIG.geoengine.api_config(Some(user)),
             &inputs.coordinate.value.coordinates,
             inputs.year,
             inputs.month,
@@ -503,15 +501,6 @@ fn k_ndvi_source() -> Box<dyn RasterOperator> {
         sources: ndvi_u8_source().into(),
     }
     .boxed()
-}
-
-fn configuration(user: &User) -> Configuration {
-    let mut configuration = Configuration::new();
-    configuration.base_path = CONFIG.geoengine.base_url.to_string();
-
-    configuration.bearer_access_token = Some(user.session_token.to_string());
-
-    configuration
 }
 
 #[cfg(test)]
