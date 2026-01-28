@@ -1,0 +1,44 @@
+#!/usr/bin/env just --justfile
+
+set shell := ["bash", "-c"]
+
+with_install := "false"
+
+default:
+    @just --list
+
+[group('lint')]
+rustfmt:
+    cargo fmt --all -- --check
+
+[group('lint')]
+clippy:
+    cargo clippy --all-targets --locked -- -D warnings
+
+[group('lint')]
+sqlfluff:
+    pipx run sqlfluff==3.5.0 lint
+
+[group('lint')]
+diesel_cli:
+    diesel migration run --locked-schema
+    diesel-guard check migrations
+
+[group('lint')]
+install_diesel_cli:
+    @echo "Installing Diesel CLI and Diesel Guard…"
+    cargo install diesel_cli --no-default-features --features postgres
+    cargo install diesel-guard --no-default-features
+
+    diesel_cli
+
+[group('lint')]
+all:
+    @echo "Running rustfmt…"
+    just rustfmt
+    @echo "Running clippy…"
+    just clippy
+    @echo "Running sqlfluff…"
+    just sqlfluff
+    @echo "Running Diesel CLI…"
+    just diesel_cli
