@@ -41,7 +41,8 @@ pub fn to_api_workflow(
     })
 }
 
-/// Helper function to read-lock a `RwLock`, recovering from poisoning if necessary.
+/// Helper function to read-lock a `RwLock`, recovering from poisoning if necessary
+#[allow(unused)] // TODO: use or delete
 pub(crate) fn read_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockReadGuard<'_, T> {
     match mutex.read() {
         Ok(guard) => guard,
@@ -53,6 +54,7 @@ pub(crate) fn read_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockRea
 }
 
 /// Helper function to write-lock a `RwLock`, recovering from poisoning if necessary.
+#[allow(unused)] // TODO: use or delete
 pub(crate) fn write_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockWriteGuard<'_, T> {
     match mutex.write() {
         Ok(guard) => guard,

@@ -29,6 +29,22 @@ It provides APIs and processing capabilities for computing biodiversity indicato
     cargo run
    ```
 
+## Schema generation
+
+The database schema is managed using Diesel migrations.
+To generate or update the schema, use the following commands:
+
+```bash
+diesel migration generate <migration_name>
+diesel migration run
+```
+
+This reverts all migrations and reapplies them, updating the `schema.rs` file accordingly:
+
+```bash
+diesel migration redo --all
+```
+
 ## Configuration
 
 The backend service can be configured via environment variables or configuration files.

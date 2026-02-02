@@ -1,16 +1,15 @@
 use crate::{
-    auth::User,
     db::{
-        DbPool,
-        model::{self, DismissJob, NewJob, UpdateJob},
+        DbPool, PooledConnection,
+        model::{self, DismissJob, NewJob, UpdateJob, UpdateJobStatus},
         schema::jobs,
     },
+    state::USER,
 };
 use anyhow::Context;
 use chrono::Utc;
-use diesel::{
-    ExpressionMethods, HasQuery, OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper,
-};
+use diesel::{ExpressionMethods, HasQuery, OptionalExtension, QueryDsl, SelectableHelper};
+use diesel_async::RunQueryDsl;
 use ogcapi::{
     drivers::ProcessResult,
     types::{
@@ -20,19 +19,48 @@ use ogcapi::{
 };
 
 pub struct JobHandler {
-    pub(crate) connection: DbPool,
+    connection: DbPool,
+}
+
+impl JobHandler {
+    pub async fn new(connection: DbPool) -> anyhow::Result<Self> {
+        let this = Self { connection };
+        this.clean_running_jobs_from_previous_sessions().await?;
+        Ok(this)
+    }
+
+    async fn connection(&self) -> anyhow::Result<PooledConnection<'_>> {
+        self.connection
+            .get()
+            .await
+            .context("could not get db connection from pool")
+    }
+
+    /// Clean up jobs that were in `Running` state from previous server sessions.
+    /// Set them to `Failed` with appropriate message.
+    async fn clean_running_jobs_from_previous_sessions(&self) -> anyhow::Result<()> {
+        let update = UpdateJobStatus {
+            status: model::StatusCode::Failed,
+            message: "Server restarted during job execution".into(),
+            updated: Utc::now(),
+        };
+
+        diesel::update(jobs::table)
+            .filter(jobs::status.eq(model::StatusCode::Running))
+            .set(update)
+            .execute(&mut self.connection().await?)
+            .await
+            .context("Failed to update job in database")?;
+
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
 impl ogcapi::drivers::JobHandler for JobHandler {
-    type User = User;
+    async fn register(&self, job: &StatusInfo, response_mode: Response) -> anyhow::Result<String> {
+        let user = USER.try_get().context("missing authenticated user")?;
 
-    async fn register(
-        &self,
-        job: &StatusInfo,
-        response_mode: Response,
-        user: &Self::User,
-    ) -> anyhow::Result<String> {
         let job_id = if job.job_id.is_empty() {
             uuid::Uuid::now_v7().to_string()
         } else {
@@ -53,21 +81,17 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             user_id: user.id,
         };
 
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
-
         let job_id: String = diesel::insert_into(jobs::table)
             .values(new_job)
             .returning(jobs::job_id)
-            .get_result(&mut connection)
+            .get_result(&mut self.connection().await?)
+            .await
             .context("Failed to insert job into database")?;
 
         Ok(job_id)
     }
 
-    async fn update(&self, job: &StatusInfo, user: &Self::User) -> anyhow::Result<()> {
+    async fn update(&self, job: &StatusInfo) -> anyhow::Result<()> {
         let update = UpdateJob {
             status: job.status.clone().into(),
             message: job.message.as_deref(),
@@ -76,37 +100,27 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             links: job.links.iter().map(|l| l.clone().into()).collect(),
         };
 
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
-
         diesel::update(jobs::table)
-            .filter(jobs::job_id.eq(&job.job_id))
-            .filter(jobs::user_id.eq(user.id))
+            .filter(
+                jobs::job_id.eq(&job.job_id), // .filter(jobs::user_id.eq(user.id)
+            )
             .set(update)
-            .execute(&mut connection)
+            .execute(&mut self.connection().await?)
+            .await
             .context("Failed to update job in database")?;
 
         Ok(())
     }
 
-    async fn status_list(
-        &self,
-        offset: usize,
-        limit: usize,
-        user: &Self::User,
-    ) -> anyhow::Result<Vec<StatusInfo>> {
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
+    async fn status_list(&self, offset: usize, limit: usize) -> anyhow::Result<Vec<StatusInfo>> {
+        let user = USER.try_get().context("missing authenticated user")?;
 
         let result = model::StatusInfo::query()
             .filter(jobs::user_id.eq(user.id))
             .offset(offset as i64)
             .limit(limit as i64)
-            .load::<model::StatusInfo>(&mut connection)
+            .load::<model::StatusInfo>(&mut self.connection().await?)
+            .await
             .context("Failed to query job status list from database")?;
 
         Ok(result
@@ -115,16 +129,14 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             .collect::<Vec<StatusInfo>>())
     }
 
-    async fn status(&self, id: &str, user: &Self::User) -> anyhow::Result<Option<StatusInfo>> {
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
+    async fn status(&self, id: &str) -> anyhow::Result<Option<StatusInfo>> {
+        let user = USER.try_get().context("missing authenticated user")?;
 
         model::StatusInfo::query()
             .filter(jobs::job_id.eq(id))
             .filter(jobs::user_id.eq(user.id))
-            .first(&mut connection)
+            .first(&mut self.connection().await?)
+            .await
             .optional()
             .map(|s| s.map(Into::into))
             .context("Failed to query job status from database")
@@ -137,7 +149,6 @@ impl ogcapi::drivers::JobHandler for JobHandler {
         message: Option<String>,
         links: Vec<Link>,
         results: Option<ExecuteResults>,
-        user: &Self::User,
     ) -> anyhow::Result<()> {
         let finish = crate::db::model::FinishJob {
             status: status.clone().into(),
@@ -149,28 +160,19 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             results: results.map(serde_json::to_value).transpose()?,
         };
 
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
-
         diesel::update(
-            jobs::table
-                .filter(jobs::job_id.eq(job_id))
-                .filter(jobs::user_id.eq(user.id)),
+            jobs::table.filter(jobs::job_id.eq(job_id)), // .filter(jobs::user_id.eq(user.id)),
         )
         .set(finish)
-        .execute(&mut connection)
+        .execute(&mut self.connection().await?)
+        .await
         .context("Failed write finished job to database")?;
 
         Ok(())
     }
 
-    async fn dismiss(&self, id: &str, user: &Self::User) -> anyhow::Result<Option<StatusInfo>> {
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
+    async fn dismiss(&self, id: &str) -> anyhow::Result<Option<StatusInfo>> {
+        let user = USER.try_get().context("missing authenticated user")?;
 
         let returned: Option<model::StatusInfo> = diesel::update(jobs::table)
             .filter(jobs::job_id.eq(id))
@@ -181,24 +183,23 @@ impl ogcapi::drivers::JobHandler for JobHandler {
                 updated: Utc::now(),
             })
             .returning(model::StatusInfo::as_returning())
-            .get_result(&mut connection)
+            .get_result(&mut self.connection().await?)
+            .await
             .optional()
             .context("Failed to dismiss job in database")?;
 
         Ok(returned.map(Into::into))
     }
 
-    async fn results(&self, id: &str, user: &Self::User) -> anyhow::Result<ProcessResult> {
-        let mut connection = self
-            .connection
-            .get()
-            .context("could not get db connection from pool")?;
+    async fn results(&self, id: &str) -> anyhow::Result<ProcessResult> {
+        let user = USER.try_get().context("missing authenticated user")?;
 
         let results: Option<(Option<serde_json::Value>, model::Response)> = jobs::table
             .select((jobs::results, jobs::response))
             .filter(jobs::job_id.eq(id))
             .filter(jobs::user_id.eq(user.id))
-            .first(&mut connection)
+            .first(&mut self.connection().await?)
+            .await
             .optional()
             .context("Failed to query job results from database")?;
 
@@ -222,11 +223,11 @@ impl ogcapi::drivers::JobHandler for JobHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{config::CONFIG, db::setup_db};
+    use crate::{auth::User, config::CONFIG, db::setup_db};
     use ogcapi::drivers::JobHandler as _;
 
-    fn mock_db_pool() -> DbPool {
-        setup_db(&CONFIG.database).unwrap()
+    async fn mock_db_pool() -> DbPool {
+        setup_db(&CONFIG.database).await.unwrap()
     }
 
     fn mock_user() -> User {
@@ -251,117 +252,115 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_register() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        let status_info = mock_status_info("");
-        let result = handler.register(&status_info, Response::Raw, &user).await;
-        assert!(result.is_ok());
-        let job_id = result.unwrap();
-        assert!(!job_id.is_empty());
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            let status_info = mock_status_info("");
+            let result = handler.register(&status_info, Response::Raw).await;
+            assert!(result.is_ok());
+            let job_id = result.unwrap();
+            assert!(!job_id.is_empty());
+        })
+        .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_update() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        let status_info = mock_status_info("job1");
-        // Register first
-        handler
-            .register(&status_info, Response::Raw, &user)
-            .await
-            .unwrap();
-        // Update
-        let mut updated_info = status_info.clone();
-        updated_info.status = StatusCode::Running;
-        let result = handler.update(&updated_info, &user).await;
-        assert!(result.is_ok());
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            let status_info = mock_status_info("job1");
+            // Register first
+            handler.register(&status_info, Response::Raw).await.unwrap();
+            // Update
+            let mut updated_info = status_info.clone();
+            updated_info.status = StatusCode::Running;
+            let result = handler.update(&updated_info).await;
+            assert!(result.is_ok());
+        })
+        .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_status_list() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        // Register a job
-        let status_info = mock_status_info("job2");
-        handler
-            .register(&status_info, Response::Raw, &user)
-            .await
-            .unwrap();
-        // List
-        let result = handler.status_list(0, 10, &user).await;
-        assert!(result.is_ok());
-        let list = result.unwrap();
-        assert!(!list.is_empty());
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            // Register a job
+            let status_info = mock_status_info("job2");
+            handler.register(&status_info, Response::Raw).await.unwrap();
+            // List
+            let result = handler.status_list(0, 10).await;
+            assert!(result.is_ok());
+            let list = result.unwrap();
+            assert!(!list.is_empty());
+        })
+        .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_status() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        let status_info = mock_status_info("job3");
-        handler
-            .register(&status_info, Response::Raw, &user)
-            .await
-            .unwrap();
-        let result = handler.status("job3", &user).await;
-        assert!(result.is_ok());
-        let status = result.unwrap();
-        assert!(status.is_some());
-        assert_eq!(status.unwrap().job_id, "job3");
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            let status_info = mock_status_info("job3");
+            handler.register(&status_info, Response::Raw).await.unwrap();
+            let result = handler.status("job3").await;
+            assert!(result.is_ok());
+            let status = result.unwrap();
+            assert!(status.is_some());
+            assert_eq!(status.unwrap().job_id, "job3");
+        })
+        .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_finish() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        let status_info = mock_status_info("job4");
-        handler
-            .register(&status_info, Response::Raw, &user)
-            .await
-            .unwrap();
-        let result = handler
-            .finish(
-                "job4",
-                &StatusCode::Successful,
-                Some("done".to_string()),
-                vec![],
-                None,
-                &user,
-            )
-            .await;
-        assert!(result.is_ok());
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            let status_info = mock_status_info("job4");
+            handler.register(&status_info, Response::Raw).await.unwrap();
+            let result = handler
+                .finish(
+                    "job4",
+                    &StatusCode::Successful,
+                    Some("done".to_string()),
+                    vec![],
+                    None,
+                )
+                .await;
+            assert!(result.is_ok());
+        })
+        .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_dismiss() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        let status_info = mock_status_info("job5");
-        handler
-            .register(&status_info, Response::Raw, &user)
-            .await
-            .unwrap();
-        let result = handler.dismiss("job5", &user).await;
-        assert!(result.is_ok());
-        let dismissed = result.unwrap();
-        assert!(dismissed.is_some());
-        assert_eq!(dismissed.unwrap().status, StatusCode::Dismissed);
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            let status_info = mock_status_info("job5");
+            handler.register(&status_info, Response::Raw).await.unwrap();
+            let result = handler.dismiss("job5").await;
+            assert!(result.is_ok());
+            let dismissed = result.unwrap();
+            assert!(dismissed.is_some());
+            assert_eq!(dismissed.unwrap().status, StatusCode::Dismissed);
+        })
+        .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_results_no_job() {
-        let pool = mock_db_pool();
-        let handler = JobHandler { connection: pool };
-        let user = mock_user();
-        let result = handler.results("no_such_job", &user).await;
-        assert!(matches!(result.unwrap(), ProcessResult::NoSuchJob));
+        let pool = mock_db_pool().await;
+        let handler = JobHandler::new(pool).await.unwrap();
+        USER.scope(mock_user(), async move {
+            let result = handler.results("no_such_job").await;
+            assert!(matches!(result.unwrap(), ProcessResult::NoSuchJob));
+        })
+        .await;
     }
 }

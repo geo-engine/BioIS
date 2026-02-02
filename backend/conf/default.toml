@@ -17,3 +17,7 @@ clear_database_on_start = false
 
 [geoengine]
 base_url = "http://localhost:3030/api"
+
+[logging]
+# Possible values: "off", "error", "warn", "info", "debug",
+level = "info"

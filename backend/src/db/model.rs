@@ -39,6 +39,14 @@ pub struct UpdateJob<'a> {
 
 #[derive(Debug, Deserialize, AsChangeset)]
 #[diesel(table_name = jobs)]
+pub struct UpdateJobStatus<'a> {
+    pub status: StatusCode,
+    pub message: Option<&'a str>,
+    pub updated: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize, AsChangeset)]
+#[diesel(table_name = jobs)]
 pub struct FinishJob<'a> {
     pub status: StatusCode,
     pub message: Option<&'a str>,

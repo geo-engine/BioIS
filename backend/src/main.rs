@@ -1,5 +1,7 @@
+use crate::auth::GeoEngineAuthMiddlewareLayer;
+use crate::collection_transactions::NoCollectionTransactions;
 use crate::db::setup_db;
-use crate::state::{AppState, BoxedProcessor};
+use crate::jobs::JobHandler;
 use anyhow::Context;
 use axum::Json;
 use axum::extract::{Query, State};
@@ -9,11 +11,12 @@ use config::CONFIG;
 use geoengine_openapi_client::apis::configuration::Configuration;
 use geoengine_openapi_client::apis::session_api::oidc_login;
 use geoengine_openapi_client::models::{AuthCodeResponse, UserSession};
-use ogcapi::{processes as ogcapi_processes, services as ogcapi_services};
-use tracing::level_filters::LevelFilter;
+use ogcapi::services as ogcapi_services;
+use ogcapi::services::Drivers;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod auth;
+mod collection_transactions;
 mod config;
 mod db;
 mod jobs;
@@ -31,24 +34,33 @@ async fn main() -> anyhow::Result<()> {
         openapi: None,
     };
 
-    let db_pool = setup_db(&CONFIG.database)?;
+    let db_pool = setup_db(&CONFIG.database).await?;
 
-    let ogcapi_state = AppState::new(db_pool).with_processors([
-        Box::new(ogcapi_processes::echo::Echo::default()),
-        Box::new(processes::NDVIProcess),
-    ] as [BoxedProcessor; _]);
+    let drivers = Drivers {
+        jobs: Box::new(JobHandler::new(db_pool).await?),
+        collections: Box::new(NoCollectionTransactions),
+    };
+
+    let ogcapi_state = ogcapi_services::AppState::new(drivers)
+        .await
+        .processors(vec![
+            Box::new(ogcapi::processes::echo::Echo),
+            Box::new(processes::NDVIProcess),
+        ])
+        .with_spawn_fn(state::spawn_with_user);
 
     // Build & run with hyper
-    let mut ogcapi_service = ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state)
-        .await?
-        .with_processes();
+    let mut ogcapi_service =
+        ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state).await?;
 
     let misc_router = Router::new()
         .route("/auth", get(auth_handler))
         .route("/health", get(health_handler))
         .with_state(CONFIG.geoengine.api_config(None));
 
-    ogcapi_service.router = ogcapi_service.router.merge(misc_router.into());
+    ogcapi_service.router = ogcapi_service.router.merge(misc_router);
+    // ogcapi_service.router = ogcapi_service.router.layer(from_fn(auth_middleware));
+    ogcapi_service.router = ogcapi_service.router.layer(GeoEngineAuthMiddlewareLayer);
 
     ogcapi_service.serve().await;
 
@@ -76,7 +88,7 @@ fn setup_tracing() {
     tracing_subscriber::registry()
         .with(
             EnvFilter::builder()
-                .with_default_directive(LevelFilter::INFO.into())
+                .with_default_directive(CONFIG.logging.clone().into())
                 .from_env_lossy(),
         )
         .with(tracing_subscriber::fmt::layer().pretty())

@@ -38,7 +38,7 @@ use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::{auth::User, config::CONFIG, util::to_api_workflow};
+use crate::{config::CONFIG, state::USER, util::to_api_workflow};
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
 #[derive(Debug, Clone)]
@@ -99,7 +99,7 @@ enum PointGeoJsonType {
 struct Year(#[schemars(range(min = 2014, max = 2014))] u16);
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, Copy, Clone)]
-struct Month(#[schemars(range(min = 1, max = 6))] u8);
+struct Month(#[schemars(range(min = 1, max = 6))] u16);
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema)]
 struct NDVIProcessOutputs {
@@ -140,8 +140,6 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
 
 #[async_trait::async_trait]
 impl Processor for NDVIProcess {
-    type User = User;
-
     fn id(&self) -> &'static str {
         "ndvi"
     }
@@ -283,7 +281,7 @@ impl Processor for NDVIProcess {
         })
     }
 
-    async fn execute(&self, execute: Execute, user: &Self::User) -> Result<ExecuteResults> {
+    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
         let value = serde_json::to_value(execute.inputs)?;
         let inputs: NDVIProcessInputs = serde_json::from_value(value)?;
 
@@ -300,7 +298,9 @@ impl Processor for NDVIProcess {
         }
 
         compute_ndvi(
-            &CONFIG.geoengine.api_config(Some(user)),
+            &CONFIG
+                .geoengine
+                .api_config(USER.try_get().ok().map(|user| user.session_token)),
             &inputs.coordinate.value.coordinates,
             inputs.year,
             inputs.month,

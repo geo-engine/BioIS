@@ -1,8 +1,11 @@
-use crate::{config::CONFIG, util::Secret};
+use std::convert::Infallible;
+
+use crate::{config::CONFIG, state::USER, util::Secret};
 use anyhow::{Context, Result};
 use axum::{
     extract::Request,
-    http::{Response, StatusCode},
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
 };
 use futures::future::BoxFuture;
 use geoengine_openapi_client::apis::{configuration, session_api::session_handler};
@@ -13,7 +16,8 @@ use nom::{
     combinator::{all_consuming, map_res},
     sequence::separated_pair,
 };
-use tower_http::auth::AsyncAuthorizeRequest;
+use ogcapi::types::common::Exception;
+use tower::{Layer, Service};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -22,8 +26,20 @@ pub struct User {
     pub session_token: Secret<Uuid>,
 }
 
+#[derive(Clone)]
+pub struct GeoEngineAuthMiddlewareLayer;
+
+impl<S> Layer<S> for GeoEngineAuthMiddlewareLayer {
+    type Service = GeoEngineAuthMiddleware<S>;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        GeoEngineAuthMiddleware::new(inner)
+    }
+}
+
 #[derive(Clone, Debug)]
-pub struct GeoEngineAuthMiddleware {
+pub struct GeoEngineAuthMiddleware<S> {
+    inner: S,
     configuration: configuration::Configuration,
     whitelisted_paths: WhitelistedPaths,
 }
@@ -40,13 +56,14 @@ impl WhitelistedPaths {
     }
 }
 
-impl GeoEngineAuthMiddleware {
-    pub fn new() -> Self {
-        Self::from_configuration(CONFIG.geoengine.api_config(None))
+impl<S> GeoEngineAuthMiddleware<S> {
+    pub fn new(inner: S) -> Self {
+        Self::from_configuration(inner, CONFIG.geoengine.api_config(None))
     }
 
-    fn from_configuration(configuration: configuration::Configuration) -> Self {
+    pub fn from_configuration(inner: S, configuration: configuration::Configuration) -> Self {
         Self {
+            inner,
             configuration,
             whitelisted_paths: WhitelistedPaths {
                 exact: vec![
@@ -67,49 +84,75 @@ impl GeoEngineAuthMiddleware {
     }
 }
 
-impl AsyncAuthorizeRequest<axum::body::Body> for GeoEngineAuthMiddleware {
-    type RequestBody = axum::body::Body;
-    type ResponseBody = axum::body::Body;
-    type Future =
-        BoxFuture<'static, Result<Request<Self::RequestBody>, Response<Self::ResponseBody>>>;
+impl<S> Service<Request> for GeoEngineAuthMiddleware<S>
+where
+    S: Service<
+            Request<axum::body::Body>,
+            Response = axum::http::Response<axum::body::Body>,
+            Error = Infallible,
+        > + Send
+        + Clone
+        + 'static,
+    S::Future: Send,
+{
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-    fn authorize(&mut self, mut request: Request<Self::RequestBody>) -> Self::Future {
+    fn poll_ready(
+        &mut self,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, request: Request) -> Self::Future {
         if self.path_is_whitelisted(request.uri().path()) {
-            return Box::pin(async move { Ok(request) });
+            return Box::pin(self.inner.call(request));
         }
 
+        let mut inner = self.inner.clone();
         let mut configuration = self.configuration.clone();
         Box::pin(async move {
-            let Some(auth_header) = request
-                .headers()
-                .get("Authorization")
-                .and_then(|h| h.to_str().ok())
-                .and_then(|h| parse_bearer_token(h).ok())
-            else {
-                return Err(Response::builder()
-                    .status(StatusCode::UNAUTHORIZED)
-                    .body(Default::default())
-                    .expect("to build empty response"));
+            let auth_header = match bearer_token_from_header(request.headers()) {
+                Ok(auth_header) => auth_header,
+                Err(error) => {
+                    let status = StatusCode::UNAUTHORIZED;
+                    let exception = Exception::new_from_status(status.as_u16()).detail(error);
+                    return Ok((status, exception.to_string()).into_response());
+                }
             };
 
-            configuration.bearer_access_token = Some(auth_header.to_string());
+            configuration.bearer_access_token = Some(auth_header.into());
 
-            let Ok(session) = session_handler(&configuration).await else {
-                return Err(Response::builder()
-                    .status(StatusCode::FORBIDDEN)
-                    .body(Default::default())
-                    .expect("to build empty response"));
+            let session = match session_handler(&configuration).await {
+                Ok(session) => session,
+                Err(error) => {
+                    let status = StatusCode::FORBIDDEN;
+                    let exception = Exception::new_from_status(status.as_u16()).detail(error);
+                    return Ok((status, exception.to_string()).into_response());
+                }
             };
 
             let user = User {
                 id: session.user.id,
                 session_token: session.id.into(),
             };
-            request.extensions_mut().insert(user);
 
-            Ok(request)
+            // continue the request, scoped
+            USER.scope(user, inner.call(request)).await
         })
     }
+}
+
+fn bearer_token_from_header(headers: &HeaderMap) -> Result<Uuid> {
+    let auth_header = headers
+        .get("Authorization")
+        .context("Missing Authorization header")?
+        .to_str()
+        .context("Invalid Authorization header")?;
+
+    parse_bearer_token(auth_header)
 }
 
 fn parse_bearer_token(header_value: &str) -> Result<Uuid> {
@@ -135,10 +178,13 @@ mod tests {
     use super::*;
     use axum::body::Body;
     use axum::http::Request as HttpRequest;
+    use axum::response::Response;
+    use geoengine_openapi_client::apis::configuration;
     use httptest::matchers::*;
     use httptest::responders::*;
     use httptest::{Expectation, Server};
     use serde_json::json;
+    use tower::util::BoxCloneService;
 
     #[test]
     fn it_parses_bearer_tokens() {
@@ -172,7 +218,7 @@ mod tests {
 
     #[test]
     fn whitelisted_paths_match_exact_and_prefix() {
-        let middleware = GeoEngineAuthMiddleware::new();
+        let middleware = GeoEngineAuthMiddleware::new(Request::<()>::default());
 
         // exact
         assert!(middleware.path_is_whitelisted("/"));
@@ -189,25 +235,48 @@ mod tests {
 
     #[tokio::test]
     async fn authorize_returns_unauthorized_for_missing_header() {
-        let mut middleware = GeoEngineAuthMiddleware::new();
+        let mut middleware = GeoEngineAuthMiddleware::new(mock_inner());
 
         let http_req: HttpRequest<Body> = HttpRequest::builder()
             .uri("/private")
             .body(Body::empty())
             .expect("to build http request");
 
-        let result = middleware.authorize(http_req).await;
+        let result = middleware.call(http_req).await;
 
-        assert!(
-            result.is_err(),
-            "expected an Err(Response) when header missing"
+        let respons = result.unwrap();
+        assert_eq!(respons.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(
+            exception_from_body(respons.into_body())
+                .await
+                .detail
+                .unwrap(),
+            "Missing Authorization header"
         );
-        let resp = result.unwrap_err();
-        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    async fn exception_from_body(body: Body) -> Exception {
+        let body_bytes = axum::body::to_bytes(body, usize::MAX)
+            .await
+            .expect("to read response body");
+        serde_json::from_slice(&body_bytes).expect("to deserialize Exception")
+    }
+
+    fn mock_inner() -> BoxCloneService<Request<Body>, Response<Body>, Infallible> {
+        let inner =
+            tower::service_fn(|_req: Request<Body>| async { Ok(StatusCode::OK.into_response()) });
+        tower::util::BoxCloneService::new(inner)
+    }
+
+    fn mock_inner_outputs_user() -> BoxCloneService<Request<Body>, Response<Body>, Infallible> {
+        let inner = tower::service_fn(|_req: Request<Body>| async {
+            Ok((StatusCode::OK, USER.get().id.to_string()).into_response())
+        });
+        tower::util::BoxCloneService::new(inner)
     }
 
     #[tokio::test]
-    async fn authorize_with_valid_header_inserts_user_extension() {
+    async fn authorize_with_valid_header_creates_user_scope() {
         // start mock auth service using `httptest`
         let server = Server::run();
 
@@ -227,7 +296,8 @@ mod tests {
 
         let mut configuration = configuration::Configuration::new();
         configuration.base_path = server.url_str("");
-        let mut middleware = GeoEngineAuthMiddleware::from_configuration(configuration);
+        let mut middleware =
+            GeoEngineAuthMiddleware::from_configuration(mock_inner_outputs_user(), configuration);
 
         let token = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
         let header_value = format!("Bearer {token}");
@@ -238,18 +308,27 @@ mod tests {
             .body(Body::empty())
             .expect("to build http request");
 
-        let result = middleware.authorize(http_req).await;
+        let result = middleware.call(http_req).await;
         assert!(result.is_ok(), "expected Ok(Request) for valid session");
 
-        let req = result.unwrap();
-        let user = req.extensions().get::<User>().expect("user in extensions");
+        let response = result.unwrap();
+        assert!(
+            response.status().is_success(),
+            "expected successful response"
+        );
+        let user_id = body_to_string(response.into_body()).await;
 
         let expected_user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
-        let expected_session_id = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
 
-        assert_eq!(user.id, expected_user_id);
-        assert_eq!(*user.session_token, expected_session_id);
+        assert_eq!(user_id, expected_user_id.to_string());
 
         // `httptest::Server` stops when dropped at test end
+    }
+
+    async fn body_to_string(body: Body) -> String {
+        let body_bytes = axum::body::to_bytes(body, usize::MAX)
+            .await
+            .expect("to read response body");
+        String::from_utf8(body_bytes.to_vec()).expect("to convert body to string")
     }
 }
