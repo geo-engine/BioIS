@@ -6,10 +6,10 @@ use geoengine_datatypes::{
 };
 use geoengine_openapi_client::{
     apis::{
-        configuration::Configuration, ogcwfs_api::wfs_feature_handler, uploads_api::upload_handler,
+        configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
     },
-    models::{GeoJson, GetFeatureRequest, SpatialPartition2D, WfsService},
+    models::{GeoJson, SpatialPartition2D, WfsRequest, WfsService},
 };
 use geoengine_operators::{
     engine::{
@@ -392,23 +392,22 @@ async fn compute_ndvi(
         "Requesting NDVI process"
     );
 
-    let feature_collection = wfs_feature_handler(
+    let feature_collection = wfs_handler(
         configuration,
         &workflow_id,
-        WfsService::Wfs,
-        GetFeatureRequest::GetFeature,
-        &workflow_id,
-        &coordinate.to_bbox(0.0).to_string(),
+        WfsRequest::GetFeature,
+        Some(&coordinate.to_bbox(0.0).to_string()),
         None,
-        Some(&time_str),
+        None,
+        None,
+        None,
+        None,
+        Some(WfsService::Wfs),
+        None,
         Some("EPSG:4326"),
+        Some(&time_str),
+        Some(&workflow_id),
         None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        Some("0.1"), // TODO: adjust to source
     )
     .await?;
 
