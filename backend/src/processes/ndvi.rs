@@ -462,13 +462,13 @@ fn ndvi_source() -> RasterOperator {
             params: ExpressionParameters {
                 expression: "min((A / (127.50)) - 1, 1)".into(),
                 output_type: RasterDataType::F64,
-                output_band: Some(Some(
+                output_band: Some(
                     RasterBandDescriptor {
                         name: "NDVI".into(),
                         measurement: Measurement::Unitless(Default::default()).into(),
                     }
                     .into(),
-                )),
+                ),
                 map_no_data: false,
             }
             .into(),
@@ -506,13 +506,13 @@ fn k_ndvi_source() -> RasterOperator {
             "}
                 .into(),
                 output_type: RasterDataType::F64,
-                output_band: Some(Some(
+                output_band: Some(
                     RasterBandDescriptor {
                         name: "kNDVI".into(),
                         measurement: Measurement::Unitless(Default::default()).into(),
                     }
                     .into(),
-                )),
+                ),
                 map_no_data: false,
             }
             .into(),

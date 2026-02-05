@@ -1068,7 +1068,7 @@ dependencies = [
 [[package]]
 name = "geoengine-openapi-client"
 version = "0.0.31"
-source = "git+https://github.com/geo-engine/openapi-client?branch=rust#1fc5fb8b0646409d13033da54aca0ab3ee497bae"
+source = "git+https://github.com/geo-engine/openapi-client?branch=rust#33110d06635f2bb68c4c3c403aba3823a6632840"
 dependencies = [
  "reqwest",
  "serde",
