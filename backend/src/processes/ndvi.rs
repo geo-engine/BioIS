@@ -1,27 +1,17 @@
 use anyhow::{Context, Result};
-use geoengine_datatypes::{
-    dataset::NamedData,
-    primitives::{Coordinate2D, Measurement},
-    raster::RasterDataType,
-};
 use geoengine_openapi_client::{
     apis::{
         configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
     },
-    models::{GeoJson, SpatialPartition2D, WfsRequest, WfsService},
-};
-use geoengine_operators::{
-    engine::{
-        RasterBandDescriptor, RasterOperator, SingleVectorMultipleRasterSources, TypedOperator,
-        VectorOperator,
+    models::{
+        ColumnNames, Coordinate2D, Expression, ExpressionParameters, FeatureAggregationMethod,
+        GdalSource, GdalSourceParameters, GeoJson, Measurement, MockPointSource,
+        MockPointSourceParameters, Names, RasterBandDescriptor, RasterDataType, RasterOperator,
+        RasterVectorJoin, RasterVectorJoinParameters, SingleRasterSource,
+        SingleVectorMultipleRasterSources, SpatialPartition2D, TemporalAggregationMethod,
+        VectorOperator, WfsRequest, WfsService,
     },
-    mock::{MockPointSource, MockPointSourceParams},
-    processing::{
-        ColumnNames, Expression, ExpressionParams, FeatureAggregationMethod, RasterVectorJoin,
-        RasterVectorJoinParams, TemporalAggregationMethod,
-    },
-    source::{GdalSource, GdalSourceParameters},
 };
 use ogcapi::{
     processes::Processor,
@@ -335,14 +325,19 @@ async fn compute_ndvi(
 
     // TODO: upload data instead of mocking it
     // let upload_data_id: String = upload_data(&configuration, coordinate)?;
-    let vector_source = MockPointSource {
-        params: MockPointSourceParams {
-            points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
-        },
-    }
-    .boxed();
+    let vector_source = VectorOperator::MockPointSource(
+        MockPointSource {
+            r#type: Default::default(),
+            params: MockPointSourceParameters {
+                points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
+                spatial_bounds: Default::default(),
+            }
+            .into(),
+        }
+        .into(),
+    );
 
-    let (names, inputs): (Vec<String>, Vec<Box<dyn RasterOperator>>) =
+    let (names, inputs): (Vec<String>, Vec<RasterOperator>) =
         match (should_compute_ndvi, should_compute_k_ndvi) {
             (true, true) => (
                 vec![NDVI.into(), K_NDVI.into()],
@@ -357,21 +352,24 @@ async fn compute_ndvi(
                 });
             }
         };
-    let workflow = to_api_workflow(&TypedOperator::Vector(
+    let workflow = to_api_workflow(&VectorOperator::RasterVectorJoin(
         RasterVectorJoin {
-            params: RasterVectorJoinParams {
-                names: ColumnNames::Names(names),
+            r#type: Default::default(),
+            params: RasterVectorJoinParameters {
+                names: ColumnNames::Names(Names::new(Default::default(), names).into()).into(),
                 feature_aggregation: FeatureAggregationMethod::First,
-                feature_aggregation_ignore_no_data: true,
+                feature_aggregation_ignore_no_data: Some(true),
                 temporal_aggregation: TemporalAggregationMethod::None,
-                temporal_aggregation_ignore_no_data: true,
-            },
+                temporal_aggregation_ignore_no_data: Some(true),
+            }
+            .into(),
             sources: SingleVectorMultipleRasterSources {
-                vector: vector_source,
+                vector: vector_source.into(),
                 rasters: inputs,
-            },
+            }
+            .into(),
         }
-        .boxed(),
+        .into(),
     ))?;
 
     // eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
@@ -457,49 +455,74 @@ fn outputs_from_feature_collection(
     Ok(result)
 }
 
-fn ndvi_source() -> Box<dyn RasterOperator> {
-    Expression {
-        params: ExpressionParams {
-            expression: "min((A / (127.50)) - 1, 1)".into(),
-            output_type: RasterDataType::F64,
-            output_band: Some(RasterBandDescriptor {
-                name: "NDVI".into(),
-                measurement: Measurement::Unitless,
-            }),
-            map_no_data: false,
-        },
-        sources: ndvi_u8_source().into(),
-    }
-    .boxed()
+fn ndvi_source() -> RasterOperator {
+    RasterOperator::Expression(
+        Expression {
+            r#type: Default::default(),
+            params: ExpressionParameters {
+                expression: "min((A / (127.50)) - 1, 1)".into(),
+                output_type: RasterDataType::F64,
+                output_band: Some(Some(
+                    RasterBandDescriptor {
+                        name: "NDVI".into(),
+                        measurement: Measurement::Unitless(Default::default()).into(),
+                    }
+                    .into(),
+                )),
+                map_no_data: false,
+            }
+            .into(),
+            sources: SingleRasterSource {
+                raster: ndvi_u8_source().into(),
+            }
+            .into(),
+        }
+        .into(),
+    )
 }
 
-fn ndvi_u8_source() -> Box<dyn RasterOperator> {
-    GdalSource {
-        params: GdalSourceParameters {
-            data: NamedData::with_system_name("ndvi"),
-        },
-    }
-    .boxed()
+fn ndvi_u8_source() -> RasterOperator {
+    RasterOperator::GdalSource(
+        GdalSource {
+            r#type: Default::default(),
+            params: GdalSourceParameters {
+                data: "ndvi".to_string(),
+                overview_level: None,
+            }
+            .into(),
+        }
+        .into(),
+    )
 }
 
-fn k_ndvi_source() -> Box<dyn RasterOperator> {
-    Expression {
-        params: ExpressionParams {
-            expression: indoc::indoc! {"
+fn k_ndvi_source() -> RasterOperator {
+    RasterOperator::Expression(
+        Expression {
+            r#type: Default::default(),
+            params: ExpressionParameters {
+                expression: indoc::indoc! {"
                 let ndvi = min((A / (127.50)) - 1, 1);
                 tanh(pow(ndvi, 2))
             "}
+                .into(),
+                output_type: RasterDataType::F64,
+                output_band: Some(Some(
+                    RasterBandDescriptor {
+                        name: "kNDVI".into(),
+                        measurement: Measurement::Unitless(Default::default()).into(),
+                    }
+                    .into(),
+                )),
+                map_no_data: false,
+            }
             .into(),
-            output_type: RasterDataType::F64,
-            output_band: Some(RasterBandDescriptor {
-                name: "kNDVI".into(),
-                measurement: Measurement::Unitless,
-            }),
-            map_no_data: false,
-        },
-        sources: ndvi_u8_source().into(),
-    }
-    .boxed()
+            sources: SingleRasterSource {
+                raster: ndvi_u8_source().into(),
+            }
+            .into(),
+        }
+        .into(),
+    )
 }
 
 #[cfg(test)]

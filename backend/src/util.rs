@@ -1,25 +1,16 @@
-use std::ops::Deref;
-
 use anyhow::{Context, Result};
+use geoengine_openapi_client::models::{
+    TypedOperatorOperator, VectorOperator, Workflow, workflow::Type as WorkflowType,
+};
+use std::ops::Deref;
 use tracing::error;
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
 pub fn to_api_workflow(
-    operator: &geoengine_operators::engine::TypedOperator,
+    operator: &VectorOperator,
 ) -> Result<geoengine_openapi_client::models::Workflow> {
-    use geoengine_openapi_client::models::{
-        TypedOperatorOperator, Workflow, workflow::Type as WorkflowType,
-    };
-    use geoengine_operators::engine::TypedOperator;
-
     let serde_json::Value::Object(mut json_object) = serde_json::to_value(operator)? else {
         anyhow::bail!("expected operator to serialize `TypedOperator` to a JSON object");
-    };
-    let serde_json::Value::Object(mut json_object) = json_object
-        .remove("operator")
-        .context("missing `operator` field")?
-    else {
-        anyhow::bail!("`operator` field is not a JSON object");
     };
     let serde_json::Value::String(r#type) =
         json_object.remove("type").context("missing `type` field")?
@@ -33,11 +24,7 @@ pub fn to_api_workflow(
             sources: json_object.remove("sources"),
             r#type,
         }),
-        r#type: match operator {
-            TypedOperator::Vector(..) => WorkflowType::Vector,
-            TypedOperator::Raster(..) => WorkflowType::Raster,
-            TypedOperator::Plot(..) => WorkflowType::Plot,
-        },
+        r#type: WorkflowType::Vector,
     })
 }
 
@@ -104,53 +91,84 @@ impl<T> From<T> for Secret<T> {
 mod tests {
 
     use super::*;
+    use geoengine_openapi_client::models::{
+        ColumnNames, Default as ColumnNamesDefault, FeatureAggregationMethod, GdalSource,
+        GdalSourceParameters, RasterOperator, RasterVectorJoin, RasterVectorJoinParameters,
+        SingleVectorMultipleRasterSources, TemporalAggregationMethod, VectorOperator,
+    };
     use pretty_assertions::assert_eq;
     use std::sync::{Arc, RwLock};
 
     #[test]
     fn it_converts_operator_to_api_workflow() {
-        use geoengine_datatypes::{dataset::NamedData, raster::RasterDataType};
-        use geoengine_operators::engine::{RasterOperator, TypedOperator};
-        use geoengine_operators::processing::{RasterTypeConversion, RasterTypeConversionParams};
-        use geoengine_operators::source::{GdalSource, GdalSourceParameters};
-
-        let gdal_source = TypedOperator::Raster(
-            RasterTypeConversion {
-                params: RasterTypeConversionParams {
-                    output_data_type: RasterDataType::F32,
-                },
-                sources: GdalSource {
-                    params: GdalSourceParameters {
-                        data: NamedData::with_system_name("ndvi"),
-                    },
+        let raster_vector_join = VectorOperator::RasterVectorJoin(
+            RasterVectorJoin {
+                r#type: Default::default(),
+                params: RasterVectorJoinParameters {
+                    feature_aggregation: FeatureAggregationMethod::First,
+                    feature_aggregation_ignore_no_data: Some(true),
+                    names: ColumnNames::Default(ColumnNamesDefault::new(Default::default()).into())
+                        .into(),
+                    temporal_aggregation: TemporalAggregationMethod::First,
+                    temporal_aggregation_ignore_no_data: Some(true),
                 }
-                .boxed()
+                .into(),
+                sources: SingleVectorMultipleRasterSources {
+                    vector: VectorOperator::MockPointSource(Default::default()).into(),
+                    rasters: vec![RasterOperator::GdalSource(
+                        GdalSource {
+                            r#type: Default::default(),
+                            params: GdalSourceParameters {
+                                data: "ndvi".into(),
+                                overview_level: None,
+                            }
+                            .into(),
+                        }
+                        .into(),
+                    )],
+                }
                 .into(),
             }
-            .boxed(),
+            .into(),
         );
 
-        let api_workflow = to_api_workflow(&gdal_source).unwrap();
+        let api_workflow = to_api_workflow(&raster_vector_join).unwrap();
 
         assert_eq!(
-            serde_json::to_value(api_workflow).unwrap(),
-            serde_json::json!({
-                "type": "Raster",
+            serde_json::to_string_pretty(&api_workflow).unwrap(),
+            serde_json::to_string_pretty(&serde_json::json!({
+                "type": "Vector",
                 "operator": {
-                    "type": "RasterTypeConversion",
+                    "type": "RasterVectorJoin",
                     "params": {
-                        "outputDataType": "F32"
+                        "featureAggregation": "first",
+                        "featureAggregationIgnoreNoData": true,
+                        "names": {
+                            "type": "default"
+                        },
+                        "temporalAggregation": "first",
+                        "temporalAggregationIgnoreNoData": true
                     },
                     "sources": {
-                        "raster": {
+                        "rasters": [{
                             "type": "GdalSource",
                             "params": {
                                 "data": "ndvi"
                             }
+                        }],
+                        "vector": {
+                            "type": "MockPointSource",
+                            "params": {
+                                "points": [],
+                                "spatialBounds": {
+                                    "type": "derive"
+                                }
+                            }
                         }
                     }
                 }
-            })
+            }))
+            .unwrap()
         );
     }
 
