@@ -27,6 +27,7 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use utoipa::ToSchema;
 
 use crate::{config::CONFIG, state::USER, util::to_api_workflow};
 
@@ -34,14 +35,16 @@ use crate::{config::CONFIG, state::USER, util::to_api_workflow};
 #[derive(Debug, Clone)]
 pub struct NDVIProcess;
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
-struct NDVIProcessInputs {
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct NDVIProcessInputs {
     pub coordinate: PointGeoJsonInput,
     pub year: Year,
     pub month: Month,
 }
 
-type Coordinate = [f64; 2];
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+#[serde(transparent)]
+pub struct Coordinate(pub [f64; 2]);
 
 trait ToBbox {
     fn to_bbox(&self, buffer: f64) -> SpatialPartition2D;
@@ -51,7 +54,7 @@ impl ToBbox for Coordinate {
     fn to_bbox(&self, buffer: f64) -> SpatialPartition2D {
         use geoengine_openapi_client::models::Coordinate2D;
 
-        let [x, y] = *self;
+        let [x, y] = self.0;
         SpatialPartition2D::new(
             Coordinate2D::new(x + buffer, y - buffer),
             Coordinate2D::new(x - buffer, y + buffer),
@@ -59,42 +62,42 @@ impl ToBbox for Coordinate {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct PointGeoJsonInput {
+pub struct PointGeoJsonInput {
     pub value: PointGeoJson,
     pub media_type: PointGeoJsonInputMediaType,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
-enum PointGeoJsonInputMediaType {
+pub enum PointGeoJsonInputMediaType {
     #[serde(rename = "application/geo+json")]
     GeoJson,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct PointGeoJson {
+pub struct PointGeoJson {
     pub r#type: PointGeoJsonType,
     pub coordinates: Coordinate,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
-enum PointGeoJsonType {
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub enum PointGeoJsonType {
     Point,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, Copy, Clone)]
-struct Year(#[schemars(range(min = 2014, max = 2014))] u16);
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+pub struct Year(#[schemars(range(min = 2014, max = 2014))] u16);
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, Copy, Clone)]
-struct Month(#[schemars(range(min = 1, max = 6))] u16);
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+pub struct Month(#[schemars(range(min = 1, max = 6))] u16);
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
-struct NDVIProcessOutputs {
-    ndvi: Option<f64>,
-    k_ndvi: Option<f64>,
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct NDVIProcessOutputs {
+    pub ndvi: Option<f64>,
+    pub k_ndvi: Option<f64>,
 }
 
 impl From<NDVIProcessOutputs> for ExecuteResults {
@@ -329,7 +332,7 @@ async fn compute_ndvi(
         MockPointSource {
             r#type: Default::default(),
             params: MockPointSourceParameters {
-                points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
+                points: vec![Coordinate2D::new(coordinate.0[0], coordinate.0[1])],
                 spatial_bounds: Default::default(),
             }
             .into(),
@@ -583,7 +586,7 @@ mod tests {
         api_config.base_path = server.url_str("");
 
         // Call compute_ndvi with both outputs requested
-        let coord: Coordinate = [12.34, 56.78];
+        let coord = Coordinate([12.34, 56.78]);
 
         let outputs = compute_ndvi(&api_config, &coord, Year(2014), Month(1), true, true)
             .await

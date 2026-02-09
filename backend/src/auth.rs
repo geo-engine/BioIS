@@ -17,13 +17,67 @@ use nom::{
     sequence::separated_pair,
 };
 use ogcapi::types::common::Exception;
+use serde::{Deserialize, Serialize};
 use tower::{Layer, Service};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub struct User {
     pub id: Uuid,
     pub session_token: Secret<Uuid>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthCodeResponse {
+    pub code: String,
+    pub session_state: String,
+    pub state: String,
+}
+
+impl From<AuthCodeResponse> for geoengine_openapi_client::models::AuthCodeResponse {
+    fn from(value: AuthCodeResponse) -> Self {
+        Self {
+            code: value.code,
+            session_state: value.session_state,
+            state: value.state,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UserSession {
+    pub created: String,
+    pub id: Uuid,
+    pub roles: Vec<Uuid>,
+    pub user: UserInfo,
+    pub valid_until: String,
+}
+
+impl From<geoengine_openapi_client::models::UserSession> for UserSession {
+    fn from(value: geoengine_openapi_client::models::UserSession) -> Self {
+        Self {
+            created: value.created,
+            id: value.id,
+            roles: value.roles,
+            user: UserInfo {
+                email: value.user.email.flatten(),
+                id: value.user.id,
+                real_name: value.user.real_name.flatten(),
+            },
+            valid_until: value.valid_until,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UserInfo {
+    pub email: Option<String>,
+    pub id: uuid::Uuid,
+    pub real_name: Option<String>,
 }
 
 #[derive(Clone)]

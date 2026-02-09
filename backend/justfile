@@ -4,7 +4,7 @@ set shell := ["bash", "-c"]
 
 with_install := "false"
 
-default:
+_default:
     @just --list
 
 [group('lint')]
