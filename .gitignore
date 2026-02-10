@@ -22,3 +22,6 @@ target
 
 .env
 Settings.toml
+
+api-client/typescript/node_modules
+api-client/typescript/package-lock.json

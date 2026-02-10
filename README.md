@@ -14,9 +14,27 @@ _TODO: Add link to hosted service when available._
 
 BioIS consists of several key components.
 
+🏗️ Architecture
+
+```mermaid
+flowchart TB
+  %% Definitions
+  ui["Angular UI<br/>(TypeScript)"]
+  bindings["TS Bindings<br/>(Generated)"]
+  service["Rust Service<br/>(Axum/utoipa)"]
+
+  %% Relations
+  ui -->|HTTP/REST| bindings
+  bindings -->|Type-safe calls| service
+```
+
 ### [Backend](backend/README.md)
 
 The core service is implemented in Rust, providing APIs and processing capabilities for biodiversity indicators.
+
+### [API Client](api-client/README.md)
+
+The API client is a TypeScript library generated from the OpenAPI specification of the BioIS backend service.
 
 ### [Frontend](frontend/README.md)
 
