@@ -1,5 +1,5 @@
-inputSpec: /local/openapi.json
-outputDir: /local/typescript
+inputSpec: ../openapi.json
+outputDir: typescript
 generatorName: typescript
 gitHost: github.com
 gitUserId: geo-engine

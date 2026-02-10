@@ -20,3 +20,17 @@ fn execute_ndvi(Json(_input): Json<NDVIProcessInputs>) {}
 #[derive(OpenApi)]
 #[openapi(paths(execute_ndvi))]
 pub struct ProcessesOpenApiSpec;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_processes_openapi_spec_is_valid() {
+        let openapi = ProcessesOpenApiSpec::openapi();
+        assert!(
+            !openapi.paths.paths.is_empty(),
+            "OpenAPI spec should contain paths"
+        );
+    }
+}

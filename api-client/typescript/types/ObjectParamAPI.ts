@@ -74,7 +74,7 @@ export class ObjectCapabilitiesApi {
      * API definition
      * @param param the request object
      */
-    public api(param: CapabilitiesApiApiRequest = {}, options?: ConfigurationOptions): Promise<{ [key: string]: any; }> {
+    public api_(param: CapabilitiesApiApiRequest = {}, options?: ConfigurationOptions): Promise<{ [key: string]: any; }> {
         return this.api.api( options).toPromise();
     }
 

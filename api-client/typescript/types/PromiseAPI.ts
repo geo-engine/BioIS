@@ -68,7 +68,7 @@ export class PromiseCapabilitiesApi {
     /**
      * API definition
      */
-    public api(_options?: PromiseConfigurationOptions): Promise<{ [key: string]: any; }> {
+    public api_(_options?: PromiseConfigurationOptions): Promise<{ [key: string]: any; }> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.api(observableOptions);
         return result.toPromise();

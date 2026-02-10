@@ -7,18 +7,27 @@
 use anyhow::Context;
 use reqwest::IntoUrl;
 use std::process::Stdio;
-use tokio::time::{Duration, sleep};
+use tokio::{
+    process::ChildStderr,
+    time::{Duration, sleep},
+};
+use tracing::{info, level_filters::LevelFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use url::Url;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let server = Server::start("http://localhost:4040")?;
+    setup_tracing();
+
+    let mut server = Server::start("http://localhost:4040")?;
+
+    check_for_start_log(server.stderr()).await?;
 
     // Wait for the server to become available and fetch the OpenAPI spec.
-    let (mut sleep_duration, backoff_factor) = (Duration::from_millis(200), 1.5);
+    let (mut sleep_duration, backoff_factor) = (Duration::from_millis(1_000), 1.5);
     let mut openapi_spec = None;
     for _ in 0..10 {
-        eprintln!("Trying to fetch OpenAPI spec from server…");
+        info!("Trying to fetch OpenAPI spec from server…");
         if let Ok(spec) = server.try_fetch_openapi_spec().await {
             openapi_spec = Some(spec);
             break;
@@ -36,6 +45,39 @@ async fn main() -> anyhow::Result<()> {
     server.shutdown().await
 }
 
+/// Checks the server's stderr for the startup log message, and waits until it is found.
+async fn check_for_start_log(stderr: ChildStderr) -> anyhow::Result<()> {
+    use tokio::io::{AsyncBufReadExt, BufReader};
+
+    let mut reader = BufReader::new(stderr).lines();
+
+    while let Some(line) = reader.next_line().await? {
+        info!(target: "server", line);
+        if line.contains("Running") && line.contains("BioIS") {
+            return Ok(());
+        }
+    }
+
+    Err(anyhow::anyhow!(
+        "Server process exited before startup log message was found"
+    ))
+}
+
+fn setup_tracing() {
+    tracing_subscriber::registry()
+        .with(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        .with(
+            tracing_subscriber::fmt::layer()
+                .compact()
+                .with_writer(std::io::stderr),
+        )
+        .init();
+}
+
 struct Server {
     child: tokio::process::Child,
     base_url: Url,
@@ -51,6 +93,7 @@ impl Server {
         let child = tokio::process::Command::new("cargo")
             .arg("run")
             .stdout(Stdio::null())
+            .stderr(Stdio::piped())
             .spawn()
             .context("Failed to spawn geoengine server")?;
 
@@ -69,6 +112,10 @@ impl Server {
                 .context("Failed to spawn dummy server process")?,
             base_url: base_url.into_url()?,
         })
+    }
+
+    fn stderr(&mut self) -> ChildStderr {
+        self.child.stderr.take().expect("failed to read stderr")
     }
 
     async fn try_fetch_openapi_spec(&self) -> anyhow::Result<serde_json::Value> {
@@ -105,7 +152,7 @@ mod tests {
         let body = serde_json::json!({"openapi": "3.0.0"});
 
         server.expect(
-            Expectation::matching(request::method_path("GET", "/api"))
+            Expectation::matching(request::method_path("GET", format!("/{OPEN_API_PATH}")))
                 .respond_with(status_code(200).body(body.to_string())),
         );
 
