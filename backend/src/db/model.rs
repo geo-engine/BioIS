@@ -9,6 +9,7 @@ use diesel::{
     sql_types::{BigInt, Nullable, SqlType, Text},
 };
 use diesel_derive_enum::DbEnum;
+use o2o::o2o;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Insertable)]
@@ -65,29 +66,39 @@ pub struct DismissJob<'a> {
     pub updated: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize, HasQuery)]
+#[derive(Debug, Deserialize, HasQuery, o2o)]
+#[owned_into(ogcapi::types::processes::StatusInfo)]
 #[diesel(table_name = jobs)]
 pub struct StatusInfo {
     pub job_id: String,
     pub process_id: Option<String>,
+    #[map(~.into())]
     pub status: StatusCode,
     pub message: Option<String>,
+    #[map(r#type, ~.into())]
     pub job_type: JobType,
+    #[map(~.into())]
     pub created: DateTime<Utc>,
+    #[map(~.into())]
     pub updated: DateTime<Utc>,
     pub finished: Option<DateTime<Utc>>,
+    #[map(~.map(|p| p as u8))]
     pub progress: Option<i16>,
+    #[map(~.into_iter().filter_map(|l| l.map(Into::into)).collect())]
     pub links: Vec<Option<Link>>,
-    pub response: Response,
 }
 
-#[derive(Debug, Deserialize, DbEnum, SqlType)]
+#[derive(Debug, Deserialize, DbEnum, SqlType, o2o)]
+#[from_owned(ogcapi::types::processes::JobType)]
+#[owned_into(ogcapi::types::processes::JobType)]
 #[db_enum(existing_type_path = "crate::db::schema::sql_types::JobType")]
 pub enum JobType {
     Process,
 }
 
-#[derive(Debug, Deserialize, DbEnum, SqlType)]
+#[derive(Debug, Deserialize, DbEnum, SqlType, o2o)]
+#[from_owned(ogcapi::types::processes::StatusCode)]
+#[owned_into(ogcapi::types::processes::StatusCode)]
 #[db_enum(existing_type_path = "crate::db::schema::sql_types::StatusCode")]
 pub enum StatusCode {
     Accepted,
@@ -97,7 +108,10 @@ pub enum StatusCode {
     Dismissed,
 }
 
-#[derive(Debug, Deserialize, AsExpression, FromSqlRow)]
+#[derive(Debug, Deserialize, AsExpression, FromSqlRow, o2o)]
+#[from_owned(ogcapi::types::common::Link)]
+#[owned_into(ogcapi::types::common::Link)]
+#[ghosts(templated: None, var_base: None)]
 #[diesel(sql_type = sql_types::Link, postgres_type(name = "Link"))]
 pub struct Link {
     pub href: String,
@@ -172,7 +186,9 @@ impl FromSql<sql_types::Link, Pg> for Link {
     }
 }
 
-#[derive(Debug, Deserialize, SqlType, DbEnum)]
+#[derive(Debug, Deserialize, SqlType, DbEnum, o2o)]
+#[from_owned(ogcapi::types::processes::Response)]
+#[owned_into(ogcapi::types::processes::Response)]
 #[db_enum(existing_type_path = "crate::db::schema::sql_types::Response")]
 pub enum Response {
     Raw,

@@ -70,6 +70,7 @@ ogcapi = { git = "https://github.com/georust/ogcapi", branch = "modify-openapi",
     "services",
     "types",
 ] }
+o2o = "0.5"
 pretty_assertions = "1.4"
 schemars = "1.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
