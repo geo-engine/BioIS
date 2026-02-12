@@ -1,4 +1,7 @@
 import { Routes } from '@angular/router';
+import { LogInGuard } from './log-in.guard';
+import { inject } from '@angular/core';
+import { UserService } from './user.service';
 
 const appRoutes: Routes = [
   {
@@ -16,16 +19,21 @@ const appRoutes: Routes = [
 
 export const routes: Routes = [
   {
-    path: 'app',
-    title: 'App',
-    loadComponent: () =>
-      import('./navigation/navigation.component').then((m) => m.NavigationComponent),
-    children: appRoutes,
-  },
-  {
     path: '',
-    title: 'BioIS',
+    title: 'BioIS – Biodiversity Indicator Service',
     loadComponent: () =>
       import('./landing-page/landing-page.component').then((m) => m.LandingPageComponent),
+  },
+  {
+    path: 'app/signin',
+    title: 'BioIS – Sign In',
+    loadComponent: () =>
+      import('./signin.component/signin.component').then((m) => m.SigninComponent),
+  },
+  {
+    path: 'app',
+    title: 'BioIS – App',
+    children: appRoutes,
+    canActivate: [LogInGuard],
   },
 ];
