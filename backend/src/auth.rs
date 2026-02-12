@@ -8,7 +8,10 @@ use axum::{
     response::IntoResponse,
 };
 use futures::future::BoxFuture;
-use geoengine_openapi_client::apis::{configuration, session_api::session_handler};
+use geoengine_openapi_client::{
+    apis::{configuration, session_api::session_handler},
+    models::ErrorResponse,
+};
 use nom::{
     IResult, Parser,
     bytes::{complete::tag_no_case, take},
@@ -182,9 +185,19 @@ where
             let session = match session_handler(&configuration).await {
                 Ok(session) => session,
                 Err(error) => {
-                    let status = StatusCode::FORBIDDEN;
-                    let exception = Exception::new_from_status(status.as_u16()).detail(error);
-                    return Ok((status, exception.to_string()).into_response());
+                    let (error_msg, status_code) = match error {
+                        geoengine_openapi_client::apis::Error::ResponseError(error) => (
+                            serde_json::from_str::<ErrorResponse>(&error.content)
+                                .map(|e| e.message)
+                                .unwrap_or_default(),
+                            error.status,
+                        ),
+                        error => (error.to_string(), StatusCode::INTERNAL_SERVER_ERROR),
+                    };
+
+                    let exception =
+                        Exception::new_from_status(status_code.as_u16()).detail(error_msg);
+                    return Ok((status_code, exception.to_string()).into_response());
                 }
             };
 
@@ -229,6 +242,7 @@ fn uuid_parser(input: &str) -> IResult<&str, Uuid> {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use axum::body::Body;
     use axum::http::Request as HttpRequest;
@@ -384,5 +398,50 @@ mod tests {
             .await
             .expect("to read response body");
         String::from_utf8(body_bytes.to_vec()).expect("to convert body to string")
+    }
+
+    #[tokio::test]
+    async fn it_returns_401_on_invalid_token() {
+        const INVALID_BEARER_TOKEN: &str = "00000000-0000-0000-0000-000000000001";
+
+        // start mock auth service using `httptest`
+        let server = Server::run();
+
+        // Respond with a valid session for any GET (works regardless of path formatting)
+        server.expect(
+            Expectation::matching(request::method("GET")).respond_with(
+                status_code(401)
+                    .append_header("Content-Type", "application/json")
+                    .body(
+                        json!({
+                            "error": "Unauthorized",
+                            "message": "Authorization error: The session id is invalid."
+                        })
+                        .to_string(),
+                    ),
+            ),
+        );
+
+        let mut configuration = configuration::Configuration::new();
+        configuration.base_path = server.url_str("");
+        let mut middleware =
+            GeoEngineAuthMiddleware::from_configuration(mock_inner_outputs_user(), configuration);
+
+        let http_req: HttpRequest<Body> = HttpRequest::builder()
+            .uri("/private")
+            .header("Authorization", format!("Bearer {INVALID_BEARER_TOKEN}"))
+            .body(Body::empty())
+            .expect("to build http request");
+
+        let result = middleware.call(http_req).await;
+
+        let response = result.unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+        let msg = exception_from_body(response.into_body())
+            .await
+            .detail
+            .unwrap();
+        assert_eq!(msg, "Authorization error: The session id is invalid.");
     }
 }
