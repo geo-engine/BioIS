@@ -2001,7 +2001,7 @@ dependencies = [
 [[package]]
 name = "ogcapi"
 version = "0.3.1"
-source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#622ad92b4cf743dfa618491d60f15c3d4ae8bc37"
+source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#8590af9c4fd22ee85583d2e1545ff246ff6b3511"
 dependencies = [
  "ogcapi-drivers",
  "ogcapi-processes",
@@ -2012,7 +2012,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-drivers"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#622ad92b4cf743dfa618491d60f15c3d4ae8bc37"
+source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#8590af9c4fd22ee85583d2e1545ff246ff6b3511"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2027,7 +2027,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-processes"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#622ad92b4cf743dfa618491d60f15c3d4ae8bc37"
+source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#8590af9c4fd22ee85583d2e1545ff246ff6b3511"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2044,7 +2044,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-services"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#622ad92b4cf743dfa618491d60f15c3d4ae8bc37"
+source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#8590af9c4fd22ee85583d2e1545ff246ff6b3511"
 dependencies = [
  "anyhow",
  "axum",
@@ -2079,7 +2079,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-types"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#622ad92b4cf743dfa618491d60f15c3d4ae8bc37"
+source = "git+https://github.com/georust/ogcapi?branch=modify-openapi#8590af9c4fd22ee85583d2e1545ff246ff6b3511"
 dependencies = [
  "chrono",
  "geojson",

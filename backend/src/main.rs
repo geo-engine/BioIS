@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::{
     auth::GeoEngineAuthMiddlewareLayer, collection_transactions::NoCollectionTransactions,
     db::setup_db, jobs::JobHandler, processes::ProcessesOpenApiSpec,
@@ -53,20 +55,20 @@ async fn main() -> anyhow::Result<()> {
         ])
         .with_spawn_fn(state::spawn_with_user);
 
-    ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state)
+    let mut service = ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state)
         .await?
-        .with_processes_api()
-        .with_custom_router(|router| {
-            router
-                .merge(misc_router)
-                .layer(GeoEngineAuthMiddlewareLayer)
-        })
-        .with_custom_openapi_doc(add_openapi_info)
-        .serve()
-        .await
+        .with_processes_api();
+
+    let router = service.get_router_mut();
+    *router = mem::take(router)
+        .merge(misc_router)
+        .layer(GeoEngineAuthMiddlewareLayer);
+    add_openapi_info(router.get_openapi_mut());
+
+    service.serve().await
 }
 
-fn add_openapi_info(mut openapi: OpenApi) -> OpenApi {
+fn add_openapi_info(openapi: &mut OpenApi) {
     openapi.info = utoipa::openapi::InfoBuilder::new()
         .title("BioIS API")
         .version(env!("CARGO_PKG_VERSION"))
@@ -81,7 +83,6 @@ fn add_openapi_info(mut openapi: OpenApi) -> OpenApi {
         // .terms_of_service(None) // TODO: add link to ToS
         .license(None) // TODO: add link to license
         .build();
-    openapi
 }
 
 fn setup_tracing() {
