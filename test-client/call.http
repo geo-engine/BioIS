@@ -65,6 +65,7 @@ Content-Type: application/json
 ###
 
 POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
 Content-Type: application/json
 
 {
@@ -85,6 +86,7 @@ Content-Type: application/json
 ###
 
 POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
 Content-Type: application/json
 
 {
