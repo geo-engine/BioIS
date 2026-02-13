@@ -1,6 +1,10 @@
 use std::convert::Infallible;
 
-use crate::{config::CONFIG, state::USER, util::Secret};
+use crate::{
+    config::CONFIG,
+    state::USER,
+    util::{Secret, error_response},
+};
 use anyhow::{Context, Result};
 use axum::{
     extract::Request,
@@ -8,10 +12,7 @@ use axum::{
     response::IntoResponse,
 };
 use futures::future::BoxFuture;
-use geoengine_openapi_client::{
-    apis::{configuration, session_api::session_handler},
-    models::ErrorResponse,
-};
+use geoengine_openapi_client::apis::{configuration, session_api::session_handler};
 use nom::{
     IResult, Parser,
     bytes::{complete::tag_no_case, take},
@@ -185,12 +186,12 @@ where
             let session = match session_handler(&configuration).await {
                 Ok(session) => session,
                 Err(error) => {
-                    let (error_msg, status_code) = match error {
-                        geoengine_openapi_client::apis::Error::ResponseError(error) => (
-                            serde_json::from_str::<ErrorResponse>(&error.content)
+                    let (error_msg, status_code) = match &error {
+                        geoengine_openapi_client::apis::Error::ResponseError(e) => (
+                            error_response(&error)
                                 .map(|e| e.message)
                                 .unwrap_or_default(),
-                            error.status,
+                            e.status,
                         ),
                         error => (error.to_string(), StatusCode::INTERNAL_SERVER_ERROR),
                     };

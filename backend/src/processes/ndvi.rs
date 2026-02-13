@@ -27,9 +27,14 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::instrument;
 use utoipa::ToSchema;
 
-use crate::{config::CONFIG, state::USER, util::to_api_workflow};
+use crate::{
+    config::CONFIG,
+    state::USER,
+    util::{error_response, to_api_workflow},
+};
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
 #[derive(Debug, Clone)]
@@ -290,7 +295,7 @@ impl Processor for NDVIProcess {
             }
         }
 
-        compute_ndvi(
+        match compute_ndvi(
             &CONFIG
                 .geoengine
                 .api_config(USER.try_get().ok().map(|user| user.session_token)),
@@ -301,7 +306,10 @@ impl Processor for NDVIProcess {
             should_compute_k_ndvi,
         )
         .await
-        .map(Into::into)
+        {
+            Ok(outputs) => Ok(outputs.into()),
+            Err(_e) => Err(anyhow::anyhow!("The server was unable to compute NDVI")),
+        }
     }
 }
 
@@ -315,6 +323,7 @@ fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
     Ok(())
 }
 
+#[instrument(skip(configuration), err(Debug))]
 async fn compute_ndvi(
     configuration: &Configuration,
     coordinate: &Coordinate,
@@ -377,7 +386,17 @@ async fn compute_ndvi(
 
     // eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
 
-    let workflow_id = register_workflow_handler(configuration, workflow).await?;
+    let workflow_id = match register_workflow_handler(configuration, workflow).await {
+        Ok(id) => id,
+        Err(e) => {
+            if let Some(error) = error_response(&e) {
+                anyhow::bail!("Failed to register workflow: {error:?}");
+            }
+
+            anyhow::bail!("Failed to register workflow: {e}");
+        }
+    };
+
     let workflow_id = workflow_id.id.to_string();
 
     // eprintln!("Registered workflow with ID: {workflow_id}");

@@ -28,6 +28,20 @@ pub fn to_api_workflow(
     })
 }
 
+pub fn error_response<T>(
+    error: &geoengine_openapi_client::apis::Error<T>,
+) -> Option<geoengine_openapi_client::models::ErrorResponse> {
+    use geoengine_openapi_client::apis::Error as ApiError;
+    use geoengine_openapi_client::models::ErrorResponse as ApiErrorResponse;
+
+    match error {
+        ApiError::Reqwest(_) | ApiError::Serde(_) | ApiError::Io(_) => None,
+        ApiError::ResponseError(error) => {
+            serde_json::from_str::<ApiErrorResponse>(&error.content).ok()
+        }
+    }
+}
+
 /// Helper function to read-lock a `RwLock`, recovering from poisoning if necessary
 #[allow(unused)] // TODO: use or delete
 pub(crate) fn read_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockReadGuard<'_, T> {
