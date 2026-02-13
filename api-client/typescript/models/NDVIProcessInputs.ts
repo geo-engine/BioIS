@@ -15,8 +15,8 @@ import { HttpFile } from '../http/http';
 
 export class NDVIProcessInputs {
     'coordinate': PointGeoJsonInput;
-    'month': number;
     'year': number;
+    'month': number;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -30,14 +30,14 @@ export class NDVIProcessInputs {
             "format": ""
         },
         {
-            "name": "month",
-            "baseName": "month",
+            "name": "year",
+            "baseName": "year",
             "type": "number",
             "format": "int32"
         },
         {
-            "name": "year",
-            "baseName": "year",
+            "name": "month",
+            "baseName": "month",
             "type": "number",
             "format": "int32"
         }    ];

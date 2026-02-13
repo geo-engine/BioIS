@@ -18,11 +18,11 @@ import { HttpFile } from '../http/http';
 * Basic description type
 */
 export class DescriptionType {
-    'additionalParameters'?: AdditionalParameters;
+    'title'?: string;
     'description'?: string;
     'keywords'?: Array<string>;
     'metadata'?: Array<Metadata>;
-    'title'?: string;
+    'additionalParameters'?: AdditionalParameters;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -30,9 +30,9 @@ export class DescriptionType {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "additionalParameters",
-            "baseName": "additionalParameters",
-            "type": "AdditionalParameters",
+            "name": "title",
+            "baseName": "title",
+            "type": "string",
             "format": ""
         },
         {
@@ -54,9 +54,9 @@ export class DescriptionType {
             "format": ""
         },
         {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
+            "name": "additionalParameters",
+            "baseName": "additionalParameters",
+            "type": "AdditionalParameters",
             "format": ""
         }    ];
 

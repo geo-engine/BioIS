@@ -20,10 +20,10 @@ import { HttpFile } from '../http/http';
 */
 export class ProcessSummary {
     'id': string;
-    'jobControlOptions'?: Array<JobControlOptions>;
-    'links'?: Array<Link>;
-    'outputTransmission'?: Array<TransmissionMode>;
     'version': string;
+    'jobControlOptions'?: Array<JobControlOptions>;
+    'outputTransmission'?: Array<TransmissionMode>;
+    'links'?: Array<Link>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -37,15 +37,15 @@ export class ProcessSummary {
             "format": ""
         },
         {
-            "name": "jobControlOptions",
-            "baseName": "jobControlOptions",
-            "type": "Array<JobControlOptions>",
+            "name": "version",
+            "baseName": "version",
+            "type": "string",
             "format": ""
         },
         {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
+            "name": "jobControlOptions",
+            "baseName": "jobControlOptions",
+            "type": "Array<JobControlOptions>",
             "format": ""
         },
         {
@@ -55,9 +55,9 @@ export class ProcessSummary {
             "format": ""
         },
         {
-            "name": "version",
-            "baseName": "version",
-            "type": "string",
+            "name": "links",
+            "baseName": "links",
+            "type": "Array<Link>",
             "format": ""
         }    ];
 

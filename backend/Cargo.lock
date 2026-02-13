@@ -3,43 +3,6 @@
 version = 4
 
 [[package]]
-name = "BioIS"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "axum",
- "bb8",
- "chrono",
- "config",
- "diesel",
- "diesel-async",
- "diesel-derive-enum",
- "diesel_migrations",
- "futures",
- "geoengine-openapi-client",
- "httptest",
- "indoc",
- "nom",
- "o2o",
- "ogcapi",
- "pretty_assertions",
- "reqwest 0.13.2",
- "schemars 1.2.1",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tower",
- "tracing",
- "tracing-subscriber",
- "url",
- "utoipa",
- "utoipa-axum",
- "uuid",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -302,6 +265,43 @@ dependencies = [
  "parking_lot",
  "portable-atomic",
  "tokio",
+]
+
+[[package]]
+name = "biois"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "bb8",
+ "chrono",
+ "config",
+ "diesel",
+ "diesel-async",
+ "diesel-derive-enum",
+ "diesel_migrations",
+ "futures",
+ "geoengine-openapi-client",
+ "httptest",
+ "indoc",
+ "nom",
+ "o2o",
+ "ogcapi",
+ "pretty_assertions",
+ "reqwest 0.13.2",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tower",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "utoipa",
+ "utoipa-axum",
+ "uuid",
 ]
 
 [[package]]

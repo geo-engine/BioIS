@@ -13,9 +13,9 @@
 import { HttpFile } from '../http/http';
 
 export class Metadata {
-    'href'?: string;
-    'role'?: string;
     'title'?: string;
+    'role'?: string;
+    'href'?: string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -23,8 +23,8 @@ export class Metadata {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "href",
-            "baseName": "href",
+            "name": "title",
+            "baseName": "title",
             "type": "string",
             "format": ""
         },
@@ -35,8 +35,8 @@ export class Metadata {
             "format": ""
         },
         {
-            "name": "title",
-            "baseName": "title",
+            "name": "href",
+            "baseName": "href",
             "type": "string",
             "format": ""
         }    ];

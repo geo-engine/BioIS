@@ -18,21 +18,21 @@ import { HttpFile } from '../http/http';
 */
 export class LandingPage {
     /**
-    * Attribution for the API.
+    * The title of the API.
     */
-    'attribution'?: string | null;
+    'title'?: string | null;
     /**
     * A textual description of the API.
     */
     'description'?: string | null;
     /**
+    * Attribution for the API.
+    */
+    'attribution'?: string | null;
+    /**
     * Links to the resources exposed through this API
     */
     'links'?: Array<Link>;
-    /**
-    * The title of the API.
-    */
-    'title'?: string | null;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -40,8 +40,8 @@ export class LandingPage {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "attribution",
-            "baseName": "attribution",
+            "name": "title",
+            "baseName": "title",
             "type": "string",
             "format": ""
         },
@@ -52,15 +52,15 @@ export class LandingPage {
             "format": ""
         },
         {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
+            "name": "attribution",
+            "baseName": "attribution",
+            "type": "string",
             "format": ""
         },
         {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
+            "name": "links",
+            "baseName": "links",
+            "type": "Array<Link>",
             "format": ""
         }    ];
 

@@ -1,5 +1,5 @@
 [package]
-name = "BioIS"
+name = "biois"
 version = "0.1.0"
 publish = false
 authors = [
@@ -11,7 +11,7 @@ license-file = "LICENSE"
 # documentation = "https://docs.geoengine.io"
 repository = "https://github.com/geo-engine/BioIS"
 edition = "2024"
-default-run = "BioIS"
+default-run = "biois"
 
 [lints.clippy]
 cargo = { level = "warn", priority = 0 }

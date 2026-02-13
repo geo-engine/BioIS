@@ -22,6 +22,15 @@ pub struct Server {
     pub port: u16,
 }
 
+impl From<&Server> for ogcapi::services::Config {
+    fn from(server: &Server) -> Self {
+        ogcapi::services::Config {
+            host: server.host.clone(),
+            port: server.port,
+        }
+    }
+}
+
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct Database {
     pub host: String,

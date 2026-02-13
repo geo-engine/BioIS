@@ -15,8 +15,8 @@ import { PointGeoJsonInputMediaType } from '../models/PointGeoJsonInputMediaType
 import { HttpFile } from '../http/http';
 
 export class PointGeoJsonInput {
-    'mediaType': PointGeoJsonInputMediaType;
     'value': PointGeoJson;
+    'mediaType': PointGeoJsonInputMediaType;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,15 +24,15 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "PointGeoJsonInputMediaType",
-            "format": ""
-        },
-        {
             "name": "value",
             "baseName": "value",
             "type": "PointGeoJson",
+            "format": ""
+        },
+        {
+            "name": "mediaType",
+            "baseName": "mediaType",
+            "type": "PointGeoJsonInputMediaType",
             "format": ""
         }    ];
 

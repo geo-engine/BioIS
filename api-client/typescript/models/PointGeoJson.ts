@@ -14,8 +14,8 @@ import { PointGeoJsonType } from '../models/PointGeoJsonType';
 import { HttpFile } from '../http/http';
 
 export class PointGeoJson {
-    'coordinates': Array<number>;
     'type': PointGeoJsonType;
+    'coordinates': Array<number>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -23,16 +23,16 @@ export class PointGeoJson {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<number>",
-            "format": "double"
-        },
-        {
             "name": "type",
             "baseName": "type",
             "type": "PointGeoJsonType",
             "format": ""
+        },
+        {
+            "name": "coordinates",
+            "baseName": "coordinates",
+            "type": "Array<number>",
+            "format": "double"
         }    ];
 
     static getAttributeTypeMap() {

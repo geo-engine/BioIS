@@ -14,8 +14,8 @@ import { Schema } from '../models/Schema';
 import { HttpFile } from '../http/http';
 
 export class Format {
-    'encoding'?: string;
     'mediaType'?: string;
+    'encoding'?: string;
     'schema'?: Schema;
 
     static readonly discriminator: string | undefined = undefined;
@@ -24,14 +24,14 @@ export class Format {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "encoding",
-            "baseName": "encoding",
+            "name": "mediaType",
+            "baseName": "mediaType",
             "type": "string",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
+            "name": "encoding",
+            "baseName": "encoding",
             "type": "string",
             "format": ""
         },
