@@ -55,9 +55,9 @@ async fn main() -> anyhow::Result<()> {
         ])
         .with_spawn_fn(state::spawn_with_user);
 
-    let mut service = ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state)
+    let mut service = ogcapi_services::Service::try_new(&ogcapi_config, ogcapi_state)
         .await?
-        .with_processes_api();
+        .processes_api();
 
     let router = service.get_router_mut();
     *router = mem::take(router)
