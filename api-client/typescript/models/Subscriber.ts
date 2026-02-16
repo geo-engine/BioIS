@@ -16,9 +16,9 @@ import { HttpFile } from '../http/http';
 * Process execution subscriber
 */
 export class Subscriber {
-    'failedUri'?: string;
-    'inProgressUri'?: string;
     'successUri': string;
+    'inProgressUri'?: string;
+    'failedUri'?: string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -26,8 +26,8 @@ export class Subscriber {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "failedUri",
-            "baseName": "failedUri",
+            "name": "successUri",
+            "baseName": "successUri",
             "type": "string",
             "format": "uri"
         },
@@ -38,8 +38,8 @@ export class Subscriber {
             "format": "uri"
         },
         {
-            "name": "successUri",
-            "baseName": "successUri",
+            "name": "failedUri",
+            "baseName": "failedUri",
             "type": "string",
             "format": "uri"
         }    ];

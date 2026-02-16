@@ -65,6 +65,7 @@ Content-Type: application/json
 ###
 
 POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
 Content-Type: application/json
 
 {
@@ -85,6 +86,7 @@ Content-Type: application/json
 ###
 
 POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
 Content-Type: application/json
 
 {
@@ -105,5 +107,15 @@ Content-Type: application/json
 ###
 
 GET http://localhost:4040/health
+
+###
+
+// test invalid token
+@INVALID = 2f8119c7-a78a-4796-a752-05f434f1da93
+
+# @v
+GET http://localhost:4040/jobs/{{process.response.body.jobID}}
+Authorization: Bearer {{INVALID}}
+Content-Type: application/json
 
 ###

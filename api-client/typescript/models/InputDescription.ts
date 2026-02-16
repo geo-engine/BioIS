@@ -20,8 +20,8 @@ import { HttpFile } from '../http/http';
 * Process input description
 */
 export class InputDescription extends DescriptionType {
-    'maxOccurs'?: MaxOccurs | null;
     'minOccurs'?: number | null;
+    'maxOccurs'?: MaxOccurs | null;
     'schema': any | null;
 
     static override readonly discriminator: string | undefined = undefined;
@@ -30,16 +30,16 @@ export class InputDescription extends DescriptionType {
 
     static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "maxOccurs",
-            "baseName": "maxOccurs",
-            "type": "MaxOccurs",
-            "format": ""
-        },
-        {
             "name": "minOccurs",
             "baseName": "minOccurs",
             "type": "number",
             "format": "int64"
+        },
+        {
+            "name": "maxOccurs",
+            "baseName": "maxOccurs",
+            "type": "MaxOccurs",
+            "format": ""
         },
         {
             "name": "schema",

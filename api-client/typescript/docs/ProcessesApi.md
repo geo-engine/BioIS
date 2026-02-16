@@ -86,16 +86,16 @@ const request: ProcessesApiExecuteNdviRequest = {
   
   nDVIProcessInputs: {
     coordinate: {
-      mediaType: "application/geo+json",
       value: {
+        type: "Point",
         coordinates: [
           3.14,
         ],
-        type: "Point",
       },
+      mediaType: "application/geo+json",
     },
-    month: 0,
     year: 0,
+    month: 0,
   },
 };
 
@@ -158,8 +158,8 @@ const request: ProcessesApiExecutionRequest = {
     outputs: {
       "key": {
         format: {
-          encoding: "encoding_example",
           mediaType: "mediaType_example",
+          encoding: "encoding_example",
           schema: null,
         },
         transmissionMode: "value",
@@ -167,9 +167,9 @@ const request: ProcessesApiExecutionRequest = {
     },
     response: "raw",
     subscriber: {
-      failedUri: "failedUri_example",
-      inProgressUri: "inProgressUri_example",
       successUri: "successUri_example",
+      inProgressUri: "inProgressUri_example",
+      failedUri: "failedUri_example",
     },
   },
 };

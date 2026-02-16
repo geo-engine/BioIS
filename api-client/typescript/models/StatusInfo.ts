@@ -16,22 +16,52 @@ import { StatusCode } from '../models/StatusCode';
 import { HttpFile } from '../http/http';
 
 export class StatusInfo {
+    'processID'?: string;
+    'type'?: JobType;
+    'jobID': string;
+    'status': StatusCode;
+    'message'?: string;
     'created'?: Date;
     'finished'?: Date;
-    'jobID': string;
-    'links'?: Array<Link>;
-    'message'?: string;
-    'processID'?: string;
-    'progress'?: number;
-    'status': StatusCode;
-    'type'?: JobType;
     'updated'?: Date;
+    'progress'?: number;
+    'links'?: Array<Link>;
 
     static readonly discriminator: string | undefined = undefined;
 
     static readonly mapping: {[index: string]: string} | undefined = undefined;
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
+        {
+            "name": "processID",
+            "baseName": "processID",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "JobType",
+            "format": ""
+        },
+        {
+            "name": "jobID",
+            "baseName": "jobID",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "StatusCode",
+            "format": ""
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string",
+            "format": ""
+        },
         {
             "name": "created",
             "baseName": "created",
@@ -45,28 +75,10 @@ export class StatusInfo {
             "format": "date-time"
         },
         {
-            "name": "jobID",
-            "baseName": "jobID",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
-            "format": ""
-        },
-        {
-            "name": "message",
-            "baseName": "message",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "processID",
-            "baseName": "processID",
-            "type": "string",
-            "format": ""
+            "name": "updated",
+            "baseName": "updated",
+            "type": "Date",
+            "format": "date-time"
         },
         {
             "name": "progress",
@@ -75,22 +87,10 @@ export class StatusInfo {
             "format": ""
         },
         {
-            "name": "status",
-            "baseName": "status",
-            "type": "StatusCode",
+            "name": "links",
+            "baseName": "links",
+            "type": "Array<Link>",
             "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "JobType",
-            "format": ""
-        },
-        {
-            "name": "updated",
-            "baseName": "updated",
-            "type": "Date",
-            "format": "date-time"
         }    ];
 
     static getAttributeTypeMap() {

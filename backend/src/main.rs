@@ -1,87 +1,12 @@
-use crate::{
-    auth::GeoEngineAuthMiddlewareLayer, collection_transactions::NoCollectionTransactions,
-    db::setup_db, jobs::JobHandler, processes::ProcessesOpenApiSpec,
-};
-use config::CONFIG;
-use ogcapi::services as ogcapi_services;
+use biois::{CONFIG, server};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa::{
-    OpenApi as _,
-    openapi::{ContactBuilder, OpenApi},
-};
-use utoipa_axum::router::OpenApiRouter;
-
-mod auth;
-mod collection_transactions;
-mod config;
-mod db;
-mod handler;
-mod jobs;
-mod processes;
-mod state;
-mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     setup_tracing();
 
-    let ogcapi_config = ogcapi::services::Config {
-        host: CONFIG.server.host.clone(),
-        port: CONFIG.server.port,
-    };
-
-    let db_pool = setup_db(&CONFIG.database).await?;
-
-    let mut misc_router = OpenApiRouter::new()
-        .routes(handler::routes())
-        .with_state(CONFIG.geoengine.api_config(None));
-
-    misc_router
-        .get_openapi_mut()
-        .merge(ProcessesOpenApiSpec::openapi());
-
-    let drivers = ogcapi_services::Drivers {
-        jobs: Box::new(JobHandler::new(db_pool).await?),
-        collections: Box::new(NoCollectionTransactions),
-    };
-
-    let ogcapi_state = ogcapi_services::AppState::new(drivers)
-        .await
-        .processors(vec![
-            Box::new(ogcapi::processes::echo::Echo),
-            Box::new(processes::NDVIProcess),
-        ])
-        .with_spawn_fn(state::spawn_with_user);
-
-    ogcapi_services::Service::try_new_with(&ogcapi_config, ogcapi_state)
-        .await?
-        .with_processes_api()
-        .with_custom_router(|router| {
-            router
-                .merge(misc_router)
-                .layer(GeoEngineAuthMiddlewareLayer)
-        })
-        .with_custom_openapi_doc(add_openapi_info)
-        .serve()
-        .await
-}
-
-fn add_openapi_info(mut openapi: OpenApi) -> OpenApi {
-    openapi.info = utoipa::openapi::InfoBuilder::new()
-        .title("BioIS API")
-        .version(env!("CARGO_PKG_VERSION"))
-        .description(Some("API for the BioIS service, providing access to geospatial processing and job management."))
-        .contact(Some(
-            ContactBuilder::new()
-                .name(Some("Geo Engine GmbH"))
-                .url(Some("https://www.geoengine.de/en/"))
-                .email(Some("info@geoengine.de"))
-                .build()
-        ))
-        // .terms_of_service(None) // TODO: add link to ToS
-        .license(None) // TODO: add link to license
-        .build();
-    openapi
+    let service = server().await?;
+    service.serve().await
 }
 
 fn setup_tracing() {

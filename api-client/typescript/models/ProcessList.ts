@@ -18,8 +18,8 @@ import { HttpFile } from '../http/http';
 * Information about the available processes
 */
 export class ProcessList {
-    'links': Array<Link>;
     'processes': Array<ProcessSummary>;
+    'links': Array<Link>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -27,15 +27,15 @@ export class ProcessList {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
-            "format": ""
-        },
-        {
             "name": "processes",
             "baseName": "processes",
             "type": "Array<ProcessSummary>",
+            "format": ""
+        },
+        {
+            "name": "links",
+            "baseName": "links",
+            "type": "Array<Link>",
             "format": ""
         }    ];
 

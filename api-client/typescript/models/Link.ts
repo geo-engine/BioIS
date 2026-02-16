@@ -21,30 +21,30 @@ export class Link {
     */
     'href': string;
     /**
-    * A hint indicating what the language of the result of dereferencing the link should be.
-    */
-    'hreflang'?: string;
-    'length'?: number;
-    /**
     * The type or semantics of the relation.
     */
     'rel': string;
-    /**
-    * This flag set to true if the link is a URL template.
-    */
-    'templated'?: boolean;
-    /**
-    * Used to label the destination of a link such that it can be used as a human-readable identifier.
-    */
-    'title'?: string;
     /**
     * A hint indicating what the media type of the result of dereferencing the link should be.
     */
     'type'?: string;
     /**
+    * This flag set to true if the link is a URL template.
+    */
+    'templated'?: boolean;
+    /**
     * A base path to retrieve semantic information about the variables used in URL template.
     */
     'varBase'?: string;
+    /**
+    * A hint indicating what the language of the result of dereferencing the link should be.
+    */
+    'hreflang'?: string;
+    /**
+    * Used to label the destination of a link such that it can be used as a human-readable identifier.
+    */
+    'title'?: string;
+    'length'?: number;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -58,32 +58,8 @@ export class Link {
             "format": ""
         },
         {
-            "name": "hreflang",
-            "baseName": "hreflang",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "length",
-            "baseName": "length",
-            "type": "number",
-            "format": "int64"
-        },
-        {
             "name": "rel",
             "baseName": "rel",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "templated",
-            "baseName": "templated",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "title",
-            "baseName": "title",
             "type": "string",
             "format": ""
         },
@@ -94,10 +70,34 @@ export class Link {
             "format": ""
         },
         {
+            "name": "templated",
+            "baseName": "templated",
+            "type": "boolean",
+            "format": ""
+        },
+        {
             "name": "varBase",
             "baseName": "varBase",
             "type": "string",
             "format": ""
+        },
+        {
+            "name": "hreflang",
+            "baseName": "hreflang",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "length",
+            "baseName": "length",
+            "type": "number",
+            "format": "int64"
         }    ];
 
     static getAttributeTypeMap() {

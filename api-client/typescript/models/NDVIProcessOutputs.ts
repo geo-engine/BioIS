@@ -13,8 +13,8 @@
 import { HttpFile } from '../http/http';
 
 export class NDVIProcessOutputs {
-    'kNdvi'?: number | null;
     'ndvi'?: number | null;
+    'kNdvi'?: number | null;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -22,14 +22,14 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "kNdvi",
-            "baseName": "k_ndvi",
+            "name": "ndvi",
+            "baseName": "ndvi",
             "type": "number",
             "format": "double"
         },
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
+            "name": "kNdvi",
+            "baseName": "k_ndvi",
             "type": "number",
             "format": "double"
         }    ];
