@@ -63,7 +63,7 @@ futures = "0.3"
 geoengine-openapi-client = { git = "https://github.com/geo-engine/openapi-client", branch = "rust" }
 indoc = "2.0"
 nom = "8.0"
-ogcapi = { git = "https://github.com/georust/ogcapi", branch = "modify-openapi", default-features = false, features = [
+ogcapi = { git = "https://github.com/georust/ogcapi", branch = "main", default-features = false, features = [
     "common",
     "drivers",
     "processes",
@@ -81,10 +81,10 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = "2.5"
 utoipa = { version = "5.3", features = ["uuid"] }
 utoipa-axum = "0.2"
-uuid = { version = "1.20", features = ["v7"] }
+uuid = { version = "1.21", features = ["v7"] }
 tower = "0.5"
 reqwest = { version = "0.13", features = ["json"] }
 
 [dev-dependencies]
 httptest = "0.16"
-tempfile = "3.24"
+tempfile = "3.25"
