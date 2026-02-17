@@ -1,0 +1,229 @@
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - main # For generating code coverage on main branch
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+    lint-backend:
+        name: Lint Backend
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - uses: extractions/setup-just@v3
+            - name: Init rustup toolchain
+              run: rustup show
+            - name: setup rust build cache
+              uses: Swatinem/rust-cache@v2
+              with:
+                # An explicit cache key that is used instead of the automatic `job`-based
+                # cache key and is thus stable across jobs.
+                # Default: empty
+                shared-key: ""
+    
+                # An additional cache key that is added alongside the automatic `job`-based
+                # cache key and can be used to further differentiate jobs.
+                # Default: empty
+                key: ci_test_
+            - name: Rustfmt
+              run: just lint-backend-rustfmt
+            - name: Clippy
+              run: just lint-backend-clippy
+            - name: SQLFluff
+              run: just lint-backend-sqlfluff
+            - name: Start PostgreSQL
+              run: |
+                service postgresql start
+                psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
+            - name: Diesel Check
+              run: |
+                just install-diesel-cli
+                just lint-backend-diesel-cli
+              env:
+                DATABASE_URL: postgres://geoengine:geoengine@localhost/biois
+
+    lint-api-client:
+        name: Lint API Client
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - uses: extractions/setup-just@v3
+            - name: Start PostgreSQL
+              run: |
+                service postgresql start
+                psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
+            - name: Install Java (OpenAPI Generator requires Java to run)
+              run: |
+                # deleted in devcontainer image, but required by java installer
+                mkdir -p /usr/share/man/man1
+                apt-get update
+                apt-get install -y openjdk-21-jre-headless
+            - name: Lint OpenAPI specification
+              run: |
+                just lint-openapi-spec
+            - name: Idempotency of OpenAPI doc generation
+              run: |
+                just generate-openapi-spec
+                just check-no-changes-in-git-repo
+            - name: Idempotency of API client code generation
+              run: |
+                just build-api-client
+                just check-no-changes-in-git-repo
+            - name: Check API client for build errors
+              run: just lint-api-client
+
+    lint-frontend:
+        name: Lint Frontend
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - uses: extractions/setup-just@v3
+            - name: Install dependencies
+              run: |
+                just install-api-client-deps
+                just install-frontend-deps
+            - name: Code Format
+              run: just lint-frontend-fmt
+            - name: Lints
+              run: just lint-frontend-code
+
+    test-backend:
+        name: Test Backend
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        outputs:
+            coverage-artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - uses: extractions/setup-just@v3
+            - name: Init rustup toolchain
+              run: rustup show
+
+            - name: Start PostgreSQL
+              run: |
+                service postgresql start
+                psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
+            - name: setup rust build cache
+              uses: Swatinem/rust-cache@v2
+              with:
+                # An explicit cache key that is used instead of the automatic `job`-based
+                # cache key and is thus stable across jobs.
+                # Default: empty
+                shared-key: ""
+    
+                # An additional cache key that is added alongside the automatic `job`-based
+                # cache key and can be used to further differentiate jobs.
+                # Default: empty
+                key: ci_test_
+            - name: Test
+              run: |
+                just install-llvm-cov
+                just test-backend-with-coverage "/lcov.info"
+            - id: upload-artifact
+              uses: actions/upload-artifact@v6
+              with:
+                name: lcov-report-backend-${{ github.run_id }}-${{ github.run_attempt }}
+                path: /lcov.info
+                compression-level: 9
+                retention-days: 1
+                if-no-files-found: error
+
+    test-frontend:
+        name: Test Frontend
+
+        runs-on: ubuntu-24.04
+        container: quay.io/geoengine/devcontainer:latest
+
+        permissions:
+            contents: read
+
+        outputs:
+            coverage-artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - uses: extractions/setup-just@v3
+            - name: Install dependencies
+              run: |
+                just install-api-client-deps
+                just install-frontend-deps
+            - name: Build
+              run: just build-frontend
+
+            - name: Test
+              run: just test-frontend
+
+            - id: upload-artifact
+              uses: actions/upload-artifact@v6
+              with:
+                name: lcov-report-frontend-${{ github.run_id }}-${{ github.run_attempt }}
+                path: frontend/coverage/BioIS/lcov.info
+                compression-level: 9
+                retention-days: 1
+                if-no-files-found: error
+            
+    upload-coverage:
+        name: Upload Coverage Report
+
+        runs-on: ubuntu-24.04
+
+        permissions:
+            contents: read
+
+        needs:
+            - test-backend
+            - test-frontend
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - name: Download Backend Coverage Report
+              uses: actions/download-artifact@v7
+              with:
+                artifact-ids: ${{ needs.test-backend.outputs.coverage-artifact-id }}
+                path: backend/
+            - name: Modify lcov paths
+              run: |
+                sed -i 's|SF:/__w/BioIS/BioIS/|SF:|' backend/lcov.info
+            - name: Download Frontend Coverage Report
+              uses: actions/download-artifact@v7
+              with:
+                artifact-ids: ${{ needs.test-frontend.outputs.coverage-artifact-id }}
+                path: frontend/
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}

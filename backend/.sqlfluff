@@ -1,0 +1,10 @@
+[sqlfluff]
+dialect = postgres
+templater = jinja
+sql_file_exts = .sql
+large_file_skip_byte_limit = 40000
+
+[sqlfluff:rules:references.keywords]
+# Words that are not-reserved in <https://www.postgresql.org/docs/current/sql-keywords-appendix.html>
+ignore_words =
+    name

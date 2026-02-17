@@ -1,0 +1,12 @@
+inputSpec: ../openapi.json
+outputDir: typescript
+generatorName: typescript
+gitHost: github.com
+gitUserId: geo-engine
+gitRepoId: BioIS
+additionalProperties:
+  supportsES6: true
+  npmName: "@geoengine/biois"
+  npmVersion: 0.1.0
+openapiNormalizer:
+  REF_AS_PARENT_IN_ALLOF: true

@@ -1,0 +1,121 @@
+# @name anonymousSession
+POST http://localhost:3030/api/anonymous
+
+###
+
+GET http://localhost:4040/processes/ndvi
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [9.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 3
+    },
+    "response": "document"
+}
+
+###
+
+# @name process
+POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+Prefer: respond-async
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [9.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 3
+    },
+    "response": "document"
+}
+
+###
+
+GET http://localhost:4040/jobs/{{process.response.body.jobID}}
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+###
+
+GET http://localhost:4040/jobs/{{process.response.body.jobID}}/results
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [9.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 5
+    },
+    "response": "document"
+}
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [10.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 5
+    },
+    "response": "document"
+}
+
+###
+
+GET http://localhost:4040/health
+
+###
+
+// test invalid token
+@INVALID = 2f8119c7-a78a-4796-a752-05f434f1da93
+
+# @v
+GET http://localhost:4040/jobs/{{process.response.body.jobID}}
+Authorization: Bearer {{INVALID}}
+Content-Type: application/json
+
+###
