@@ -28,7 +28,8 @@ export class UserService {
     const storedUser = sessionStorage.getItem(USER_SESSION_KEY);
     if (storedUser) {
       try {
-        this.user.set(JSON.parse(storedUser) as UserSession /* TODO: proper type checking */);
+        const userSession = JSON.parse(storedUser) as UserSession; /* TODO: proper type checking */
+        if (sessionIsValid(userSession)) this.user.set(userSession);
       } catch (error) {
         console.error('Failed to parse stored user session:', error);
       }
@@ -77,3 +78,15 @@ function configuration(/*options: { authMethods?: OAuth2Configuration } = {}*/):
     // ...options,
   });
 }
+
+function sessionIsValid(userSession: UserSession, now: number = Date.now()): boolean {
+  // const validUntil = Temporal.Instant.from(userSession.validUntil);
+  // const now = Temporal.Now.instant();
+  const validUntil = Date.parse(userSession.validUntil);
+  return now < validUntil;
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const __TEST__ = {
+  sessionIsValid,
+};

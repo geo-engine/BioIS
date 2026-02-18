@@ -68,6 +68,10 @@ export class SigninComponent implements OnInit {
       this.activatedRoute.queryParams,
     );
 
+    if (this.userSession()) {
+      return;
+    }
+
     if (Object.keys(queryParams).length === 0) {
       try {
         await this.userService.oidcRedirect();
