@@ -1,0 +1,69 @@
+<mat-card appearance="outlined">
+  <mat-card-header>
+    <mat-icon mat-card-avatar>
+      @switch (state()) {
+        @case (SigninState.InProgress) {
+          hourglass_top
+        }
+        @case (SigninState.InvalidState) {
+          report_problem
+        }
+        @case (SigninState.Error) {
+          error
+        }
+        @case (SigninState.LoggedIn) {
+          check_circle
+        }
+      }
+    </mat-icon>
+    <mat-card-title>
+      @switch (state()) {
+        @case (SigninState.InProgress) {
+          Signing in…
+        }
+        @case (SigninState.InvalidState) {
+          Unexpected response
+        }
+        @case (SigninState.Error) {
+          Error signing in
+        }
+        @case (SigninState.LoggedIn) {
+          Signed in
+        }
+      }
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @switch (state()) {
+      @case (SigninState.InProgress) {
+        <mat-spinner></mat-spinner>
+      }
+      @case (SigninState.InvalidState) {
+        <p>Invalid response. Please try again.</p>
+      }
+      @case (SigninState.Error) {
+        @if (error()?.status; as status) {
+          <p>Status: {{ status }}</p>
+        }
+        @if (error()?.title; as title) {
+          <p>Title: {{ title }}</p>
+        }
+        @if (error()?.detail; as detail) {
+          <p>{{ detail }}</p>
+        }
+      }
+      @case (SigninState.LoggedIn) {
+        <p>
+          Successfully logged in!
+          <br /><br />
+          @if (userSession()?.user; as user) {
+            Welcome, {{ user?.realName }} <{{ user?.email }}>!
+            <br />
+            Id: {{ user.id }}
+          }
+        </p>
+        <button mat-button color="primary" (click)="navigateToApp()">Go to Home</button>
+      }
+    }
+  </mat-card-content>
+</mat-card>

@@ -503,12 +503,13 @@ export class ObservableUserApi {
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandlerWithHttpInfo(authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<HttpInfo<UserSession>> {
+    public authHandlerWithHttpInfo(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<HttpInfo<UserSession>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
-        const requestContextPromise = this.requestFactory.authHandler(authCodeResponse, _config);
+        const requestContextPromise = this.requestFactory.authHandler(redirectUri, authCodeResponse, _config);
         // build promise chain
         let middlewarePreObservable = from<RequestContext>(requestContextPromise);
         for (const middleware of _config.middleware) {
@@ -526,10 +527,43 @@ export class ObservableUserApi {
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandler(authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<UserSession> {
-        return this.authHandlerWithHttpInfo(authCodeResponse, _options).pipe(map((apiResponse: HttpInfo<UserSession>) => apiResponse.data));
+    public authHandler(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<UserSession> {
+        return this.authHandlerWithHttpInfo(redirectUri, authCodeResponse, _options).pipe(map((apiResponse: HttpInfo<UserSession>) => apiResponse.data));
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandlerWithHttpInfo(redirectUri: string, _options?: ConfigurationOptions): Observable<HttpInfo<string>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.authRequestUrlHandler(redirectUri, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.authRequestUrlHandlerWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandler(redirectUri: string, _options?: ConfigurationOptions): Observable<string> {
+        return this.authRequestUrlHandlerWithHttpInfo(redirectUri, _options).pipe(map((apiResponse: HttpInfo<string>) => apiResponse.data));
     }
 
 }

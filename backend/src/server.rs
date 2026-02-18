@@ -17,14 +17,15 @@ use utoipa::{
     OpenApi as _,
     openapi::{ContactBuilder, OpenApi},
 };
-use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 /// Create and configure the OGC API service, including routes, state, and OpenAPI documentation.
 pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
     let db_pool = setup_db(&CONFIG.database).await?;
 
     let mut misc_router = OpenApiRouter::new()
-        .routes(handler::routes())
+        .routes(routes!(handler::health_handler))
+        .nest("/auth", handler::auth_router())
         .with_state(CONFIG.geoengine.api_config(None));
 
     misc_router

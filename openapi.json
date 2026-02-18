@@ -470,12 +470,24 @@
         }
       }
     },
-    "/auth": {
+    "/auth/accessTokenLogin": {
       "post": {
         "tags": [
           "User"
         ],
         "operationId": "auth_handler",
+        "parameters": [
+          {
+            "name": "redirectUri",
+            "in": "query",
+            "description": "The URI to which the identity provider should redirect after successful authentication.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -493,6 +505,54 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserSession"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 500,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/authenticationRequestUrl": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider's login page.",
+        "operationId": "auth_request_url_handler",
+        "parameters": [
+          {
+            "name": "redirectUri",
+            "in": "query",
+            "description": "The URI to which the identity provider should redirect after successful authentication.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A URL for initiating the OIDC code flow.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
                 }
               }
             }

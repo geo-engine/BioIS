@@ -373,11 +373,28 @@ import { UserApiRequestFactory, UserApiResponseProcessor} from "../apis/UserApi"
 
 export interface UserApiAuthHandlerRequest {
     /**
+     * The URI to which the identity provider should redirect after successful authentication.
+     * Defaults to: undefined
+     * @type string
+     * @memberof UserApiauthHandler
+     */
+    redirectUri: string
+    /**
      * 
      * @type AuthCodeResponse
      * @memberof UserApiauthHandler
      */
     authCodeResponse: AuthCodeResponse
+}
+
+export interface UserApiAuthRequestUrlHandlerRequest {
+    /**
+     * The URI to which the identity provider should redirect after successful authentication.
+     * Defaults to: undefined
+     * @type string
+     * @memberof UserApiauthRequestUrlHandler
+     */
+    redirectUri: string
 }
 
 export class ObjectUserApi {
@@ -391,14 +408,30 @@ export class ObjectUserApi {
      * @param param the request object
      */
     public authHandlerWithHttpInfo(param: UserApiAuthHandlerRequest, options?: ConfigurationOptions): Promise<HttpInfo<UserSession>> {
-        return this.api.authHandlerWithHttpInfo(param.authCodeResponse,  options).toPromise();
+        return this.api.authHandlerWithHttpInfo(param.redirectUri, param.authCodeResponse,  options).toPromise();
     }
 
     /**
      * @param param the request object
      */
     public authHandler(param: UserApiAuthHandlerRequest, options?: ConfigurationOptions): Promise<UserSession> {
-        return this.api.authHandler(param.authCodeResponse,  options).toPromise();
+        return this.api.authHandler(param.redirectUri, param.authCodeResponse,  options).toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param param the request object
+     */
+    public authRequestUrlHandlerWithHttpInfo(param: UserApiAuthRequestUrlHandlerRequest, options?: ConfigurationOptions): Promise<HttpInfo<string>> {
+        return this.api.authRequestUrlHandlerWithHttpInfo(param.redirectUri,  options).toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param param the request object
+     */
+    public authRequestUrlHandler(param: UserApiAuthRequestUrlHandlerRequest, options?: ConfigurationOptions): Promise<string> {
+        return this.api.authRequestUrlHandler(param.redirectUri,  options).toPromise();
     }
 
 }

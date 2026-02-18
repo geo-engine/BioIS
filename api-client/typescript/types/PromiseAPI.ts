@@ -358,20 +358,42 @@ export class PromiseUserApi {
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandlerWithHttpInfo(authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<HttpInfo<UserSession>> {
+    public authHandlerWithHttpInfo(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<HttpInfo<UserSession>> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.authHandlerWithHttpInfo(authCodeResponse, observableOptions);
+        const result = this.api.authHandlerWithHttpInfo(redirectUri, authCodeResponse, observableOptions);
         return result.toPromise();
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandler(authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<UserSession> {
+    public authHandler(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<UserSession> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.authHandler(authCodeResponse, observableOptions);
+        const result = this.api.authHandler(redirectUri, authCodeResponse, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandlerWithHttpInfo(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<string>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.authRequestUrlHandlerWithHttpInfo(redirectUri, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandler(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<string> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.authRequestUrlHandler(redirectUri, observableOptions);
         return result.toPromise();
     }
 

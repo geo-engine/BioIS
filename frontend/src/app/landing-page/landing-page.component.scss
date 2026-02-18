@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 $max-width: 1200px;
 
 :host {
@@ -94,6 +96,12 @@ section.features {
       margin-top: 1rem;
     }
   }
+
+  @include mat.card-overrides(
+    (
+      outlined-outline-width: 0,
+    )
+  );
 }
 
 footer {
