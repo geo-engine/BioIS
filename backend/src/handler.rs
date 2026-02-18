@@ -171,7 +171,14 @@ mod tests {
         };
 
         // call handler
-        let res = auth_handler(State(api_config), Query(redirect), Json(auth_code_response)).await;
+        let res = auth_handler(
+            State(api_config),
+            Query(AuthRequestUrlParams {
+                redirect_uri: Url::parse(&redirect).unwrap(),
+            }),
+            Json(auth_code_response),
+        )
+        .await;
 
         assert!(res.is_ok(), "expected Ok(UserSession) from auth_handler");
     }
