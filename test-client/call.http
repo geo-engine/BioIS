@@ -29,6 +29,57 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [9.77, 49.54]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "year": 2014,
+        "month": 3
+    },
+    "outputs": {
+        "ndvi": {}
+    },
+    "response": "document"
+}
+
+###
+
+POST http://localhost:4040/processes/ndvi/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "inputs": {
+    "coordinate": {
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          0,
+          0
+        ]
+      },
+      "mediaType": "application/geo+json"
+    },
+    "year": 2014,
+    "month": 1
+  },
+  "outputs": {
+    "kNdvi": {}
+  },
+  "response": "document"
+}
+
+###
+
 # @name process
 POST http://localhost:4040/processes/ndvi/execution
 Authorization: Bearer {{anonymousSession.response.body.$.id}}

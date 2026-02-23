@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { AsyncPipe } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
-import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { RouterModule, RouterOutlet } from '@angular/router';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-navigation',
@@ -21,7 +20,6 @@ import { RouterModule, RouterOutlet } from '@angular/router';
     MatSidenavModule,
     MatListModule,
     MatIconModule,
-    AsyncPipe,
     RouterOutlet,
     RouterModule,
   ],
@@ -29,8 +27,17 @@ import { RouterModule, RouterOutlet } from '@angular/router';
 export class NavigationComponent {
   private breakpointObserver = inject(BreakpointObserver);
 
-  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset).pipe(
-    map((result) => result.matches),
-    shareReplay(),
-  );
+  readonly isHandset = rxResource({
+    stream: () =>
+      this.breakpointObserver.observe(Breakpoints.Handset).pipe(
+        map((result) => result.matches),
+        shareReplay(),
+      ),
+    defaultValue: false,
+  });
+
+  // isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset).pipe(
+  //   map((result) => result.matches),
+  //   shareReplay(),
+  // );
 }

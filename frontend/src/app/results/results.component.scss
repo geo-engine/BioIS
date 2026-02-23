@@ -1,0 +1,25 @@
+.full-width-table {
+  width: 100%;
+}
+
+.no-data-row {
+  text-align: center;
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+cdk-virtual-scroll-viewport {
+  height: 100vh;
+}
+
+mat-icon {
+  color: var(--mat-sys-secondary);
+
+  &.error {
+    color: var(--mat-sys-error);
+  }
+
+  &.success {
+    color: var(--mat-sys-primary);
+  }
+}

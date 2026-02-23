@@ -1,0 +1,73 @@
+<table mat-table class="full-width-table" matSort aria-label="Jobs" [trackBy]="trackByFn">
+  <!-- <mat-text-column name="jobID" headerText="Job"></mat-text-column> -->
+  <ng-container matColumnDef="jobID">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header>Job</th>
+    <td mat-cell *matCellDef="let row">
+      @if (row.status === StatusCode.Successful) {
+        <a [routerLink]="['/app/results', row.jobID]">{{ row.jobID }}</a>
+      } @else {
+        {{ row.jobID }}
+      }
+    </td>
+  </ng-container>
+
+  <mat-text-column name="processID" headerText="Process"></mat-text-column>
+
+  <ng-container matColumnDef="status">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+    <td mat-cell *matCellDef="let row">
+      @switch (row.status) {
+        @case (StatusCode.Accepted) {
+          <mat-icon [matTooltip]="row.status">task</mat-icon>
+        }
+        @case (StatusCode.Running) {
+          <mat-progress-bar
+            mode="determinate"
+            [value]="row.progress"
+            [matTooltip]="row.status"
+          ></mat-progress-bar>
+        }
+        @case (StatusCode.Successful) {
+          <mat-icon [matTooltip]="row.status" class="success">check_circle</mat-icon>
+        }
+        @case (StatusCode.Failed) {
+          <mat-icon [matTooltip]="row.status" class="error">error</mat-icon>
+        }
+        @case (StatusCode.Dismissed) {
+          <mat-icon [matTooltip]="row.status">cancel</mat-icon>
+        }
+      }
+    </td>
+  </ng-container>
+
+  <mat-text-column name="message" headerText="Message"></mat-text-column>
+
+  <ng-container matColumnDef="updated">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated</th>
+    <td
+      mat-cell
+      *matCellDef="let row"
+      [matTooltip]="updatedTooltip(row.created | date: 'full', row.finished | date: 'full')"
+    >
+      {{ row.updated | date: 'short' }}
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+  <tr class="mat-row" *matNoDataRow>
+    <td class="mat-cell no-data-row" [attr.colspan]="displayedColumns.length">No data to show</td>
+  </tr>
+</table>
+
+<!-- [length]="dataSource.data.length" -->
+<mat-paginator
+  #paginator
+  [pageIndex]="0"
+  [length]="1"
+  [pageSize]="pageSize"
+  [pageSizeOptions]="[pageSize]"
+  aria-label="Select page"
+>
+</mat-paginator>

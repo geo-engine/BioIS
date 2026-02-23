@@ -1,17 +1,50 @@
+@use '@angular/material' as mat;
+
+$max-width: 1200px;
+
+:host {
+  --max-width: #{$max-width};
+}
+
+.background {
+  position: fixed;
+  top: 0;
+}
+
 .sidenav-container {
   height: 100%;
+
+  max-width: var(--max-width);
+  margin: auto;
 }
 
 .sidenav {
   width: 200px;
+
+  @include mat.sidenav-overrides(
+    (
+      container-divider-color: var(--mat-toolbar-container-background-color),
+      container-shape: 0,
+    )
+  );
 }
 
-.sidenav .mat-toolbar {
-  background: inherit;
-}
-
-.mat-toolbar.mat-primary {
+mat-toolbar {
   position: sticky;
   top: 0;
   z-index: 1;
+
+  mat-toolbar-row {
+    max-width: var(--max-width);
+    margin: auto;
+  }
+
+  .logo {
+    height: 1.8rem;
+    width: auto;
+  }
+
+  .spacer {
+    flex: 1;
+  }
 }

@@ -5,6 +5,7 @@ import {
   UserSession,
   UserApi,
   Configuration,
+  AuthMethodsConfiguration,
 } from '@geoengine/biois';
 
 const USER_SESSION_KEY = 'userSession';
@@ -61,6 +62,30 @@ export class UserService {
     const oidcUrl = await userApi.authRequestUrlHandler(redirectUri);
 
     window.location.href = oidcUrl;
+  }
+
+  apiConfiguration(): Configuration {
+    const authMethods = {
+      accessToken: 'Bearer ' + this.user()?.id /* TODO: handle missing/expired token */,
+    };
+    const config = createConfiguration({
+      baseServer: new ServerConfiguration('http://localhost:4040', {}),
+      // authMethods: authMethods as AuthMethodsConfiguration,
+      authMethods: {
+        default: {
+          getName: () => 'default',
+          applySecurityAuthentication: (context) => {
+            context.setHeaderParam('Authorization', authMethods.accessToken);
+            // TODO: separate this?
+            context.setHeaderParam('Prefer', 'respond-async');
+          },
+        },
+      } as AuthMethodsConfiguration,
+    });
+    // if (this.user()) {
+    //   config.baseServer = this.user().accessToken;
+    // }
+    return config;
   }
 }
 

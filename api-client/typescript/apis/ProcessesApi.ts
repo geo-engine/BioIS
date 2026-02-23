@@ -12,8 +12,8 @@ import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { JobList } from '../models/JobList';
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Process } from '../models/Process';
 import { ProcessList } from '../models/ProcessList';
 import { StatusInfo } from '../models/StatusInfo';
@@ -56,14 +56,14 @@ export class ProcessesApiRequestFactory extends BaseAPIRequestFactory {
     }
 
     /**
-     * @param nDVIProcessInputs 
+     * @param nDVIProcessParams 
      */
-    public async executeNdvi(nDVIProcessInputs: NDVIProcessInputs, _options?: Configuration): Promise<RequestContext> {
+    public async executeNdvi(nDVIProcessParams: NDVIProcessParams, _options?: Configuration): Promise<RequestContext> {
         let _config = _options || this.configuration;
 
-        // verify required parameter 'nDVIProcessInputs' is not null or undefined
-        if (nDVIProcessInputs === null || nDVIProcessInputs === undefined) {
-            throw new RequiredError("ProcessesApi", "executeNdvi", "nDVIProcessInputs");
+        // verify required parameter 'nDVIProcessParams' is not null or undefined
+        if (nDVIProcessParams === null || nDVIProcessParams === undefined) {
+            throw new RequiredError("ProcessesApi", "executeNdvi", "nDVIProcessParams");
         }
 
 
@@ -81,7 +81,7 @@ export class ProcessesApiRequestFactory extends BaseAPIRequestFactory {
         ]);
         requestContext.setHeaderParam("Content-Type", contentType);
         const serializedBody = ObjectSerializer.stringify(
-            ObjectSerializer.serialize(nDVIProcessInputs, "NDVIProcessInputs", ""),
+            ObjectSerializer.serialize(nDVIProcessParams, "NDVIProcessParams", ""),
             contentType
         );
         requestContext.setBody(serializedBody);
@@ -370,7 +370,7 @@ export class ProcessesApiResponseProcessor {
         if (isCodeInRange("200", response.httpStatusCode)) {
             const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "{ [key: string]: InlineOrRefData; }", ""
+                "any", ""
             ) as { [key: string]: InlineOrRefData; };
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
@@ -386,7 +386,7 @@ export class ProcessesApiResponseProcessor {
         if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
             const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "{ [key: string]: InlineOrRefData; }", ""
+                "any", ""
             ) as { [key: string]: InlineOrRefData; };
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
@@ -514,7 +514,7 @@ export class ProcessesApiResponseProcessor {
         if (isCodeInRange("200", response.httpStatusCode)) {
             const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "{ [key: string]: InlineOrRefData; }", ""
+                "any", ""
             ) as { [key: string]: InlineOrRefData; };
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
@@ -530,7 +530,7 @@ export class ProcessesApiResponseProcessor {
         if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
             const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "{ [key: string]: InlineOrRefData; }", ""
+                "any", ""
             ) as { [key: string]: InlineOrRefData; };
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }

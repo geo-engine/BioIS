@@ -3,15 +3,20 @@ import { LogInGuard } from './log-in.guard';
 
 const appRoutes: Routes = [
   {
-    path: 'dashboard',
-    title: 'Dashboard',
-    loadComponent: () =>
-      import('./dashboard/dashboard.component').then((m) => m.DashboardComponent),
+    path: 'results',
+    title: 'Results',
+    loadComponent: () => import('./results/results.component').then((m) => m.ResultsComponent),
   },
   {
-    path: 'table',
-    title: 'Table',
-    loadComponent: () => import('./table/table.component').then((m) => m.TableComponent),
+    path: 'results/:resultId',
+    title: 'Result Details',
+    loadComponent: () => import('./result/result.component').then((m) => m.DashboardComponent),
+  },
+  {
+    path: 'create',
+    title: 'Create new',
+    loadComponent: () =>
+      import('./create-new/create-new.component').then((m) => m.CreateNewComponent),
   },
 ];
 

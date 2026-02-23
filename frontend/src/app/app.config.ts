@@ -3,6 +3,8 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { MAT_CARD_CONFIG } from '@angular/material/card';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import { PreventDefaultOnSubmitEventPlugin } from './util/prevent-default';
+import { EVENT_MANAGER_PLUGINS } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,7 +19,12 @@ export const appConfig: ApplicationConfig = {
     // iconRegistry.setDefaultFontSetClass('Material-Icons');
     // }),
     // { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'Material Icons' } },
-    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } },
+    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
     { provide: MAT_CARD_CONFIG, useValue: { appearance: 'outlined' } },
+    {
+      provide: EVENT_MANAGER_PLUGINS,
+      useClass: PreventDefaultOnSubmitEventPlugin,
+      multi: true,
+    },
   ],
 };

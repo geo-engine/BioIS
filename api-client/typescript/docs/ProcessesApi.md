@@ -69,7 +69,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
 # **executeNdvi**
-> NDVIProcessOutputs executeNdvi(nDVIProcessInputs)
+> NDVIProcessOutputs executeNdvi(nDVIProcessParams)
 
 
 ### Example
@@ -84,18 +84,24 @@ const apiInstance = new ProcessesApi(configuration);
 
 const request: ProcessesApiExecuteNdviRequest = {
   
-  nDVIProcessInputs: {
-    coordinate: {
-      value: {
-        type: "Point",
-        coordinates: [
-          3.14,
-        ],
+  nDVIProcessParams: {
+    inputs: {
+      coordinate: {
+        value: {
+          type: "Point",
+          coordinates: [
+            3.14,
+          ],
+        },
+        mediaType: "application/geo+json",
       },
-      mediaType: "application/geo+json",
+      year: 0,
+      month: 0,
     },
-    year: 0,
-    month: 0,
+    outputs: {
+      "key": null,
+    },
+    response: "raw",
   },
 };
 
@@ -108,7 +114,7 @@ console.log('API called successfully. Returned data:', data);
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **nDVIProcessInputs** | **NDVIProcessInputs**|  |
+ **nDVIProcessParams** | **NDVIProcessParams**|  |
 
 
 ### Return type

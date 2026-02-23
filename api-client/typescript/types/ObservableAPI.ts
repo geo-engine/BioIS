@@ -25,6 +25,7 @@ import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson } from '../models/PointGeoJson';
@@ -253,12 +254,12 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdviWithHttpInfo(nDVIProcessInputs: NDVIProcessInputs, _options?: ConfigurationOptions): Observable<HttpInfo<NDVIProcessOutputs>> {
+    public executeNdviWithHttpInfo(nDVIProcessParams: NDVIProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<NDVIProcessOutputs>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
-        const requestContextPromise = this.requestFactory.executeNdvi(nDVIProcessInputs, _config);
+        const requestContextPromise = this.requestFactory.executeNdvi(nDVIProcessParams, _config);
         // build promise chain
         let middlewarePreObservable = from<RequestContext>(requestContextPromise);
         for (const middleware of _config.middleware) {
@@ -276,10 +277,10 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdvi(nDVIProcessInputs: NDVIProcessInputs, _options?: ConfigurationOptions): Observable<NDVIProcessOutputs> {
-        return this.executeNdviWithHttpInfo(nDVIProcessInputs, _options).pipe(map((apiResponse: HttpInfo<NDVIProcessOutputs>) => apiResponse.data));
+    public executeNdvi(nDVIProcessParams: NDVIProcessParams, _options?: ConfigurationOptions): Observable<NDVIProcessOutputs> {
+        return this.executeNdviWithHttpInfo(nDVIProcessParams, _options).pipe(map((apiResponse: HttpInfo<NDVIProcessOutputs>) => apiResponse.data));
     }
 
     /**

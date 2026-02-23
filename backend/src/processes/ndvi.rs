@@ -43,7 +43,9 @@ pub struct NDVIProcess;
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 pub struct NDVIProcessInputs {
     pub coordinate: PointGeoJsonInput,
+    #[schema(minimum = 2014, maximum = 2014)]
     pub year: Year,
+    #[schema(minimum = 1, maximum = 6)]
     pub month: Month,
 }
 
@@ -94,12 +96,13 @@ pub enum PointGeoJsonType {
 }
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
-pub struct Year(#[schemars(range(min = 2014, max = 2014))] u16);
+pub struct Year(u16);
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
-pub struct Month(#[schemars(range(min = 1, max = 6))] u16);
+pub struct Month(u16);
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct NDVIProcessOutputs {
     pub ndvi: Option<f64>,
     pub k_ndvi: Option<f64>,
@@ -122,7 +125,7 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
         }
         if let Some(k_ndvi) = outputs.k_ndvi {
             result.insert(
-                "k_ndvi".to_string(),
+                "kNdvi".to_string(),
                 ExecuteResult {
                     output: Output {
                         format: None,
@@ -246,7 +249,7 @@ impl Processor for NDVIProcess {
                     },
                 ),
                 (
-                    "k_ndvi".to_string(),
+                    "kNdvi".to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
                             title: Some(
@@ -290,7 +293,7 @@ impl Processor for NDVIProcess {
         for output_key in execute.outputs.keys() {
             match output_key.as_str() {
                 "ndvi" => should_compute_ndvi = true,
-                "k_ndvi" => should_compute_k_ndvi = true,
+                "kNdvi" => should_compute_k_ndvi = true,
                 other => anyhow::bail!("Unknown output requested: {other}"),
             }
         }
@@ -648,7 +651,7 @@ mod tests {
 
         // outputs contain ndvi and k_ndvi
         assert!(process.outputs.contains_key("ndvi"));
-        assert!(process.outputs.contains_key("k_ndvi"));
+        assert!(process.outputs.contains_key("kNdvi"));
 
         // some basic checks for descriptions and schema presence
         let ndvi_output = &process.outputs["ndvi"];

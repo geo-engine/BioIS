@@ -10,11 +10,17 @@
  * Do not edit the class manually.
  */
 
+import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
+import { Response } from '../models/Response';
 import { HttpFile } from '../http/http';
 
-export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
+/**
+* Process execution
+*/
+export class NDVIProcessParams {
+    'inputs': NDVIProcessInputs;
+    'outputs'?: { [key: string]: any; };
+    'response'?: Response;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -22,22 +28,30 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
+            "name": "inputs",
+            "baseName": "inputs",
+            "type": "NDVIProcessInputs",
+            "format": ""
         },
         {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
+            "name": "outputs",
+            "baseName": "outputs",
+            "type": "{ [key: string]: any; }",
+            "format": ""
+        },
+        {
+            "name": "response",
+            "baseName": "response",
+            "type": "Response",
+            "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
+        return NDVIProcessParams.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
+
+

@@ -25,6 +25,8 @@ install-llvm-cov:
 [working-directory('frontend')]
 install-frontend-deps:
     @-clear
+    rm -rf node_modules/@geoengine/biois \
+           .angular/cache
     npm ci
 
 [group('frontend')]

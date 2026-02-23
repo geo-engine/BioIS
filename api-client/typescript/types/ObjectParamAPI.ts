@@ -24,6 +24,7 @@ import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson } from '../models/PointGeoJson';
@@ -161,10 +162,10 @@ export interface ProcessesApiDeleteRequest {
 export interface ProcessesApiExecuteNdviRequest {
     /**
      * 
-     * @type NDVIProcessInputs
+     * @type NDVIProcessParams
      * @memberof ProcessesApiexecuteNdvi
      */
-    nDVIProcessInputs: NDVIProcessInputs
+    nDVIProcessParams: NDVIProcessParams
 }
 
 export interface ProcessesApiExecutionRequest {
@@ -248,14 +249,14 @@ export class ObjectProcessesApi {
      * @param param the request object
      */
     public executeNdviWithHttpInfo(param: ProcessesApiExecuteNdviRequest, options?: ConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
-        return this.api.executeNdviWithHttpInfo(param.nDVIProcessInputs,  options).toPromise();
+        return this.api.executeNdviWithHttpInfo(param.nDVIProcessParams,  options).toPromise();
     }
 
     /**
      * @param param the request object
      */
     public executeNdvi(param: ProcessesApiExecuteNdviRequest, options?: ConfigurationOptions): Promise<NDVIProcessOutputs> {
-        return this.api.executeNdvi(param.nDVIProcessInputs,  options).toPromise();
+        return this.api.executeNdvi(param.nDVIProcessParams,  options).toPromise();
     }
 
     /**

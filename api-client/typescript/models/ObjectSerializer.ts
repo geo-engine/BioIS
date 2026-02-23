@@ -20,6 +20,7 @@ export * from '../models/MaxOccurs';
 export * from '../models/Metadata';
 export * from '../models/NDVIProcessInputs';
 export * from '../models/NDVIProcessOutputs';
+export * from '../models/NDVIProcessParams';
 export * from '../models/Output';
 export * from '../models/OutputDescription';
 export * from '../models/PointGeoJson';
@@ -61,6 +62,7 @@ import { MaxOccursClass } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams    } from '../models/NDVIProcessParams';
 import { Output   } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson   } from '../models/PointGeoJson';
@@ -123,6 +125,7 @@ let typeMap: {[index: string]: any} = {
     "Metadata": Metadata,
     "NDVIProcessInputs": NDVIProcessInputs,
     "NDVIProcessOutputs": NDVIProcessOutputs,
+    "NDVIProcessParams": NDVIProcessParams,
     "Output": Output,
     "OutputDescription": OutputDescription,
     "PointGeoJson": PointGeoJson,

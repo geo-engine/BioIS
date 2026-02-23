@@ -24,6 +24,7 @@ import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson } from '../models/PointGeoJson';
@@ -191,20 +192,20 @@ export class PromiseProcessesApi {
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdviWithHttpInfo(nDVIProcessInputs: NDVIProcessInputs, _options?: PromiseConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
+    public executeNdviWithHttpInfo(nDVIProcessParams: NDVIProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.executeNdviWithHttpInfo(nDVIProcessInputs, observableOptions);
+        const result = this.api.executeNdviWithHttpInfo(nDVIProcessParams, observableOptions);
         return result.toPromise();
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdvi(nDVIProcessInputs: NDVIProcessInputs, _options?: PromiseConfigurationOptions): Promise<NDVIProcessOutputs> {
+    public executeNdvi(nDVIProcessParams: NDVIProcessParams, _options?: PromiseConfigurationOptions): Promise<NDVIProcessOutputs> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.executeNdvi(nDVIProcessInputs, observableOptions);
+        const result = this.api.executeNdvi(nDVIProcessParams, observableOptions);
         return result.toPromise();
     }
 

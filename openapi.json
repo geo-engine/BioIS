@@ -584,7 +584,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NDVIProcessInputs"
+                "$ref": "#/components/schemas/NDVIProcessParams"
               }
             }
           },
@@ -1098,12 +1098,36 @@
             ],
             "format": "double"
           },
-          "k_ndvi": {
+          "kNdvi": {
             "type": [
               "number",
               "null"
             ],
             "format": "double"
+          }
+        }
+      },
+      "NDVIProcessParams": {
+        "type": "object",
+        "description": "Process execution",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/NDVIProcessInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
           }
         }
       },
