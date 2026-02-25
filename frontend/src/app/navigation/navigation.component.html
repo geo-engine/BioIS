@@ -3,7 +3,6 @@
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav
     #drawer
-    class="sidenav"
     fixedInViewport
     [attr.role]="isHandset.value()"
     [mode]="isHandset.value() ? 'over' : 'side'"
@@ -11,8 +10,8 @@
   >
     <mat-toolbar><mat-icon class="logo" svgIcon="geoengine:logo"></mat-icon></mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item [routerLink]="['/app/results']">Results</a>
-      <a mat-list-item [routerLink]="['/app/create']">Create new</a>
+      <a mat-list-item [routerLink]="['/app/results']"><mat-icon>assessment</mat-icon> Results</a>
+      <a mat-list-item [routerLink]="['/app/create']"><mat-icon>add</mat-icon> Create new</a>
     </mat-nav-list>
   </mat-sidenav>
 

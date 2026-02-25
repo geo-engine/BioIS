@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 form {
   display: flex;
   flex-direction: column;
@@ -27,4 +29,22 @@ fieldset {
     font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
   }
+}
+
+mat-icon {
+  margin-left: 0.5rem;
+
+  @include mat.icon-overrides(
+    (
+      color: var(--mat-sys-primary),
+    )
+  );
+}
+
+p > mat-icon {
+  vertical-align: text-bottom;
+}
+
+mat-checkbox ~ mat-icon {
+  vertical-align: middle;
 }
