@@ -42,6 +42,11 @@ export class DashboardComponent {
       if (!params.processId) return {};
 
       const result = await api.results(params.processId);
+
+      if (result instanceof Blob) {
+        throw new Error('Expected NDVIProcessOutputs but received HttpFile');
+      }
+
       return result;
     },
   });

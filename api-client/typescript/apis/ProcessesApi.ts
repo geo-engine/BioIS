@@ -10,12 +10,12 @@ import {SecurityAuthentication} from '../auth/auth';
 
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
-import { InlineOrRefData } from '../models/InlineOrRefData';
 import { JobList } from '../models/JobList';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Process } from '../models/Process';
 import { ProcessList } from '../models/ProcessList';
+import { Results } from '../models/Results';
 import { StatusInfo } from '../models/StatusInfo';
 
 /**
@@ -148,9 +148,13 @@ export class ProcessesApiRequestFactory extends BaseAPIRequestFactory {
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param limit Amount of items to return
+     * @param offset Offset into the items list
      */
-    public async jobs(_options?: Configuration): Promise<RequestContext> {
+    public async jobs(limit?: number, offset?: number, _options?: Configuration): Promise<RequestContext> {
         let _config = _options || this.configuration;
+
+
 
         // Path Params
         const localVarPath = '/jobs';
@@ -158,6 +162,16 @@ export class ProcessesApiRequestFactory extends BaseAPIRequestFactory {
         // Make Request Context
         const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
         requestContext.setHeaderParam("Accept", "application/json, */*;q=0.8")
+
+        // Query Params
+        if (limit !== undefined) {
+            requestContext.setQueryParam("limit", ObjectSerializer.serialize(limit, "number", ""));
+        }
+
+        // Query Params
+        if (offset !== undefined) {
+            requestContext.setQueryParam("offset", ObjectSerializer.serialize(offset, "number", ""));
+        }
 
 
         
@@ -365,13 +379,13 @@ export class ProcessesApiResponseProcessor {
      * @params response Response returned by the server for a request to execution
      * @throws ApiException if the response code was not in [200, 299]
      */
-     public async executionWithHttpInfo(response: ResponseContext): Promise<HttpInfo<{ [key: string]: InlineOrRefData; } >> {
+     public async executionWithHttpInfo(response: ResponseContext): Promise<HttpInfo<Results >> {
         const contentType = ObjectSerializer.normalizeMediaType(response.headers["content-type"]);
         if (isCodeInRange("200", response.httpStatusCode)) {
-            const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
+            const body: Results = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "any", ""
-            ) as { [key: string]: InlineOrRefData; };
+                "Results", ""
+            ) as Results;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
         if (isCodeInRange("404", response.httpStatusCode)) {
@@ -384,10 +398,10 @@ export class ProcessesApiResponseProcessor {
 
         // Work around for missing responses in specification, e.g. for petstore.yaml
         if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-            const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
+            const body: Results = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "any", ""
-            ) as { [key: string]: InlineOrRefData; };
+                "Results", ""
+            ) as Results;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
 
@@ -509,13 +523,13 @@ export class ProcessesApiResponseProcessor {
      * @params response Response returned by the server for a request to results
      * @throws ApiException if the response code was not in [200, 299]
      */
-     public async resultsWithHttpInfo(response: ResponseContext): Promise<HttpInfo<{ [key: string]: InlineOrRefData; } >> {
+     public async resultsWithHttpInfo(response: ResponseContext): Promise<HttpInfo<Results >> {
         const contentType = ObjectSerializer.normalizeMediaType(response.headers["content-type"]);
         if (isCodeInRange("200", response.httpStatusCode)) {
-            const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
+            const body: Results = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "any", ""
-            ) as { [key: string]: InlineOrRefData; };
+                "Results", ""
+            ) as Results;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
         if (isCodeInRange("404", response.httpStatusCode)) {
@@ -528,10 +542,10 @@ export class ProcessesApiResponseProcessor {
 
         // Work around for missing responses in specification, e.g. for petstore.yaml
         if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-            const body: { [key: string]: InlineOrRefData; } = ObjectSerializer.deserialize(
+            const body: Results = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "any", ""
-            ) as { [key: string]: InlineOrRefData; };
+                "Results", ""
+            ) as Results;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
 

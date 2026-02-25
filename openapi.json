@@ -296,6 +296,34 @@
         "summary": "Retrieve the list of jobs",
         "description": "For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).",
         "operationId": "jobs",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Amount of items to return",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset into the items list",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list of jobs for this process.",
@@ -1316,10 +1344,19 @@
         ]
       },
       "Results": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/components/schemas/InlineOrRefData"
-        }
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/InlineOrRefData"
+            }
+          },
+          {
+            "type": "string",
+            "format": "binary"
+          }
+        ],
+        "title": "ExecuteResults"
       },
       "Schema": {
         "oneOf": [

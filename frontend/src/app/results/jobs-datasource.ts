@@ -1,6 +1,6 @@
 import { DataSource } from '@angular/cdk/collections';
-import { MatPaginator } from '@angular/material/paginator';
-import { Observable, from } from 'rxjs';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { Observable, startWith, switchMap } from 'rxjs';
 import { Configuration, ProcessesApi, StatusInfo } from '@geoengine/biois';
 
 /**
@@ -9,8 +9,7 @@ import { Configuration, ProcessesApi, StatusInfo } from '@geoengine/biois';
  * (including sorting, pagination, and filtering).
  */
 export class JobsDataSource extends DataSource<StatusInfo> {
-  // data: StatusInfo[] = [];
-  paginator: MatPaginator | undefined;
+  paginator?: MatPaginator;
   // sort: MatSort | undefined;
 
   protected readonly api: ProcessesApi;
@@ -30,20 +29,17 @@ export class JobsDataSource extends DataSource<StatusInfo> {
       throw Error('Please set the paginator on the data source before connecting.');
     }
 
-    return from(
-      this.queryDataPage(
-        this.paginator.pageIndex * this.paginator.pageSize,
-        this.paginator.pageSize,
+    const initialPageEvent = new PageEvent();
+    initialPageEvent.length = this.paginator.length;
+    initialPageEvent.pageIndex = this.paginator.pageIndex;
+    initialPageEvent.pageSize = this.paginator.pageSize;
+
+    return this.paginator.page.pipe(
+      startWith(initialPageEvent),
+      switchMap((pageEvent) =>
+        this.queryDataPage(pageEvent.pageIndex * pageEvent.pageSize, pageEvent.pageSize),
       ),
     );
-
-    // Combine everything that affects the rendered data into one update
-    // stream for the data-table to consume.
-    // return merge(observableOf(this.data), this.paginator.page, this.sort.sortChange).pipe(
-    //   map((params) => {
-    //     return this.getPagedData(this.getSortedData([...this.data]));
-    //   }),
-    // );
   }
 
   /**
@@ -55,52 +51,15 @@ export class JobsDataSource extends DataSource<StatusInfo> {
   }
 
   protected async queryDataPage(offset: number, limit: number): Promise<StatusInfo[]> {
-    const jobs = (await this.api.jobs(/* TODO: pagination */)).jobs;
+    const jobs = (await this.api.jobs(limit, offset)).jobs;
 
     if (this.paginator && limit <= jobs.length) {
-      this.paginator.length += 1;
+      this.paginator.length = Math.max(
+        this.paginator.length,
+        offset + jobs.length + /* no page is shown if we won't expect another item */ 1,
+      );
     }
 
     return jobs;
   }
-
-  // /**
-  //  * Paginate the data (client-side). If you're using server-side pagination,
-  //  * this would be replaced by requesting the appropriate data from the server.
-  //  */
-  // private getPagedData(data: StatusInfo[]): StatusInfo[] {
-  //   if (this.paginator) {
-  //     const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
-  //     return data.splice(startIndex, this.paginator.pageSize);
-  //   } else {
-  //     return data;
-  //   }
-  // }
-
-  //   /**
-  //    * Sort the data (client-side). If you're using server-side sorting,
-  //    * this would be replaced by requesting the appropriate data from the server.
-  //    */
-  //   private getSortedData(data: StatusInfo[]): StatusInfo[] {
-  //     if (!this.sort?.active || this.sort.direction === '') {
-  //       return data;
-  //     }
-
-  //     return data.sort((a, b) => {
-  //       const isAsc = this.sort?.direction === 'asc';
-  //       switch (this.sort?.active) {
-  //         case 'name':
-  //           return compare(a.name, b.name, isAsc);
-  //         case 'id':
-  //           return compare(+a.id, +b.id, isAsc);
-  //         default:
-  //           return 0;
-  //       }
-  //     });
-  //   }
 }
-
-/** Simple sort comparator for example ID/Name columns (for client-side sorting). */
-// function compare(a: string | number, b: string | number, isAsc: boolean): number {
-//   return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
-// }

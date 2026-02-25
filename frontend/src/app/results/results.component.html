@@ -1,7 +1,7 @@
-<table mat-table class="full-width-table" matSort aria-label="Jobs" [trackBy]="trackByFn">
+<table mat-table class="full-width-table" aria-label="Jobs" [trackBy]="trackByFn">
   <!-- <mat-text-column name="jobID" headerText="Job"></mat-text-column> -->
   <ng-container matColumnDef="jobID">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Job</th>
+    <th mat-header-cell *matHeaderCellDef>Job</th>
     <td mat-cell *matCellDef="let row">
       @if (row.status === StatusCode.Successful) {
         <a [routerLink]="['/app/results', row.jobID]">{{ row.jobID }}</a>
@@ -14,7 +14,7 @@
   <mat-text-column name="processID" headerText="Process"></mat-text-column>
 
   <ng-container matColumnDef="status">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+    <th mat-header-cell *matHeaderCellDef>Status</th>
     <td mat-cell *matCellDef="let row">
       @switch (row.status) {
         @case (StatusCode.Accepted) {
@@ -43,7 +43,7 @@
   <mat-text-column name="message" headerText="Message"></mat-text-column>
 
   <ng-container matColumnDef="updated">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated</th>
+    <th mat-header-cell *matHeaderCellDef>Updated</th>
     <td
       mat-cell
       *matCellDef="let row"

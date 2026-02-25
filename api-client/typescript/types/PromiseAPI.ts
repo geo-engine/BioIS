@@ -36,6 +36,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
@@ -215,7 +216,7 @@ export class PromiseProcessesApi {
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executionWithHttpInfo(processID, execute, observableOptions);
         return result.toPromise();
@@ -227,7 +228,7 @@ export class PromiseProcessesApi {
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.execution(processID, execute, observableOptions);
         return result.toPromise();
@@ -236,20 +237,24 @@ export class PromiseProcessesApi {
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobsWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<JobList>> {
+    public jobsWithHttpInfo(limit?: number, offset?: number, _options?: PromiseConfigurationOptions): Promise<HttpInfo<JobList>> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.jobsWithHttpInfo(observableOptions);
+        const result = this.api.jobsWithHttpInfo(limit, offset, observableOptions);
         return result.toPromise();
     }
 
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobs(_options?: PromiseConfigurationOptions): Promise<JobList> {
+    public jobs(limit?: number, offset?: number, _options?: PromiseConfigurationOptions): Promise<JobList> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.jobs(observableOptions);
+        const result = this.api.jobs(limit, offset, observableOptions);
         return result.toPromise();
     }
 
@@ -300,7 +305,7 @@ export class PromiseProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public resultsWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public resultsWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.resultsWithHttpInfo(jobId, observableOptions);
         return result.toPromise();
@@ -311,7 +316,7 @@ export class PromiseProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public results(jobId: string, _options?: PromiseConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public results(jobId: string, _options?: PromiseConfigurationOptions): Promise<Results> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.results(jobId, observableOptions);
         return result.toPromise();

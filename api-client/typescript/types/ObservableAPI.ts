@@ -37,6 +37,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
@@ -289,7 +290,7 @@ export class ObservableProcessesApi {
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<Results>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
         const requestContextPromise = this.requestFactory.execution(processID, execute, _config);
@@ -315,18 +316,20 @@ export class ObservableProcessesApi {
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<{ [key: string]: InlineOrRefData; }> {
-        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<{ [key: string]: InlineOrRefData; }>) => apiResponse.data));
+    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<Results> {
+        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<Results>) => apiResponse.data));
     }
 
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobsWithHttpInfo(_options?: ConfigurationOptions): Observable<HttpInfo<JobList>> {
+    public jobsWithHttpInfo(limit?: number, offset?: number, _options?: ConfigurationOptions): Observable<HttpInfo<JobList>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
-        const requestContextPromise = this.requestFactory.jobs(_config);
+        const requestContextPromise = this.requestFactory.jobs(limit, offset, _config);
         // build promise chain
         let middlewarePreObservable = from<RequestContext>(requestContextPromise);
         for (const middleware of _config.middleware) {
@@ -346,9 +349,11 @@ export class ObservableProcessesApi {
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobs(_options?: ConfigurationOptions): Observable<JobList> {
-        return this.jobsWithHttpInfo(_options).pipe(map((apiResponse: HttpInfo<JobList>) => apiResponse.data));
+    public jobs(limit?: number, offset?: number, _options?: ConfigurationOptions): Observable<JobList> {
+        return this.jobsWithHttpInfo(limit, offset, _options).pipe(map((apiResponse: HttpInfo<JobList>) => apiResponse.data));
     }
 
     /**
@@ -422,7 +427,7 @@ export class ObservableProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public resultsWithHttpInfo(jobId: string, _options?: ConfigurationOptions): Observable<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public resultsWithHttpInfo(jobId: string, _options?: ConfigurationOptions): Observable<HttpInfo<Results>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
         const requestContextPromise = this.requestFactory.results(jobId, _config);
@@ -447,8 +452,8 @@ export class ObservableProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public results(jobId: string, _options?: ConfigurationOptions): Observable<{ [key: string]: InlineOrRefData; }> {
-        return this.resultsWithHttpInfo(jobId, _options).pipe(map((apiResponse: HttpInfo<{ [key: string]: InlineOrRefData; }>) => apiResponse.data));
+    public results(jobId: string, _options?: ConfigurationOptions): Observable<Results> {
+        return this.resultsWithHttpInfo(jobId, _options).pipe(map((apiResponse: HttpInfo<Results>) => apiResponse.data));
     }
 
     /**

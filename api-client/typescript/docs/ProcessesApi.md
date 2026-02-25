@@ -139,7 +139,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
 # **execution**
-> { [key: string]: InlineOrRefData; } execution(execute)
+> Results execution(execute)
 
 Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
 
@@ -195,7 +195,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**{ [key: string]: InlineOrRefData; }**
+**Results**
 
 ### Authorization
 
@@ -225,11 +225,17 @@ For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.htm
 
 ```typescript
 import { createConfiguration, ProcessesApi } from '';
+import type { ProcessesApiJobsRequest } from '';
 
 const configuration = createConfiguration();
 const apiInstance = new ProcessesApi(configuration);
 
-const request = {};
+const request: ProcessesApiJobsRequest = {
+    // Amount of items to return (optional)
+  limit: 0,
+    // Offset into the items list (optional)
+  offset: 0,
+};
 
 const data = await apiInstance.jobs(request);
 console.log('API called successfully. Returned data:', data);
@@ -237,7 +243,11 @@ console.log('API called successfully. Returned data:', data);
 
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | [**number**] | Amount of items to return | (optional) defaults to undefined
+ **offset** | [**number**] | Offset into the items list | (optional) defaults to undefined
 
 
 ### Return type
@@ -364,7 +374,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
 # **results**
-> { [key: string]: InlineOrRefData; } results()
+> Results results()
 
 Lists available results of a job. In case of a failure, lists exceptions instead.  For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).  
 
@@ -397,7 +407,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**{ [key: string]: InlineOrRefData; }**
+**Results**
 
 ### Authorization
 

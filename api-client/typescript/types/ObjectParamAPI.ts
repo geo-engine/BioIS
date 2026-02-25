@@ -36,6 +36,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
@@ -185,6 +186,22 @@ export interface ProcessesApiExecutionRequest {
 }
 
 export interface ProcessesApiJobsRequest {
+    /**
+     * Amount of items to return
+     * Minimum: 0
+     * Defaults to: undefined
+     * @type number
+     * @memberof ProcessesApijobs
+     */
+    limit?: number
+    /**
+     * Offset into the items list
+     * Minimum: 0
+     * Defaults to: undefined
+     * @type number
+     * @memberof ProcessesApijobs
+     */
+    offset?: number
 }
 
 export interface ProcessesApiProcessRequest {
@@ -264,7 +281,7 @@ export class ObjectProcessesApi {
      * Execute a process
      * @param param the request object
      */
-    public executionWithHttpInfo(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public executionWithHttpInfo(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<HttpInfo<Results>> {
         return this.api.executionWithHttpInfo(param.processID, param.execute,  options).toPromise();
     }
 
@@ -273,7 +290,7 @@ export class ObjectProcessesApi {
      * Execute a process
      * @param param the request object
      */
-    public execution(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public execution(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<Results> {
         return this.api.execution(param.processID, param.execute,  options).toPromise();
     }
 
@@ -283,7 +300,7 @@ export class ObjectProcessesApi {
      * @param param the request object
      */
     public jobsWithHttpInfo(param: ProcessesApiJobsRequest = {}, options?: ConfigurationOptions): Promise<HttpInfo<JobList>> {
-        return this.api.jobsWithHttpInfo( options).toPromise();
+        return this.api.jobsWithHttpInfo(param.limit, param.offset,  options).toPromise();
     }
 
     /**
@@ -292,7 +309,7 @@ export class ObjectProcessesApi {
      * @param param the request object
      */
     public jobs(param: ProcessesApiJobsRequest = {}, options?: ConfigurationOptions): Promise<JobList> {
-        return this.api.jobs( options).toPromise();
+        return this.api.jobs(param.limit, param.offset,  options).toPromise();
     }
 
     /**
@@ -336,7 +353,7 @@ export class ObjectProcessesApi {
      * Retrieve the result(s) of a job
      * @param param the request object
      */
-    public resultsWithHttpInfo(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public resultsWithHttpInfo(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<HttpInfo<Results>> {
         return this.api.resultsWithHttpInfo(param.jobId,  options).toPromise();
     }
 
@@ -345,7 +362,7 @@ export class ObjectProcessesApi {
      * Retrieve the result(s) of a job
      * @param param the request object
      */
-    public results(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public results(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<Results> {
         return this.api.results(param.jobId,  options).toPromise();
     }
 

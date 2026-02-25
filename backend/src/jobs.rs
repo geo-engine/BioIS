@@ -115,10 +115,12 @@ impl ogcapi::drivers::JobHandler for JobHandler {
     async fn status_list(&self, offset: usize, limit: usize) -> anyhow::Result<Vec<StatusInfo>> {
         let user = USER.try_get().context("missing authenticated user")?;
 
-        let result = model::StatusInfo::query()
+        let query = model::StatusInfo::query()
             .filter(jobs::user_id.eq(user.id))
             .offset(offset as i64)
-            .limit(limit as i64)
+            .limit(limit as i64);
+
+        let result = query
             .load::<model::StatusInfo>(&mut self.connection().await?)
             .await
             .context("Failed to query job status list from database")?;

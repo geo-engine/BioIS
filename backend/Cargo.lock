@@ -2058,7 +2058,7 @@ dependencies = [
 [[package]]
 name = "ogcapi"
 version = "0.3.1"
-source = "git+https://github.com/georust/ogcapi?branch=main#7fc7f000b5163d3d15cbb43a7282d570a34de0b3"
+source = "git+https://github.com/georust/ogcapi?branch=openapi-fixes#a7b3974bbcbc2a481694af163c6eaf96a4b9117c"
 dependencies = [
  "ogcapi-drivers",
  "ogcapi-processes",
@@ -2069,7 +2069,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-drivers"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#7fc7f000b5163d3d15cbb43a7282d570a34de0b3"
+source = "git+https://github.com/georust/ogcapi?branch=openapi-fixes#a7b3974bbcbc2a481694af163c6eaf96a4b9117c"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2084,7 +2084,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-processes"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#7fc7f000b5163d3d15cbb43a7282d570a34de0b3"
+source = "git+https://github.com/georust/ogcapi?branch=openapi-fixes#a7b3974bbcbc2a481694af163c6eaf96a4b9117c"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2101,7 +2101,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-services"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#7fc7f000b5163d3d15cbb43a7282d570a34de0b3"
+source = "git+https://github.com/georust/ogcapi?branch=openapi-fixes#a7b3974bbcbc2a481694af163c6eaf96a4b9117c"
 dependencies = [
  "anyhow",
  "axum",
@@ -2136,7 +2136,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-types"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#7fc7f000b5163d3d15cbb43a7282d570a34de0b3"
+source = "git+https://github.com/georust/ogcapi?branch=openapi-fixes#a7b3974bbcbc2a481694af163c6eaf96a4b9117c"
 dependencies = [
  "chrono",
  "geojson",
@@ -3697,7 +3697,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0136791f7c95b1f6dd99f9cc786b91bb81c3800b639b3478e561ddb7be95e5f1"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.1",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
