@@ -1,6 +1,6 @@
 <mat-toolbar class="top-bar" role="banner">
   <mat-toolbar-row>
-    <mat-icon svgIcon="geoengine:logo"></mat-icon>
+    <mat-icon svgIcon="geoengine:logo-white"></mat-icon>
     <!-- <span class="spacer"></span> -->
     <span class="title">{{ title }}</span>
   </mat-toolbar-row>
@@ -10,7 +10,7 @@
   <img class="background" ngSrc="assets/hero-village.jpg" alt="" fill />
   <h1>{{ title }} — Biodiversity Indicator Service</h1>
   <p>
-    Scalable biodiversity indicators and analytics for corporate ESG reporting, with metrics and
+    Easy-to-use biodiversity indicators and analytics for corporate ESG reporting, with metrics and
     workflows tailored to ESRS E4 requirements.
   </p>
 </header>
@@ -30,8 +30,9 @@
         automated indicator computation, and reporting-ready exports
       </li>
       <li>
-        Standards-based process interfaces (OGC API - Processes) and output formats aligned with
-        ESRS E4 expectations
+        Standards-based process interfaces (<a href="https://ogc.org/standards/ogcapi-processes/"
+          ><mat-icon aria-hidden="true" inline="true">launch</mat-icon> OGC API - Processes</a
+        >) and output formats aligned with ESRS E4 expectations
       </li>
       <li>
         Pre-built and customizable biodiversity indicators (e.g., species richness, habitat
@@ -43,18 +44,18 @@
 </section>
 
 <section class="features" aria-label="Features">
-  <img class="background" ngSrc="assets/structure-green.png" alt="" fill />
+  <img class="background" ngSrc="assets/GeoEngine_Structure_lightgreen.svg" alt="" fill />
   <div class="content">
     <h2>Key features</h2>
     <div class="features-grid">
       <mat-card class="feature-card">
         <mat-card-header>
           <mat-icon mat-card-avatar aria-hidden="true">cloud_queue</mat-icon>
-          <mat-card-title>Scalable Processing</mat-card-title>
+          <mat-card-title>Cloud Processing</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          Cloud-processing for large-scale biodiversity indicators. Reproducible workflows,
-          provenance, and batch runs enable enterprise reporting and trend analysis.
+          Easy-to-use cloud-processing for large-scale biodiversity indicators. Reproducible
+          workflows, provenance, and batch runs enable enterprise reporting and trend analysis.
         </mat-card-content>
       </mat-card>
 
@@ -64,8 +65,12 @@
           <mat-card-title>APIs & Standards</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          REST APIs and OGC API - Processes interfaces for programmatic access, automated indicator
-          generation, and exports compatible with corporate ESG reporting needs.
+          REST APIs and
+          <a href="https://ogc.org/standards/ogcapi-processes/">
+            <mat-icon aria-hidden="true" inline="true">launch</mat-icon> OGC API - Processes
+          </a>
+          interfaces for programmatic access, automated indicator generation, and exports compatible
+          with corporate ESG reporting needs.
         </mat-card-content>
       </mat-card>
 
@@ -87,9 +92,10 @@
   <div class="content">
     <h2>Registration & Contact</h2>
     <p>
-      This platform is available for corporate pilots and early adopters focused on ESG and
-      biodiversity reporting. Request enterprise access, pilot engagements, or technical information
-      at <a href="mailto:info@geoengine.de">info@geoengine.de</a>.
+      This platform is in an early stage and available for pilots and early adopters focused on ESG
+      and biodiversity reporting. If you would like to test it, just get in contact with us to get
+      an account. If you would just like to now more, pleasure also feel free to reach out at
+      <a href="mailto:info@geoengine.de">info@geoengine.de</a>.
     </p>
     <p>
       We welcome collaboration to align indicators, validation approaches, and reporting outputs
@@ -99,7 +105,8 @@
 </section>
 
 <section class="launch" aria-label="Launch the app">
-  <div class="content">
+  <img class="background" ngSrc="assets/GeoEngine_Structure_lightblue.svg" alt="" fill />
+  <div class="content box">
     <h2>Launch the app</h2>
     <p>
       Open the BioIS application to explore biodiversity indicators, run ESRS E4–aligned analyses,
@@ -107,8 +114,8 @@
       generate reporting-ready results, inspect provenance and inputs, and export indicator data for
       governance and external reporting.
     </p>
-    <a mat-flat-button aria-label="Launch {{ title }} app" [routerLink]="['/app']">
-      <mat-icon aria-hidden="true">launch</mat-icon>
+    <a matButton="tonal" aria-label="Launch {{ title }} app" [routerLink]="['/app']">
+      <mat-icon aria-hidden="true">rocket_launch</mat-icon>
       Launch {{ title }} app
     </a>
   </div>
@@ -121,7 +128,7 @@
       <a href="https://www.geoengine.de/en/" target="_blank" rel="noopener">www.geoengine.de</a>
     </li>
     <li>
-      <a href="https://www.geoengine.de/en/imprint/" target="_blank" rel="noopener">Impress</a>
+      <a href="https://www.geoengine.de/en/imprint/" target="_blank" rel="noopener">Imprint</a>
     </li>
   </ul>
 </footer>

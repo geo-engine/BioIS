@@ -75,11 +75,27 @@ section {
     margin: 0 auto;
     padding: 2rem 0;
   }
+
+  a mat-icon {
+    vertical-align: top;
+  }
+
+  mat-card-content a mat-icon {
+    vertical-align: bottom;
+  }
 }
 
 section.features {
   h2 {
     margin-bottom: 2rem;
+  }
+
+  mat-icon {
+    height: unset;
+    width: unset;
+    border-radius: unset;
+    margin-bottom: unset;
+    margin-top: 0.2rem;
   }
 
   .features-grid {
@@ -102,6 +118,12 @@ section.features {
       outlined-outline-width: 0,
     )
   );
+}
+
+section .content.box {
+  background: var(--mat-sys-surface);
+  border-radius: var(--mat-sys-corner-medium);
+  padding: 2rem;
 }
 
 footer {

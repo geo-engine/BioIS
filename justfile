@@ -182,6 +182,11 @@ test-frontend:
 
 ### RUN ###
 
+# Run backend and frontend at the same time. Usage: `just run`.
+[group('run')]
+[parallel]
+run: run-backend run-frontend
+
 # Run the backend. Usage: `just run-backend --release`.
 [group('backend')]
 [group('run')]

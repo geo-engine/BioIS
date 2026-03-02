@@ -10,15 +10,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    // provideAppInitializer(() => {
-    //   const iconRegistry = inject(MatIconRegistry);
-    //   console.log(
-    //     'Setting default font set class for Material Icons',
-    //     iconRegistry.getDefaultFontSetClass(),
-    //   );
-    // iconRegistry.setDefaultFontSetClass('Material-Icons');
-    // }),
-    // { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'Material Icons' } },
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
     { provide: MAT_CARD_CONFIG, useValue: { appearance: 'outlined' } },
     {
