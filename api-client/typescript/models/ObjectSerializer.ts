@@ -20,6 +20,7 @@ export * from '../models/MaxOccurs';
 export * from '../models/Metadata';
 export * from '../models/NDVIProcessInputs';
 export * from '../models/NDVIProcessOutputs';
+export * from '../models/NDVIProcessParams';
 export * from '../models/Output';
 export * from '../models/OutputDescription';
 export * from '../models/PointGeoJson';
@@ -31,6 +32,7 @@ export * from '../models/ProcessList';
 export * from '../models/ProcessSummary';
 export * from '../models/QualifiedInputValue';
 export * from '../models/Response';
+export * from '../models/Results';
 export * from '../models/Schema';
 export * from '../models/StatusCode';
 export * from '../models/StatusInfo';
@@ -61,6 +63,7 @@ import { MaxOccursClass } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams    } from '../models/NDVIProcessParams';
 import { Output   } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson   } from '../models/PointGeoJson';
@@ -72,6 +75,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { ResultsClass } from '../models/Results';
 import { SchemaClass } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo           } from '../models/StatusInfo';
@@ -123,6 +127,7 @@ let typeMap: {[index: string]: any} = {
     "Metadata": Metadata,
     "NDVIProcessInputs": NDVIProcessInputs,
     "NDVIProcessOutputs": NDVIProcessOutputs,
+    "NDVIProcessParams": NDVIProcessParams,
     "Output": Output,
     "OutputDescription": OutputDescription,
     "PointGeoJson": PointGeoJson,

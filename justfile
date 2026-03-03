@@ -25,6 +25,9 @@ install-llvm-cov:
 [working-directory('frontend')]
 install-frontend-deps:
     @-clear
+    rm -rf node_modules/@geoengine/biois \
+           .angular/cache
+    npm link ../api-client/typescript
     npm ci
 
 [group('frontend')]
@@ -179,6 +182,11 @@ test-frontend:
     npm run test
 
 ### RUN ###
+
+# Run backend and frontend at the same time. Usage: `just run`.
+[group('run')]
+[parallel]
+run: run-backend run-frontend
 
 # Run the backend. Usage: `just run-backend --release`.
 [group('backend')]

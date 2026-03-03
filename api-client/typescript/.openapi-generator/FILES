@@ -40,6 +40,7 @@ models/MaxOccurs.ts
 models/Metadata.ts
 models/NDVIProcessInputs.ts
 models/NDVIProcessOutputs.ts
+models/NDVIProcessParams.ts
 models/ObjectSerializer.ts
 models/Output.ts
 models/OutputDescription.ts
@@ -52,6 +53,7 @@ models/ProcessList.ts
 models/ProcessSummary.ts
 models/QualifiedInputValue.ts
 models/Response.ts
+models/Results.ts
 models/Schema.ts
 models/StatusCode.ts
 models/StatusInfo.ts

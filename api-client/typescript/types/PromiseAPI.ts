@@ -24,6 +24,7 @@ import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson } from '../models/PointGeoJson';
@@ -35,6 +36,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
@@ -191,20 +193,20 @@ export class PromiseProcessesApi {
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdviWithHttpInfo(nDVIProcessInputs: NDVIProcessInputs, _options?: PromiseConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
+    public executeNdviWithHttpInfo(nDVIProcessParams: NDVIProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.executeNdviWithHttpInfo(nDVIProcessInputs, observableOptions);
+        const result = this.api.executeNdviWithHttpInfo(nDVIProcessParams, observableOptions);
         return result.toPromise();
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdvi(nDVIProcessInputs: NDVIProcessInputs, _options?: PromiseConfigurationOptions): Promise<NDVIProcessOutputs> {
+    public executeNdvi(nDVIProcessParams: NDVIProcessParams, _options?: PromiseConfigurationOptions): Promise<NDVIProcessOutputs> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.executeNdvi(nDVIProcessInputs, observableOptions);
+        const result = this.api.executeNdvi(nDVIProcessParams, observableOptions);
         return result.toPromise();
     }
 
@@ -214,7 +216,7 @@ export class PromiseProcessesApi {
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executionWithHttpInfo(processID, execute, observableOptions);
         return result.toPromise();
@@ -226,7 +228,7 @@ export class PromiseProcessesApi {
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.execution(processID, execute, observableOptions);
         return result.toPromise();
@@ -235,20 +237,24 @@ export class PromiseProcessesApi {
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobsWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<JobList>> {
+    public jobsWithHttpInfo(limit?: number, offset?: number, _options?: PromiseConfigurationOptions): Promise<HttpInfo<JobList>> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.jobsWithHttpInfo(observableOptions);
+        const result = this.api.jobsWithHttpInfo(limit, offset, observableOptions);
         return result.toPromise();
     }
 
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobs(_options?: PromiseConfigurationOptions): Promise<JobList> {
+    public jobs(limit?: number, offset?: number, _options?: PromiseConfigurationOptions): Promise<JobList> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.jobs(observableOptions);
+        const result = this.api.jobs(limit, offset, observableOptions);
         return result.toPromise();
     }
 
@@ -299,7 +305,7 @@ export class PromiseProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public resultsWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public resultsWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.resultsWithHttpInfo(jobId, observableOptions);
         return result.toPromise();
@@ -310,7 +316,7 @@ export class PromiseProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public results(jobId: string, _options?: PromiseConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public results(jobId: string, _options?: PromiseConfigurationOptions): Promise<Results> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.results(jobId, observableOptions);
         return result.toPromise();
@@ -358,20 +364,42 @@ export class PromiseUserApi {
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandlerWithHttpInfo(authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<HttpInfo<UserSession>> {
+    public authHandlerWithHttpInfo(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<HttpInfo<UserSession>> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.authHandlerWithHttpInfo(authCodeResponse, observableOptions);
+        const result = this.api.authHandlerWithHttpInfo(redirectUri, authCodeResponse, observableOptions);
         return result.toPromise();
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandler(authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<UserSession> {
+    public authHandler(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<UserSession> {
         const observableOptions = wrapOptions(_options);
-        const result = this.api.authHandler(authCodeResponse, observableOptions);
+        const result = this.api.authHandler(redirectUri, authCodeResponse, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandlerWithHttpInfo(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<string>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.authRequestUrlHandlerWithHttpInfo(redirectUri, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandler(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<string> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.authRequestUrlHandler(redirectUri, observableOptions);
         return result.toPromise();
     }
 

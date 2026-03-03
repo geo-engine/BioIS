@@ -2,9 +2,26 @@
 //! OpenAPI docs for processes.
 //! The functions are placeholders only.
 
+use std::collections::HashMap;
+
 use crate::processes::ndvi::{NDVIProcessInputs, NDVIProcessOutputs};
 use axum::Json;
-use utoipa::OpenApi;
+use ogcapi::types::processes::Response;
+use serde::Deserialize;
+use utoipa::{OpenApi, ToSchema};
+
+/// Process execution
+#[allow(unused, reason = "Placeholder for spec only")]
+// TODO: macro for generating this from the process definition
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct NDVIProcessParams {
+    pub inputs: NDVIProcessInputs,
+    #[serde(default)]
+    #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
+    pub outputs: HashMap<String, ()>,
+    #[serde(default)]
+    pub response: Response,
+}
 
 #[allow(unused, reason = "Placeholder for spec only")]
 #[utoipa::path(
@@ -13,7 +30,7 @@ use utoipa::OpenApi;
     tag = "Processes",
     responses((status = OK, body = NDVIProcessOutputs))
 )]
-fn execute_ndvi(Json(_input): Json<NDVIProcessInputs>) {}
+fn execute_ndvi(Json(_input): Json<NDVIProcessParams>) {}
 
 /// OpenAPI extension to include process endpoints in the generated documentation
 #[allow(unused, reason = "Placeholder for spec only")]
