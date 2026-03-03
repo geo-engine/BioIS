@@ -2,6 +2,11 @@
   width: 100%;
 }
 
+th.center,
+td.center {
+  text-align: center;
+}
+
 .no-data-row {
   text-align: center;
   font-style: italic;
@@ -21,5 +26,24 @@ mat-icon {
 
   &.success {
     color: var(--mat-sys-primary);
+  }
+
+  &.info {
+    color: var(--mat-sys-primary);
+    margin-left: 0.25em;
+  }
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+
+  button {
+    flex: 0;
+    margin-left: 0.25rem;
+  }
+
+  mat-paginator {
+    flex: 1;
   }
 }

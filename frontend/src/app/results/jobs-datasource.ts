@@ -29,13 +29,8 @@ export class JobsDataSource extends DataSource<StatusInfo> {
       throw Error('Please set the paginator on the data source before connecting.');
     }
 
-    const initialPageEvent = new PageEvent();
-    initialPageEvent.length = this.paginator.length;
-    initialPageEvent.pageIndex = this.paginator.pageIndex;
-    initialPageEvent.pageSize = this.paginator.pageSize;
-
     return this.paginator.page.pipe(
-      startWith(initialPageEvent),
+      startWith(currentPageAsEvent(this.paginator)),
       switchMap((pageEvent) =>
         this.queryDataPage(pageEvent.pageIndex * pageEvent.pageSize, pageEvent.pageSize),
       ),
@@ -62,4 +57,17 @@ export class JobsDataSource extends DataSource<StatusInfo> {
 
     return jobs;
   }
+}
+
+/**
+ * Converts the current page of the paginator into a PageEvent, which can be emitted to trigger a reload of the current page.
+ * @param paginator
+ * @returns
+ */
+export function currentPageAsEvent(paginator: MatPaginator): PageEvent {
+  const pageEvent = new PageEvent();
+  pageEvent.pageIndex = paginator.pageIndex;
+  pageEvent.pageSize = paginator.pageSize;
+  pageEvent.length = paginator.length;
+  return pageEvent;
 }

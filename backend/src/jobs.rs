@@ -117,6 +117,7 @@ impl ogcapi::drivers::JobHandler for JobHandler {
 
         let query = model::StatusInfo::query()
             .filter(jobs::user_id.eq(user.id))
+            .order(jobs::updated.desc())
             .offset(offset as i64)
             .limit(limit as i64);
 

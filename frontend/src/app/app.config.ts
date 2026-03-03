@@ -5,6 +5,7 @@ import { MAT_CARD_CONFIG } from '@angular/material/card';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { PreventDefaultOnSubmitEventPlugin } from './util/prevent-default';
 import { EVENT_MANAGER_PLUGINS } from '@angular/platform-browser';
+import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,6 +17,13 @@ export const appConfig: ApplicationConfig = {
       provide: EVENT_MANAGER_PLUGINS,
       useClass: PreventDefaultOnSubmitEventPlugin,
       multi: true,
+    },
+    {
+      provide: DATE_PIPE_DEFAULT_OPTIONS,
+      useValue: {
+        /* timezone: 'CET' */
+        dateFormat: "dd.MM.yyyy 'at' H:mm",
+      },
     },
   ],
 };

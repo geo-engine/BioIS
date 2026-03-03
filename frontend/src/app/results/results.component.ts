@@ -1,5 +1,5 @@
 import {
-  AfterViewInit,
+  afterRenderEffect,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -10,7 +10,7 @@ import {
 import { MatTableModule, MatTable } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
-import { JobsDataSource as JobsDataSource } from './jobs-datasource';
+import { currentPageAsEvent, JobsDataSource as JobsDataSource } from './jobs-datasource';
 import { UserService } from '../user.service';
 import { StatusCode, StatusInfo } from '@geoengine/biois';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -19,6 +19,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { MatAnchor, MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-results',
@@ -27,6 +28,7 @@ import { RouterLink } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
+    MatButtonModule,
     MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,
@@ -35,9 +37,10 @@ import { RouterLink } from '@angular/router';
     MatTooltipModule,
     RouterLink,
     ScrollingModule,
+    MatAnchor,
   ],
 })
-export class ResultsComponent implements AfterViewInit {
+export class ResultsComponent {
   readonly userService = inject(UserService);
   readonly paginator = viewChild.required(MatPaginator);
   readonly sort = viewChild.required(MatSort);
@@ -49,21 +52,22 @@ export class ResultsComponent implements AfterViewInit {
   readonly dataSource = new JobsDataSource(this.userService.apiConfiguration());
 
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
-  readonly displayedColumns = ['jobID', 'processID', 'status', 'message', 'updated'];
+  readonly displayedColumns = ['updated', 'jobID', 'processID', 'status', 'message'];
 
   readonly pageSize = 20; // TODO: get from server settings
 
-  readonly trackByFn: TrackByFunction<StatusInfo> = (_index, item) => item.jobID;
+  constructor() {
+    afterRenderEffect(() => {
+      const table = this.table();
 
-  ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator();
-    this.table().dataSource = this.dataSource;
+      if (table.dataSource) return;
 
-    setTimeout(() => {
-      // triggers change detection to update the table with the new data source
-      this.changeDetector.markForCheck();
+      this.dataSource.paginator = this.paginator();
+      table.dataSource = this.dataSource;
     });
   }
+
+  readonly trackByFn: TrackByFunction<StatusInfo> = (_index, item) => item.jobID;
 
   updatedTooltip(start: string | null, end: string | null): string {
     if (!start) {
@@ -73,5 +77,9 @@ export class ResultsComponent implements AfterViewInit {
       return `Started ${start}`;
     }
     return `Started ${start}; Finished: ${end}`;
+  }
+
+  refresh(): void {
+    this.paginator().page.next(currentPageAsEvent(this.paginator()));
   }
 }
