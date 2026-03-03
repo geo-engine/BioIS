@@ -18,6 +18,10 @@ const appRoutes: Routes = [
     loadComponent: () =>
       import('./create-new/create-new.component').then((m) => m.CreateNewComponent),
   },
+  {
+    path: '**',
+    redirectTo: 'results',
+  },
 ];
 
 export const routes: Routes = [
