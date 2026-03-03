@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { LogInGuard } from './log-in.guard';
+import { inject } from '@angular/core';
+import { UserService } from './user.service';
 
 const appRoutes: Routes = [
   {
@@ -17,6 +19,15 @@ const appRoutes: Routes = [
     title: 'Create new',
     loadComponent: () =>
       import('./create-new/create-new.component').then((m) => m.CreateNewComponent),
+  },
+  {
+    path: 'signout',
+    title: 'BioIS – Sign Out',
+    redirectTo: (): string => {
+      const userService = inject(UserService);
+      userService.logout();
+      return '/';
+    },
   },
   {
     path: '**',

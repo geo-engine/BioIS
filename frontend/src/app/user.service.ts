@@ -54,6 +54,12 @@ export class UserService {
     this.user.set(user);
   }
 
+  logout(): void {
+    // TODO: this is currently only used to clear the session on the frontend,
+    // but we should also invalidate the session on the backend
+    this.user.set(undefined);
+  }
+
   async oidcRedirect(): Promise<void> {
     // TODO: try out `angular-auth-oidc-client` or `oidc-client-ts` instead of implementing OIDC ourselves
 
