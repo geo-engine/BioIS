@@ -27,6 +27,7 @@ install-frontend-deps:
     @-clear
     rm -rf node_modules/@geoengine/biois \
            .angular/cache
+    npm link ../api-client/typescript
     npm ci
 
 [group('frontend')]
