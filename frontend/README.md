@@ -21,10 +21,8 @@ Subsequent runs can be started with:
     just run-frontend
 ```
 
-or
+or, to start both the backend and frontend together:
 
 ```bash
     just run
 ```
-
-to start both the backend and frontend together.
