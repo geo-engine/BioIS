@@ -17,8 +17,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../user.service';
 import { NDVIProcessOutputs, ProcessesApi } from '@geoengine/biois';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
+import { ColorBreakpoint, NumberIndicatorComponent } from './number-indicator.component';
 
 @Component({
   selector: 'app-result',
@@ -32,7 +32,7 @@ import { CommonModule } from '@angular/common';
     MatGridListModule,
     MatIconModule,
     MatMenuModule,
-    MatProgressSpinner,
+    NumberIndicatorComponent,
   ],
 })
 export class DashboardComponent {
@@ -67,6 +67,15 @@ export class DashboardComponent {
       .pipe(map(({ matches }) => (matches ? 2 : 1))),
   );
 
+  readonly ndviColorMap: Array<ColorBreakpoint> = [
+    { min: -1, max: 0, color: '#8B4513' }, // Barren ground/cities - brown
+    { min: 0, max: 0.1, color: '#A0522D' }, // Very little vegetation - saddle brown
+    { min: 0.1, max: 0.3, color: '#DAA520' }, // Sparse vegetation - goldenrod
+    { min: 0.3, max: 0.6, color: '#9ACD32' }, // Moderate vegetation - yellow-green
+    { min: 0.6, max: 0.9, color: '#32CD32' }, // Healthy crops - lime green
+    { min: 0.9, max: 1, color: '#008000' }, // Dense vegetation - dark green
+  ];
+
   constructor() {
     this.processId = toSignal(
       this.activatedRoute.params.pipe(
@@ -87,38 +96,4 @@ export class DashboardComponent {
     link.download = `result-${processId}.json`;
     link.click();
   }
-
-  ndviToPercentage(ndvi: number): number {
-    // NDVI ranges from -1 to 1, we want to convert it to a percentage from 0% (no vegetation) to 100% (full vegetation)
-    return ((ndvi + 1) / 2) * 100;
-  }
-
-  spinnerColorVariable(ndvi: number): string {
-    const cssVariableName = `--mat-progress-spinner-active-indicator-color`;
-    return `${cssVariableName}: ${valueToColor(ndvi)};`;
-  }
-}
-
-/**
- * Maps a value between -1 and 1 to a color.
- *
- * @param value a value between -1 and 1 representing the NDVI value
- */
-function valueToColor(value: number): string {
-  const classRanges = [
-    { min: -1, max: 0, color: '#8B4513' }, // Barren ground/cities - brown
-    { min: 0, max: 0.1, color: '#A0522D' }, // Very little vegetation - saddle brown
-    { min: 0.1, max: 0.3, color: '#DAA520' }, // Sparse vegetation - goldenrod
-    { min: 0.3, max: 0.6, color: '#9ACD32' }, // Moderate vegetation - yellow-green
-    { min: 0.6, max: 0.9, color: '#32CD32' }, // Healthy crops - lime green
-    { min: 0.9, max: 1, color: '#008000' }, // Dense vegetation - dark green
-  ];
-
-  for (const range of classRanges) {
-    if (value >= range.min && value <= range.max) {
-      return range.color;
-    }
-  }
-
-  return '#808080'; // Fallback gray
 }
