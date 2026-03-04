@@ -253,6 +253,14 @@ run-pod: build-backend-container build-frontend-container
         --network=pasta:-T,3030:3030 `# Map local Geo Engine at port 3030 into pod` \
         --replace -
 
+# Stop the pod in dev mode. Usage: `just down-pod`.
+[group('container')]
+[group('run')]
+down-pod:
+    cat k8s/dev-config.yaml k8s/pod.yaml | \
+    podman play kube \
+        --down -
+
 ### MISC ###
 
 # Generate the OpenAPI spec and write it to `openapi.json`.
