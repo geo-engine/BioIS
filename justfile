@@ -244,6 +244,15 @@ run-frontend-container: build-frontend-container
         -p 4200:80 \
         biois-frontend:latest
 
+# Run the container as a pod in dev mode. Usage: `just run-pod`.
+[group('container')]
+[group('run')]
+run-pod: build-backend-container build-frontend-container
+    cat k8s/dev-config.yaml k8s/pod.yaml | \
+    podman play kube \
+        --network=pasta:-T,3030:3030 `# Map local Geo Engine at port 3030 into pod` \
+        --replace -
+
 ### MISC ###
 
 # Generate the OpenAPI spec and write it to `openapi.json`.

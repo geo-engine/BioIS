@@ -38,4 +38,4 @@ The API client is a TypeScript library generated from the OpenAPI specification 
 
 ### [Frontend](frontend/README.md)
 
-_TODO: Add description of frontend component._
+The frontend is an Angular application that provides a user interface for interacting with the BioIS service.

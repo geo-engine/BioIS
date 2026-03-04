@@ -9,7 +9,9 @@
 encode zstd gzip
 
 # Proxy API requests to the backend
-handle /api/* {
+handle /api* {
+    uri strip_prefix /api
+    
     reverse_proxy biois-backend:4040
 }
 
