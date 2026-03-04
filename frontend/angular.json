@@ -11,6 +11,7 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
+          "changeDetection": "OnPush",
           "style": "scss"
         }
       },
@@ -30,7 +31,11 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.scss"],
+            "loader": {
+              ".woff": "file",
+              ".woff2": "file"
+            }
           },
           "configurations": {
             "production": {

@@ -1,0 +1,80 @@
+<form (submit)="onSubmit()">
+  <fieldset>
+    <legend>Inputs</legend>
+
+    <p>
+      @let coordinate = description.value()?.inputs?.['coordinate'];
+      <span>{{ coordinate?.title }}</span>
+      <mat-icon matTooltip="{{ coordinate?.description }}">info</mat-icon>
+    </p>
+    <div>
+      <mat-form-field>
+        <mat-label>Longitude</mat-label>
+        <input matInput type="number" [formField]="form.inputs.coordinate.value.coordinates[0]" />
+        @for (error of form.inputs.coordinate.value.coordinates[0]().errors(); track error) {
+          <mat-error>{{ error.message }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Latitude</mat-label>
+        <input matInput type="number" [formField]="form.inputs.coordinate.value.coordinates[1]" />
+        @for (error of form.inputs.coordinate.value.coordinates[1]().errors(); track error) {
+          <mat-error>{{ error.message }}</mat-error>
+        }
+      </mat-form-field>
+
+      @for (error of form.inputs.coordinate.value.coordinates().errors(); track error) {
+        <mat-error>{{ error.message }}</mat-error>
+      }
+    </div>
+
+    <p>
+      @let year = description.value()?.inputs?.['year'];
+      <span>{{ year?.title }}</span>
+      <mat-icon matTooltip="{{ year?.description }}">info</mat-icon>
+    </p>
+    <mat-form-field>
+      <mat-label>Year</mat-label>
+      <input matInput type="number" [formField]="form.inputs.year" />
+      @for (error of form.inputs.year().errors(); track error) {
+        <mat-error>{{ error.message }}</mat-error>
+      }
+    </mat-form-field>
+
+    <p>
+      @let month = description.value()?.inputs?.['month'];
+      <span>{{ month?.title }}</span>
+      <mat-icon matTooltip="{{ month?.description }}">info</mat-icon>
+    </p>
+    <mat-form-field>
+      <mat-label>Month</mat-label>
+      <mat-select [formField]="form.inputs.month">
+        @for (m of [1, 2, 3, 4, 5, 6]; track m) {
+          <mat-option [value]="m">{{ m }}</mat-option>
+        }
+      </mat-select>
+      @for (error of form.inputs.month().errors(); track error) {
+        <mat-error>{{ error.message }}</mat-error>
+      }
+    </mat-form-field>
+  </fieldset>
+
+  <fieldset>
+    <legend>Outputs</legend>
+
+    @let ndvi = description.value()?.outputs?.['ndvi'];
+    <mat-checkbox [formField]="form.outputs.ndvi">{{ ndvi?.title }}</mat-checkbox>
+    <mat-icon matTooltip="{{ ndvi?.description }}">info</mat-icon>
+
+    @let kNdvi = description.value()?.outputs?.['kNdvi'];
+    <mat-checkbox [formField]="form.outputs.kNdvi">{{ kNdvi?.title }}</mat-checkbox>
+    <mat-icon matTooltip="{{ kNdvi?.description }}">info</mat-icon>
+
+    @for (error of form.outputs().errors(); track error) {
+      <mat-error>{{ error.message }}</mat-error>
+    }
+  </fieldset>
+
+  <button mat-raised-button type="submit" [disabled]="!form().valid()">Submit</button>
+</form>

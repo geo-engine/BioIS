@@ -24,6 +24,7 @@ import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson } from '../models/PointGeoJson';
@@ -35,6 +36,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
@@ -161,10 +163,10 @@ export interface ProcessesApiDeleteRequest {
 export interface ProcessesApiExecuteNdviRequest {
     /**
      * 
-     * @type NDVIProcessInputs
+     * @type NDVIProcessParams
      * @memberof ProcessesApiexecuteNdvi
      */
-    nDVIProcessInputs: NDVIProcessInputs
+    nDVIProcessParams: NDVIProcessParams
 }
 
 export interface ProcessesApiExecutionRequest {
@@ -184,6 +186,22 @@ export interface ProcessesApiExecutionRequest {
 }
 
 export interface ProcessesApiJobsRequest {
+    /**
+     * Amount of items to return
+     * Minimum: 0
+     * Defaults to: undefined
+     * @type number
+     * @memberof ProcessesApijobs
+     */
+    limit?: number
+    /**
+     * Offset into the items list
+     * Minimum: 0
+     * Defaults to: undefined
+     * @type number
+     * @memberof ProcessesApijobs
+     */
+    offset?: number
 }
 
 export interface ProcessesApiProcessRequest {
@@ -248,14 +266,14 @@ export class ObjectProcessesApi {
      * @param param the request object
      */
     public executeNdviWithHttpInfo(param: ProcessesApiExecuteNdviRequest, options?: ConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
-        return this.api.executeNdviWithHttpInfo(param.nDVIProcessInputs,  options).toPromise();
+        return this.api.executeNdviWithHttpInfo(param.nDVIProcessParams,  options).toPromise();
     }
 
     /**
      * @param param the request object
      */
     public executeNdvi(param: ProcessesApiExecuteNdviRequest, options?: ConfigurationOptions): Promise<NDVIProcessOutputs> {
-        return this.api.executeNdvi(param.nDVIProcessInputs,  options).toPromise();
+        return this.api.executeNdvi(param.nDVIProcessParams,  options).toPromise();
     }
 
     /**
@@ -263,7 +281,7 @@ export class ObjectProcessesApi {
      * Execute a process
      * @param param the request object
      */
-    public executionWithHttpInfo(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public executionWithHttpInfo(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<HttpInfo<Results>> {
         return this.api.executionWithHttpInfo(param.processID, param.execute,  options).toPromise();
     }
 
@@ -272,7 +290,7 @@ export class ObjectProcessesApi {
      * Execute a process
      * @param param the request object
      */
-    public execution(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public execution(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<Results> {
         return this.api.execution(param.processID, param.execute,  options).toPromise();
     }
 
@@ -282,7 +300,7 @@ export class ObjectProcessesApi {
      * @param param the request object
      */
     public jobsWithHttpInfo(param: ProcessesApiJobsRequest = {}, options?: ConfigurationOptions): Promise<HttpInfo<JobList>> {
-        return this.api.jobsWithHttpInfo( options).toPromise();
+        return this.api.jobsWithHttpInfo(param.limit, param.offset,  options).toPromise();
     }
 
     /**
@@ -291,7 +309,7 @@ export class ObjectProcessesApi {
      * @param param the request object
      */
     public jobs(param: ProcessesApiJobsRequest = {}, options?: ConfigurationOptions): Promise<JobList> {
-        return this.api.jobs( options).toPromise();
+        return this.api.jobs(param.limit, param.offset,  options).toPromise();
     }
 
     /**
@@ -335,7 +353,7 @@ export class ObjectProcessesApi {
      * Retrieve the result(s) of a job
      * @param param the request object
      */
-    public resultsWithHttpInfo(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public resultsWithHttpInfo(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<HttpInfo<Results>> {
         return this.api.resultsWithHttpInfo(param.jobId,  options).toPromise();
     }
 
@@ -344,7 +362,7 @@ export class ObjectProcessesApi {
      * Retrieve the result(s) of a job
      * @param param the request object
      */
-    public results(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<{ [key: string]: InlineOrRefData; }> {
+    public results(param: ProcessesApiResultsRequest, options?: ConfigurationOptions): Promise<Results> {
         return this.api.results(param.jobId,  options).toPromise();
     }
 
@@ -373,11 +391,28 @@ import { UserApiRequestFactory, UserApiResponseProcessor} from "../apis/UserApi"
 
 export interface UserApiAuthHandlerRequest {
     /**
+     * The URI to which the identity provider should redirect after successful authentication.
+     * Defaults to: undefined
+     * @type string
+     * @memberof UserApiauthHandler
+     */
+    redirectUri: string
+    /**
      * 
      * @type AuthCodeResponse
      * @memberof UserApiauthHandler
      */
     authCodeResponse: AuthCodeResponse
+}
+
+export interface UserApiAuthRequestUrlHandlerRequest {
+    /**
+     * The URI to which the identity provider should redirect after successful authentication.
+     * Defaults to: undefined
+     * @type string
+     * @memberof UserApiauthRequestUrlHandler
+     */
+    redirectUri: string
 }
 
 export class ObjectUserApi {
@@ -391,14 +426,30 @@ export class ObjectUserApi {
      * @param param the request object
      */
     public authHandlerWithHttpInfo(param: UserApiAuthHandlerRequest, options?: ConfigurationOptions): Promise<HttpInfo<UserSession>> {
-        return this.api.authHandlerWithHttpInfo(param.authCodeResponse,  options).toPromise();
+        return this.api.authHandlerWithHttpInfo(param.redirectUri, param.authCodeResponse,  options).toPromise();
     }
 
     /**
      * @param param the request object
      */
     public authHandler(param: UserApiAuthHandlerRequest, options?: ConfigurationOptions): Promise<UserSession> {
-        return this.api.authHandler(param.authCodeResponse,  options).toPromise();
+        return this.api.authHandler(param.redirectUri, param.authCodeResponse,  options).toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param param the request object
+     */
+    public authRequestUrlHandlerWithHttpInfo(param: UserApiAuthRequestUrlHandlerRequest, options?: ConfigurationOptions): Promise<HttpInfo<string>> {
+        return this.api.authRequestUrlHandlerWithHttpInfo(param.redirectUri,  options).toPromise();
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param param the request object
+     */
+    public authRequestUrlHandler(param: UserApiAuthRequestUrlHandlerRequest, options?: ConfigurationOptions): Promise<string> {
+        return this.api.authRequestUrlHandler(param.redirectUri,  options).toPromise();
     }
 
 }

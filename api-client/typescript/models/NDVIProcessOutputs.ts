@@ -29,7 +29,7 @@ export class NDVIProcessOutputs {
         },
         {
             "name": "kNdvi",
-            "baseName": "k_ndvi",
+            "baseName": "kNdvi",
             "type": "number",
             "format": "double"
         }    ];

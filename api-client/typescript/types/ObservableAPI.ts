@@ -25,6 +25,7 @@ import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PointGeoJson } from '../models/PointGeoJson';
@@ -36,6 +37,7 @@ import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
+import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
@@ -253,12 +255,12 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdviWithHttpInfo(nDVIProcessInputs: NDVIProcessInputs, _options?: ConfigurationOptions): Observable<HttpInfo<NDVIProcessOutputs>> {
+    public executeNdviWithHttpInfo(nDVIProcessParams: NDVIProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<NDVIProcessOutputs>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
-        const requestContextPromise = this.requestFactory.executeNdvi(nDVIProcessInputs, _config);
+        const requestContextPromise = this.requestFactory.executeNdvi(nDVIProcessParams, _config);
         // build promise chain
         let middlewarePreObservable = from<RequestContext>(requestContextPromise);
         for (const middleware of _config.middleware) {
@@ -276,10 +278,10 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * @param nDVIProcessInputs
+     * @param nDVIProcessParams
      */
-    public executeNdvi(nDVIProcessInputs: NDVIProcessInputs, _options?: ConfigurationOptions): Observable<NDVIProcessOutputs> {
-        return this.executeNdviWithHttpInfo(nDVIProcessInputs, _options).pipe(map((apiResponse: HttpInfo<NDVIProcessOutputs>) => apiResponse.data));
+    public executeNdvi(nDVIProcessParams: NDVIProcessParams, _options?: ConfigurationOptions): Observable<NDVIProcessOutputs> {
+        return this.executeNdviWithHttpInfo(nDVIProcessParams, _options).pipe(map((apiResponse: HttpInfo<NDVIProcessOutputs>) => apiResponse.data));
     }
 
     /**
@@ -288,7 +290,7 @@ export class ObservableProcessesApi {
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<Results>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
         const requestContextPromise = this.requestFactory.execution(processID, execute, _config);
@@ -314,18 +316,20 @@ export class ObservableProcessesApi {
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<{ [key: string]: InlineOrRefData; }> {
-        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<{ [key: string]: InlineOrRefData; }>) => apiResponse.data));
+    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<Results> {
+        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<Results>) => apiResponse.data));
     }
 
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobsWithHttpInfo(_options?: ConfigurationOptions): Observable<HttpInfo<JobList>> {
+    public jobsWithHttpInfo(limit?: number, offset?: number, _options?: ConfigurationOptions): Observable<HttpInfo<JobList>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
-        const requestContextPromise = this.requestFactory.jobs(_config);
+        const requestContextPromise = this.requestFactory.jobs(limit, offset, _config);
         // build promise chain
         let middlewarePreObservable = from<RequestContext>(requestContextPromise);
         for (const middleware of _config.middleware) {
@@ -345,9 +349,11 @@ export class ObservableProcessesApi {
     /**
      * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
      * Retrieve the list of jobs
+     * @param [limit] Amount of items to return
+     * @param [offset] Offset into the items list
      */
-    public jobs(_options?: ConfigurationOptions): Observable<JobList> {
-        return this.jobsWithHttpInfo(_options).pipe(map((apiResponse: HttpInfo<JobList>) => apiResponse.data));
+    public jobs(limit?: number, offset?: number, _options?: ConfigurationOptions): Observable<JobList> {
+        return this.jobsWithHttpInfo(limit, offset, _options).pipe(map((apiResponse: HttpInfo<JobList>) => apiResponse.data));
     }
 
     /**
@@ -421,7 +427,7 @@ export class ObservableProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public resultsWithHttpInfo(jobId: string, _options?: ConfigurationOptions): Observable<HttpInfo<{ [key: string]: InlineOrRefData; }>> {
+    public resultsWithHttpInfo(jobId: string, _options?: ConfigurationOptions): Observable<HttpInfo<Results>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
         const requestContextPromise = this.requestFactory.results(jobId, _config);
@@ -446,8 +452,8 @@ export class ObservableProcessesApi {
      * Retrieve the result(s) of a job
      * @param jobId
      */
-    public results(jobId: string, _options?: ConfigurationOptions): Observable<{ [key: string]: InlineOrRefData; }> {
-        return this.resultsWithHttpInfo(jobId, _options).pipe(map((apiResponse: HttpInfo<{ [key: string]: InlineOrRefData; }>) => apiResponse.data));
+    public results(jobId: string, _options?: ConfigurationOptions): Observable<Results> {
+        return this.resultsWithHttpInfo(jobId, _options).pipe(map((apiResponse: HttpInfo<Results>) => apiResponse.data));
     }
 
     /**
@@ -503,12 +509,13 @@ export class ObservableUserApi {
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandlerWithHttpInfo(authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<HttpInfo<UserSession>> {
+    public authHandlerWithHttpInfo(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<HttpInfo<UserSession>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
-        const requestContextPromise = this.requestFactory.authHandler(authCodeResponse, _config);
+        const requestContextPromise = this.requestFactory.authHandler(redirectUri, authCodeResponse, _config);
         // build promise chain
         let middlewarePreObservable = from<RequestContext>(requestContextPromise);
         for (const middleware of _config.middleware) {
@@ -526,10 +533,43 @@ export class ObservableUserApi {
     }
 
     /**
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
      * @param authCodeResponse
      */
-    public authHandler(authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<UserSession> {
-        return this.authHandlerWithHttpInfo(authCodeResponse, _options).pipe(map((apiResponse: HttpInfo<UserSession>) => apiResponse.data));
+    public authHandler(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: ConfigurationOptions): Observable<UserSession> {
+        return this.authHandlerWithHttpInfo(redirectUri, authCodeResponse, _options).pipe(map((apiResponse: HttpInfo<UserSession>) => apiResponse.data));
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandlerWithHttpInfo(redirectUri: string, _options?: ConfigurationOptions): Observable<HttpInfo<string>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.authRequestUrlHandler(redirectUri, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.authRequestUrlHandlerWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+     */
+    public authRequestUrlHandler(redirectUri: string, _options?: ConfigurationOptions): Observable<string> {
+        return this.authRequestUrlHandlerWithHttpInfo(redirectUri, _options).pipe(map((apiResponse: HttpInfo<string>) => apiResponse.data));
     }
 
 }

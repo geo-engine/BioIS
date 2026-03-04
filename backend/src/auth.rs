@@ -132,7 +132,7 @@ impl<S> GeoEngineAuthMiddleware<S> {
                     "/processes/echo",
                     "/processes/ndvi",
                 ],
-                prefix: vec!["/api", "/swagger"],
+                prefix: vec!["/api", "/swagger", "/auth/"],
             },
         }
     }

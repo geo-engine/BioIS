@@ -1,0 +1,183 @@
+@use '@angular/material' as mat;
+
+$max-width: 1200px;
+
+:host {
+  display: block;
+  min-height: 100vh;
+  font-size: 16px;
+  --max-width: #{$max-width};
+
+  @include mat.toolbar-overrides(
+    (
+      standard-height: 6rem,
+      mobile-height: 4rem,
+    )
+  );
+}
+
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  mat-toolbar-row {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    justify-content: space-between;
+    padding: 0 2rem;
+
+    mat-icon {
+      height: 2.5rem;
+      width: auto;
+    }
+  }
+}
+
+.hero {
+  padding: 2rem 2rem;
+  position: relative;
+
+  color: var(--mat-sys-surface-bright);
+  text-shadow: 0 2px 4px var(--mat-sys-on-surface);
+
+  height: 30rem;
+  max-width: var(--max-width);
+  box-sizing: border-box;
+  margin: 8rem auto 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+
+  img.background {
+    border-radius: 1rem;
+    @media (max-width: $max-width) {
+      border-radius: 0rem !important;
+    }
+  }
+
+  a {
+    text-shadow: none;
+  }
+}
+
+header,
+section {
+  margin-bottom: 2rem;
+  padding: 2rem;
+}
+
+header:has(.background),
+section:has(.background) {
+  position: relative;
+
+  img.background {
+    object-fit: cover;
+    z-index: -1;
+  }
+}
+
+section {
+  .content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
+
+  a mat-icon {
+    vertical-align: top;
+  }
+
+  mat-card-content a mat-icon {
+    vertical-align: bottom;
+  }
+}
+
+section.features {
+  h2 {
+    margin-bottom: 2rem;
+  }
+
+  mat-icon {
+    height: unset;
+    width: unset;
+    border-radius: unset;
+    margin-bottom: unset;
+    margin-top: 0.2rem;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .feature-card {
+    padding: 1rem;
+    min-height: 15rem;
+
+    mat-card-content {
+      margin-top: 1rem;
+    }
+  }
+
+  @include mat.card-overrides(
+    (
+      outlined-outline-width: 0,
+    )
+  );
+}
+
+section .content.box {
+  background: var(--mat-sys-surface);
+  border-radius: var(--mat-sys-corner-medium);
+  padding: 2rem;
+}
+
+footer {
+  max-width: var(--max-width);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 3rem;
+  padding-bottom: 1rem;
+  margin: 0 auto;
+
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+
+  ul {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+    gap: 0.5rem;
+
+    li:not(:first-child)::before {
+      content: '•';
+      padding-right: 0.5rem;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    margin-top: 6rem;
+    font-size: smaller;
+  }
+}

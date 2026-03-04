@@ -4,21 +4,25 @@ use axum::{
     Json,
     extract::{Query, State},
     http::StatusCode,
-    routing::MethodRouter,
+    response::IntoResponse,
 };
-use geoengine_openapi_client::apis::{configuration::Configuration, session_api::oidc_login};
-use ogcapi::{services as ogcapi_services, types::common::Exception};
-use utoipa::openapi::{Paths, RefOr, Schema};
-use utoipa_axum::routes;
+use geoengine_openapi_client::apis::{
+    configuration::Configuration,
+    session_api::{oidc_init, oidc_login},
+};
+use ogcapi::{
+    services::{self as ogcapi_services},
+    types::common::Exception,
+};
+use serde::Deserialize;
+use url::Url;
+use utoipa::IntoParams;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
-type Routes = (
-    Vec<(String, RefOr<Schema>)>,
-    Paths,
-    MethodRouter<Configuration>,
-);
-
-pub fn routes() -> Routes {
-    routes!(health_handler, auth_handler)
+pub fn auth_router() -> OpenApiRouter<Configuration> {
+    OpenApiRouter::new()
+        .routes(routes!(auth_handler))
+        .routes(routes!(auth_request_url_handler))
 }
 
 #[utoipa::path(get, path = "/health", responses((status = NO_CONTENT)))]
@@ -26,7 +30,8 @@ pub async fn health_handler() -> StatusCode {
     StatusCode::NO_CONTENT
 }
 
-#[utoipa::path(post, path = "/auth", tag = "User",
+#[utoipa::path(post, path = "/accessTokenLogin", tag = "User",
+    params(AuthRequestUrlParams),
     responses(
         (
             status = OK,
@@ -41,16 +46,68 @@ pub async fn health_handler() -> StatusCode {
         )
     )
 )]
-pub async fn auth_handler(
+async fn auth_handler(
     State(api_config): State<Configuration>,
-    Query(redirect_uri): Query<String>,
+    Query(AuthRequestUrlParams { redirect_uri }): Query<AuthRequestUrlParams>,
     Json(auth_code_response): Json<AuthCodeResponse>,
 ) -> ogcapi_services::Result<Json<UserSession>> {
-    let user_session = oidc_login(&api_config, &redirect_uri, auth_code_response.into())
+    let user_session = oidc_login(
+        &api_config,
+        redirect_uri.as_str(),
+        auth_code_response.into(),
+    )
+    .await
+    .context("Failed to perform OIDC login")?;
+
+    Ok(Json(user_session.into()))
+}
+
+#[derive(Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct AuthRequestUrlParams {
+    /// The URI to which the identity provider should redirect after successful authentication.
+    redirect_uri: Url,
+}
+
+/// Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider's login page.
+#[utoipa::path(get, path = "/authenticationRequestUrl", tag = "User",
+    params(AuthRequestUrlParams),
+    responses(
+        (
+            status = OK,
+            description = "A URL for initiating the OIDC code flow.",
+            body = Url
+        ),
+        (
+            status = INTERNAL_SERVER_ERROR,
+            description = "A server error occurred.", 
+            body = Exception,
+            example = json!(Exception::new_from_status(500))
+        )
+    )
+)]
+async fn auth_request_url_handler(
+    State(api_config): State<Configuration>,
+    Query(AuthRequestUrlParams { redirect_uri }): Query<AuthRequestUrlParams>,
+) -> ogcapi_services::Result<UrlResponse> {
+    let auth_code_flow_request_url = oidc_init(&api_config, redirect_uri.as_str())
         .await
         .context("Failed to perform OIDC login")?;
 
-    Ok(Json(user_session.into()))
+    let auth_code_flow_request_url: Url = auth_code_flow_request_url
+        .url
+        .parse()
+        .context("Failed to parse OIDC authentication request URL")?;
+
+    Ok(UrlResponse(auth_code_flow_request_url))
+}
+
+struct UrlResponse(Url);
+
+impl IntoResponse for UrlResponse {
+    fn into_response(self) -> axum::response::Response {
+        String::from(self.0).into_response()
+    }
 }
 
 #[cfg(test)]
@@ -114,7 +171,14 @@ mod tests {
         };
 
         // call handler
-        let res = auth_handler(State(api_config), Query(redirect), Json(auth_code_response)).await;
+        let res = auth_handler(
+            State(api_config),
+            Query(AuthRequestUrlParams {
+                redirect_uri: Url::parse(&redirect).unwrap(),
+            }),
+            Json(auth_code_response),
+        )
+        .await;
 
         assert!(res.is_ok(), "expected Ok(UserSession) from auth_handler");
     }
