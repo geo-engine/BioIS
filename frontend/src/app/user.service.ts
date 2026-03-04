@@ -75,7 +75,7 @@ export class UserService {
       accessToken: 'Bearer ' + this.user()?.id /* TODO: handle missing/expired token */,
     };
     const config = createConfiguration({
-      baseServer: new ServerConfiguration('http://localhost:4040', {}),
+      baseServer: new ServerConfiguration('/api', {}),
       // authMethods: authMethods as AuthMethodsConfiguration,
       authMethods: {
         default: {
@@ -105,7 +105,7 @@ function oidcRedirectUri(): string {
 
 function configuration(/*options: { authMethods?: OAuth2Configuration } = {}*/): Configuration {
   return createConfiguration({
-    baseServer: new ServerConfiguration('http://localhost:4040', {}),
+    baseServer: new ServerConfiguration('/api', {}),
     // ...options,
   });
 }
