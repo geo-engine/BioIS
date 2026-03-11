@@ -12,7 +12,7 @@ RUN npm ci --silent
 
 WORKDIR /app/api-client/typescript
 COPY api-client/typescript .
-RUN npm ci --silent
+RUN npm install --silent
 
 # 1.2 Copy source and build
 WORKDIR /app/frontend

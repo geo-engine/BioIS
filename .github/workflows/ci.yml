@@ -227,3 +227,21 @@ jobs:
               uses: coverallsapp/github-action@v2
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
+    test-containers:
+        name: Container Builds
+
+        runs-on: ubuntu-24.04
+
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - uses: extractions/setup-just@v3
+            - name: Build backend container
+              run: just build-backend-container
+            - name: Build frontend container
+              run: just build-frontend-container
+                
+                
