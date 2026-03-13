@@ -26,7 +26,7 @@ COPY \
 RUN npm run build --silent
 
 # 2. Final image: Caddy to serve static files and reverse-proxy API
-FROM caddy:2-alpine AS runner
+FROM docker.io/caddy:2-alpine AS runner
 
 # Copy built site into caddy's web root
 COPY --from=builder /app/frontend/dist/BioIS/browser /usr/share/caddy

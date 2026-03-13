@@ -61,7 +61,7 @@ spec:
         - secretRef:
             name: biois-postgres-secret
     - name: postgres
-      image: postgres:18-alpine
+      image: docker.io/postgres:18-alpine
       # ports:
       #   - containerPort: 5432
       #     hostPort: 5432
