@@ -13,6 +13,7 @@ COPY \
     rust-toolchain.toml \
     ./
 # create dummy src to allow caching of cargo registry build step
+# This is a best practice so that code changes don't invalidate the entire cargo build cache
 RUN mkdir src && printf "fn main() { println!(\"cargo build cache\"); }\n" > src/main.rs
 RUN cargo build --release
 RUN rm -rf src
