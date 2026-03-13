@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: biois-config
+data:
+  # When running as a single Pod, Postgres is reachable on localhost
+  POSTGRES_HOST: "127.0.0.1"
+  POSTGRES_PORT: "5432"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: biois-postgres-secret
+type: Opaque
+stringData:
+  POSTGRES_USER: "geoengine"
+  POSTGRES_PASSWORD: "geoengine"
+  POSTGRES_DB: "biois"

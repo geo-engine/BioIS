@@ -64,6 +64,26 @@ build-frontend:
     npm ci
     npm run build
 
+# Build the frontend container. Usage: `just build-frontend-container`.
+[group('build')]
+[group('container')]
+build-frontend-container:
+    @-clear
+    podman build \
+        -f frontend/Dockerfile \
+        -t biois-frontend:latest \
+        .
+
+# Build the frontend container. Usage: `just build-frontend-container`.
+[group('build')]
+[group('container')]
+build-backend-container:
+    @-clear
+    podman build \
+        -f backend/Dockerfile \
+        -t biois-backend:latest \
+        backend
+
 ### LINT ###
 
 [group('api-client')]
@@ -203,6 +223,43 @@ run-backend mode="":
 run-frontend:
     @-clear
     npm run ng serve
+
+# Run the backend container in dev mode. Usage: `just run-backend-container`.
+[group('container')]
+[group('run')]
+run-backend-container: build-backend-container
+    podman run --rm --replace \
+        --name biois-backend-dev \
+        --network host \
+        -p 4040:4040 \
+        -v $(pwd)/backend/Settings.toml:/usr/local/bin/Settings.toml \
+        biois-backend:latest
+
+# Run the frontend container in dev mode. Usage: `just run-frontend-container`.
+[group('container')]
+[group('run')]
+run-frontend-container: build-frontend-container
+    podman run --rm --replace \
+        --name biois-frontend-dev \
+        -p 4200:80 \
+        biois-frontend:latest
+
+# Run the container as a pod in dev mode. Usage: `just run-pod`.
+[group('container')]
+[group('run')]
+run-pod: build-backend-container build-frontend-container
+    cat k8s/dev-config.yaml k8s/pod.yaml | \
+    podman play kube \
+        --network=pasta:-T,3030:3030 `# Map local Geo Engine at port 3030 into pod` \
+        --replace -
+
+# Stop the pod in dev mode. Usage: `just down-pod`.
+[group('container')]
+[group('run')]
+down-pod:
+    cat k8s/dev-config.yaml k8s/pod.yaml | \
+    podman play kube \
+        --down -
 
 ### MISC ###
 

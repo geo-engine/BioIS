@@ -1,0 +1,65 @@
+name: Create containers
+
+on:
+  # run every night
+  schedule:
+    - cron: "0 22 * * *"
+
+  # schedule manually
+  workflow_dispatch:
+    inputs:
+      # On workflow dispatch, `branch` is selected by default
+      # You can access it in `github.ref_name`
+
+      tag_name:
+        description: "Tag name for the container"
+        required: true
+        default: "nightly"
+
+      container_repository_branch:
+        description: "Branch of the container repository"
+        required: true
+        default: "main"
+
+jobs:
+    build-and-push-containers:
+        name: Build and push container images to Quay
+        if: github.event_name != 'schedule' || github.repository_owner == 'geo-engine'
+        
+        runs-on: ubuntu-24.04
+
+        permissions:
+            contents: read
+
+        env:
+            TAG_NAME: nightly
+            BACKEND_CONTAINER_NAME: biois-backend
+            FRONTEND_CONTAINER_NAME: biois-frontend
+
+        steps:
+            - name: Modify TAG_NAME if on `tag_name` is set on `workflow_dispatch`
+              if: github.event.inputs.tag_name != ''
+              run: |
+                echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Login to quay.io
+              run: podman login -u="geoengine+bot" -p="${{secrets.QUAY_IO_TOKEN}}" quay.io
+
+            - name: Build containers
+              run: |
+                just build-backend-container
+                just build-frontend-container
+
+            - name: Push image to quay.io
+              run: |
+                podman push ${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}}
+                podman push ${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}}
+      
+            - name: Push nightly with date
+              if: env.TAG_NAME == 'nightly'
+              run: |
+                podman push ${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}}-$(date +'%Y-%m-%d')
+                podman push ${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}}-$(date +'%Y-%m-%d')
