@@ -135,7 +135,12 @@ jobs:
             - name: Start PostgreSQL
               run: |
                 service postgresql start
-                psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
+                sudo -u postgres psql << EOF
+                  \set AUTOCOMMIT on
+                  CREATE DATABASE biois OWNER geoengine;
+                  \c biois
+                  CREATE EXTENSION postgis;
+                EOF
             - name: setup rust build cache
               uses: Swatinem/rust-cache@v2
               with:

@@ -375,6 +375,23 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn process_summary_has_expected_inputs_and_outputs() {
         let pool = mock_db_pool().await;
+
+        // create schema / table and insert a test site
+        {
+            let mut conn = pool.get().await.unwrap();
+            conn.batch_execute(&indoc::formatdoc! {"
+            CREATE SCHEMA IF NOT EXISTS \"Natura2000\";
+            CREATE TABLE IF NOT EXISTS \"Natura2000\".naturasite_polygon (
+                sitecode TEXT,
+                sitename TEXT,
+                geom geometry
+            );
+            "
+            })
+            .await
+            .unwrap();
+        }
+
         let p = HabitatDistanceProcess::new(pool).await.unwrap();
         let process = p.process().expect("to produce process description");
 
