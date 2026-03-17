@@ -5,11 +5,11 @@ use crate::{
     db::setup_db,
     handler,
     jobs::JobHandler,
-    processes::{NDVIProcess, ProcessesOpenApiSpec},
+    processes::{HabitatDistanceProcess, NDVIProcess, ProcessesOpenApiSpec},
     state::spawn_with_user,
 };
 use ogcapi::{
-    processes::echo::Echo,
+    processes::{Processor, echo::Echo},
     services::{self as ogcapi_services},
 };
 use std::mem;
@@ -32,6 +32,9 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .get_openapi_mut()
         .merge(ProcessesOpenApiSpec::openapi());
 
+    let mut processors: Vec<Box<dyn Processor>> = vec![Box::new(Echo), Box::new(NDVIProcess)];
+    add_habitat_distance_process(&mut processors, db_pool.clone()).await;
+
     let drivers = ogcapi_services::Drivers {
         jobs: Box::new(JobHandler::new(db_pool).await?),
         collections: Box::new(NoCollectionTransactions),
@@ -39,10 +42,16 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
 
     let ogcapi_state = ogcapi_services::AppState::new(drivers)
         .await
-        .processors(vec![Box::new(Echo), Box::new(NDVIProcess)])
+        .processors(processors)
         .with_spawn_fn(spawn_with_user);
 
-    let mut service = ogcapi_services::Service::try_new(&(&CONFIG.server).into(), ogcapi_state)
+    let mut server_cfg: ogcapi_services::Config = (&CONFIG.server).into();
+    if cfg!(test) {
+        // Use ephemeral port in tests to avoid "address already in use" when creating the service
+        server_cfg.port = 0;
+    }
+
+    let mut service = ogcapi_services::Service::try_new(&server_cfg, ogcapi_state)
         .await?
         .processes_api();
 
@@ -71,4 +80,24 @@ fn add_openapi_info(openapi: &mut OpenApi) {
         // .terms_of_service(None) // TODO: add link to ToS
         .license(None) // TODO: add link to license
         .build();
+}
+
+async fn add_habitat_distance_process(
+    processors: &mut Vec<Box<dyn Processor>>,
+    db_pool: crate::db::DbPool,
+) {
+    match HabitatDistanceProcess::new(db_pool).await {
+        Ok(habitat_distance_process) => {
+            tracing::info!(
+                "Successfully initialized HabitatDistanceProcess, adding it to the list of available processes."
+            );
+            processors.push(Box::new(habitat_distance_process));
+        }
+        Err(err) => {
+            tracing::warn!(
+                "Failed to initialize HabitatDistanceProcess, skipping it: {:#}",
+                err
+            );
+        }
+    }
 }

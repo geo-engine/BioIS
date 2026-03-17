@@ -4,7 +4,10 @@
 
 use std::collections::HashMap;
 
-use crate::processes::ndvi::{NDVIProcessInputs, NDVIProcessOutputs};
+use crate::processes::{
+    habitat_distance::{HabitatDistanceProcessInputs, HabitatDistanceProcessOutputs},
+    ndvi::{NDVIProcessInputs, NDVIProcessOutputs},
+};
 use axum::Json;
 use ogcapi::types::processes::Response;
 use serde::Deserialize;
@@ -32,10 +35,32 @@ pub struct NDVIProcessParams {
 )]
 fn execute_ndvi(Json(_input): Json<NDVIProcessParams>) {}
 
+/// Process execution
+#[allow(unused, reason = "Placeholder for spec only")]
+// TODO: macro for generating this from the process definition
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct HabitatDistanceProcessParams {
+    pub inputs: HabitatDistanceProcessInputs,
+    #[serde(default)]
+    #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
+    pub outputs: HashMap<String, ()>,
+    #[serde(default)]
+    pub response: Response,
+}
+
+#[allow(unused, reason = "Placeholder for spec only")]
+#[utoipa::path(
+    post,
+    path = "/processes/habitatDistance/execution",
+    tag = "Processes",
+    responses((status = OK, body = HabitatDistanceProcessOutputs))
+)]
+fn execute_habitat_distance(Json(_input): Json<HabitatDistanceProcessParams>) {}
+
 /// OpenAPI extension to include process endpoints in the generated documentation
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(OpenApi)]
-#[openapi(paths(execute_ndvi))]
+#[openapi(paths(execute_ndvi, execute_habitat_distance))]
 pub struct ProcessesOpenApiSpec;
 
 #[cfg(test)]

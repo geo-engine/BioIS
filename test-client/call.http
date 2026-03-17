@@ -170,3 +170,33 @@ Authorization: Bearer {{INVALID}}
 Content-Type: application/json
 
 ###
+
+GET http://localhost:4040/processes/habitatDistance
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+
+###
+
+POST http://localhost:4040/processes/habitatDistance/execution
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "inputs": {
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [8.46, 50.49]
+            },
+            "mediaType": "application/geo+json"
+        }
+    },
+    "response": "document"
+}
+
+###
+
+GET http://localhost:4040/jobs/{{process.response.body.jobID}}
+Authorization: Bearer {{anonymousSession.response.body.$.id}}
+Content-Type: application/json
+
+###

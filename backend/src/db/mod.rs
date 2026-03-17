@@ -45,7 +45,9 @@ pub async fn setup_db(config: &crate::config::Database) -> Result<DbPool> {
     let db_pool_builder = if cfg!(test) {
         db_pool_builder
             .max_size(1) // Use a single connection for tests
-            .connection_customizer(Box::new(TestCustomizer))
+            .connection_customizer(Box::new(TestCustomizer {
+                schema: config.schema.clone(),
+            }))
     } else {
         db_pool_builder
             .max_size(8) // TODO: investigate a good size
@@ -107,7 +109,7 @@ impl CustomizeConnection<AsyncPgConnection, PoolError> for SchemaSettingConnecti
     ) -> Pin<Box<dyn Future<Output = Result<(), PoolError>> + Send + 'a>> {
         let schema = self.schema.clone();
         Box::pin(async move {
-            conn.batch_execute(&format!("SET search_path TO {schema};"))
+            conn.batch_execute(&format!("SET search_path TO {schema},public;"))
                 .await
                 .map_err(PoolError::QueryError)
         })
@@ -120,14 +122,21 @@ impl CustomizeConnection<AsyncPgConnection, PoolError> for SchemaSettingConnecti
 ///
 /// Built after [`diesel::r2d2::TestCustomizer`]
 #[derive(Debug)]
-struct TestCustomizer;
+struct TestCustomizer {
+    schema: String,
+}
 
 impl CustomizeConnection<AsyncPgConnection, PoolError> for TestCustomizer {
     fn on_acquire<'a>(
         &'a self,
         conn: &'a mut AsyncPgConnection,
     ) -> Pin<Box<dyn Future<Output = Result<(), PoolError>> + Send + 'a>> {
+        let schema = self.schema.clone();
         Box::pin(async move {
+            conn.batch_execute(&format!("SET search_path TO {schema},public;"))
+                .await
+                .map_err(PoolError::QueryError)?;
+
             conn.begin_test_transaction()
                 .await
                 .map_err(PoolError::QueryError)
