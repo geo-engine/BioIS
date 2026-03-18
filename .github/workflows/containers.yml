@@ -57,11 +57,11 @@ jobs:
 
             - name: Push image to quay.io
               run: |
-                podman push ${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}}
-                podman push ${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}}
+                podman push ${{env.BACKEND_CONTAINER_NAME}}:latest quay.io/geoengine/${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}}
+                podman push ${{env.FRONTEND_CONTAINER_NAME}}:latest quay.io/geoengine/${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}}
       
             - name: Push nightly with date
               if: env.TAG_NAME == 'nightly'
               run: |
-                podman push ${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}}-$(date +'%Y-%m-%d')
-                podman push ${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}} quay.io/geoengine/${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}}-$(date +'%Y-%m-%d')
+                podman push ${{env.BACKEND_CONTAINER_NAME}}:latest quay.io/geoengine/${{env.BACKEND_CONTAINER_NAME}}:${{env.TAG_NAME}}-$(date +'%Y-%m-%d')
+                podman push ${{env.FRONTEND_CONTAINER_NAME}}:latest quay.io/geoengine/${{env.FRONTEND_CONTAINER_NAME}}:${{env.TAG_NAME}}-$(date +'%Y-%m-%d')
