@@ -35,6 +35,8 @@ FROM gcr.io/distroless/cc-debian13:nonroot
 COPY --from=builder /usr/src/biois/target/release/biois /usr/local/bin/biois
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+WORKDIR /biois
+
 USER nonroot
 EXPOSE 4040
 ENTRYPOINT ["/usr/local/bin/biois"]
