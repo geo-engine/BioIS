@@ -37,6 +37,8 @@ jobs:
             FRONTEND_CONTAINER_NAME: biois-frontend
 
         steps:
+            - uses: extractions/setup-just@v3
+          
             - name: Modify TAG_NAME if on `tag_name` is set on `workflow_dispatch`
               if: github.event.inputs.tag_name != ''
               run: |
