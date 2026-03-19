@@ -12,7 +12,7 @@ use axum::{
     response::IntoResponse,
 };
 use futures::future::BoxFuture;
-use geoengine_openapi_client::apis::{configuration, session_api::session_handler};
+use geoengine_api_client::apis::{configuration, session_api::session_handler};
 use nom::{
     IResult, Parser,
     bytes::{complete::tag_no_case, take},
@@ -40,7 +40,7 @@ pub struct AuthCodeResponse {
     pub state: String,
 }
 
-impl From<AuthCodeResponse> for geoengine_openapi_client::models::AuthCodeResponse {
+impl From<AuthCodeResponse> for geoengine_api_client::models::AuthCodeResponse {
     fn from(value: AuthCodeResponse) -> Self {
         Self {
             code: value.code,
@@ -60,8 +60,8 @@ pub struct UserSession {
     pub valid_until: String,
 }
 
-impl From<geoengine_openapi_client::models::UserSession> for UserSession {
-    fn from(value: geoengine_openapi_client::models::UserSession) -> Self {
+impl From<geoengine_api_client::models::UserSession> for UserSession {
+    fn from(value: geoengine_api_client::models::UserSession) -> Self {
         Self {
             created: value.created,
             id: value.id,
@@ -187,7 +187,7 @@ where
                 Ok(session) => session,
                 Err(error) => {
                     let (error_msg, status_code) = match &error {
-                        geoengine_openapi_client::apis::Error::ResponseError(e) => (
+                        geoengine_api_client::apis::Error::ResponseError(e) => (
                             error_response(&error)
                                 .map(|e| e.message)
                                 .unwrap_or_default(),
@@ -248,7 +248,7 @@ mod tests {
     use axum::body::Body;
     use axum::http::Request as HttpRequest;
     use axum::response::Response;
-    use geoengine_openapi_client::apis::configuration;
+    use geoengine_api_client::apis::configuration;
     use httptest::matchers::*;
     use httptest::responders::*;
     use httptest::{Expectation, Server};

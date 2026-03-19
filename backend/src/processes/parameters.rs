@@ -1,4 +1,4 @@
-use geoengine_openapi_client::models::SpatialPartition2D;
+use geoengine_api_client::models::SpatialPartition2D;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -13,7 +13,7 @@ pub trait ToBbox {
 
 impl ToBbox for Coordinate {
     fn to_bbox(&self, buffer: f64) -> SpatialPartition2D {
-        use geoengine_openapi_client::models::Coordinate2D;
+        use geoengine_api_client::models::Coordinate2D;
 
         let [x, y] = self.0;
         SpatialPartition2D::new(

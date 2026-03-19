@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use geoengine_openapi_client::{
+use geoengine_api_client::{
     apis::{
         configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
@@ -340,18 +340,20 @@ async fn compute_ndvi(
             .into(),
         }
         .into(),
-    ))?;
+    ));
 
     // eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
 
-    let workflow_id = match register_workflow_handler(configuration, workflow).await {
+    let workflow_id = match register_workflow_handler(configuration, workflow.clone()).await {
         Ok(id) => id,
         Err(e) => {
+            let workflow_json = serde_json::to_string_pretty(&workflow)
+                .unwrap_or_else(|_| "<failed to serialize workflow>".to_string());
             if let Some(error) = error_response(&e) {
-                anyhow::bail!("Failed to register workflow: {error:?}");
+                anyhow::bail!("Failed to register workflow `{workflow_json}`: {error:?}");
             }
 
-            anyhow::bail!("Failed to register workflow: {e}");
+            anyhow::bail!("Failed to register workflow `{workflow_json}`: {e}");
         }
     };
 
@@ -508,7 +510,7 @@ fn k_ndvi_source() -> RasterOperator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use geoengine_openapi_client::apis::configuration::Configuration as ApiConfiguration;
+    use geoengine_api_client::apis::configuration::Configuration as ApiConfiguration;
     use httptest::matchers::*;
     use httptest::responders::*;
     use httptest::{Expectation, Server};

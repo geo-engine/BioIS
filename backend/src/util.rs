@@ -1,38 +1,25 @@
-use anyhow::{Context, Result};
-use geoengine_openapi_client::models::{
-    TypedOperatorOperator, VectorOperator, Workflow, workflow::Type as WorkflowType,
+use geoengine_api_client::models::{
+    TypedOperator, TypedVectorOperator, VectorOperator, Workflow,
+    typed_vector_operator::Type as VectorType,
 };
 use std::ops::Deref;
 use tracing::error;
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_workflow(
-    operator: &VectorOperator,
-) -> Result<geoengine_openapi_client::models::Workflow> {
-    let serde_json::Value::Object(mut json_object) = serde_json::to_value(operator)? else {
-        anyhow::bail!("expected operator to serialize `TypedOperator` to a JSON object");
-    };
-    let serde_json::Value::String(r#type) =
-        json_object.remove("type").context("missing `type` field")?
-    else {
-        anyhow::bail!("`type` field is not a string");
-    };
-
-    Ok(Workflow {
-        operator: Box::new(TypedOperatorOperator {
-            params: json_object.remove("params"),
-            sources: json_object.remove("sources"),
-            r#type,
-        }),
-        r#type: WorkflowType::Vector,
-    })
+pub fn to_api_workflow(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
+    Workflow::TypedOperator(Box::new(TypedOperator::TypedVectorOperator(Box::new(
+        TypedVectorOperator {
+            operator: Box::new(operator.clone()),
+            r#type: VectorType::Vector,
+        },
+    ))))
 }
 
 pub fn error_response<T>(
-    error: &geoengine_openapi_client::apis::Error<T>,
-) -> Option<geoengine_openapi_client::models::ErrorResponse> {
-    use geoengine_openapi_client::apis::Error as ApiError;
-    use geoengine_openapi_client::models::ErrorResponse as ApiErrorResponse;
+    error: &geoengine_api_client::apis::Error<T>,
+) -> Option<geoengine_api_client::models::ErrorResponse> {
+    use geoengine_api_client::apis::Error as ApiError;
+    use geoengine_api_client::models::ErrorResponse as ApiErrorResponse;
 
     match error {
         ApiError::Reqwest(_) | ApiError::Serde(_) | ApiError::Io(_) => None,
@@ -105,7 +92,7 @@ impl<T> From<T> for Secret<T> {
 mod tests {
 
     use super::*;
-    use geoengine_openapi_client::models::{
+    use geoengine_api_client::models::{
         ColumnNames, Default as ColumnNamesDefault, FeatureAggregationMethod, GdalSource,
         GdalSourceParameters, RasterOperator, RasterVectorJoin, RasterVectorJoinParameters,
         SingleVectorMultipleRasterSources, TemporalAggregationMethod, VectorOperator,
@@ -146,7 +133,7 @@ mod tests {
             .into(),
         );
 
-        let api_workflow = to_api_workflow(&raster_vector_join).unwrap();
+        let api_workflow = to_api_workflow(&raster_vector_join);
 
         assert_eq!(
             serde_json::to_string_pretty(&api_workflow).unwrap(),
@@ -168,7 +155,7 @@ mod tests {
                             "type": "GdalSource",
                             "params": {
                                 "data": "ndvi"
-                            }
+                            },
                         }],
                         "vector": {
                             "type": "MockPointSource",
@@ -177,7 +164,7 @@ mod tests {
                                 "spatialBounds": {
                                     "type": "derive"
                                 }
-                            }
+                            },
                         }
                     }
                 }
