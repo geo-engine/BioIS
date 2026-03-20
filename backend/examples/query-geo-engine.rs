@@ -6,8 +6,8 @@ use geoengine_openapi_client::{
         session_api::anonymous_handler, workflows_api::register_workflow_handler,
     },
     models::{
-        Coordinate2D, SpatialPartition2D, TypedOperatorOperator, WfsRequest, WfsService, Workflow,
-        workflow::Type,
+        Coordinate2D, LegacyTypedOperator, LegacyTypedOperatorOperator, SpatialPartition2D,
+        WfsRequest, WfsService, Workflow, legacy_typed_operator::Type,
     },
 };
 
@@ -22,8 +22,8 @@ async fn main() {
     eprintln!("{session:#?}");
     configuration.bearer_access_token = Some(session.id.to_string());
 
-    let workflow = Workflow {
-        operator: Box::new(TypedOperatorOperator {
+    let workflow = Workflow::LegacyTypedOperator(Box::new(LegacyTypedOperator {
+        operator: Box::new(LegacyTypedOperatorOperator {
             params: Some(serde_json::json!({
                 "data": "ne_10m_ports"
             })),
@@ -31,7 +31,7 @@ async fn main() {
             r#type: "OgrSource".into(),
         }),
         r#type: Type::Vector,
-    };
+    }));
 
     let workflow_id = register_workflow_handler(&configuration, workflow)
         .await

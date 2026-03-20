@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use geoengine_openapi_client::models::{
-    TypedOperatorOperator, VectorOperator, Workflow, workflow::Type as WorkflowType,
+    LegacyTypedOperator, LegacyTypedOperatorOperator, VectorOperator, Workflow,
+    legacy_typed_operator::Type as WorkflowType,
 };
 use std::ops::Deref;
 use tracing::error;
@@ -18,14 +19,18 @@ pub fn to_api_workflow(
         anyhow::bail!("`type` field is not a string");
     };
 
-    Ok(Workflow {
-        operator: Box::new(TypedOperatorOperator {
-            params: json_object.remove("params"),
-            sources: json_object.remove("sources"),
-            r#type,
-        }),
-        r#type: WorkflowType::Vector,
-    })
+    Ok(Workflow::LegacyTypedOperator(
+        LegacyTypedOperator {
+            operator: LegacyTypedOperatorOperator {
+                params: json_object.remove("params"),
+                sources: json_object.remove("sources"),
+                r#type,
+            }
+            .into(),
+            r#type: WorkflowType::Vector,
+        }
+        .into(),
+    ))
 }
 
 pub fn error_response<T>(
