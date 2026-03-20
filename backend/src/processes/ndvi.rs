@@ -341,8 +341,6 @@ async fn compute_ndvi(
         .into(),
     ))?;
 
-    eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
-
     let workflow_id = match register_workflow_handler(configuration, workflow).await {
         Ok(id) => id,
         Err(e) => {
@@ -371,10 +369,10 @@ async fn compute_ndvi(
 
     // query the whole UTM zone 32N (EPSG:32632), as the result only contains a single coordinate, but the wfs call requires specifying a bbox
     // TODO: create a workflow that works with points of any UTM zone
-    let minx = 399960.0000000000000000;
-    let miny = 5590200.0000000000000000;
-    let maxx = 509760.0000000000000000;
-    let maxy = 5700000.0000000000000000;
+    let minx = 399_960;
+    let miny = 5_590_200;
+    let maxx = 509_760;
+    let maxy = 5_700_000;
 
     let feature_collection = wfs_handler(
         configuration,
