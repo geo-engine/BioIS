@@ -6,6 +6,9 @@
 @use '@angular/material' as mat;
 @use '../theme-colors' as themeColors;
 
+@import '@fontsource/poppins';
+@import '@fontsource/material-icons';
+
 html {
   height: 100%;
   @include mat.theme(
