@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use geoengine_openapi_client::apis::{
+use geoengine_api_client::apis::{
     configuration::Configuration,
     session_api::{oidc_init, oidc_login},
 };

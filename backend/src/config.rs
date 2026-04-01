@@ -1,5 +1,5 @@
 use crate::util::Secret;
-use geoengine_openapi_client::apis::configuration::Configuration;
+use geoengine_api_client::apis::configuration::Configuration;
 use std::{path::Path, sync::LazyLock};
 use tracing::Level;
 use tracing_subscriber::filter::Directive;
