@@ -54,12 +54,12 @@ export class CreateNewComponent {
       coordinate: {
         value: {
           type: PointGeoJsonType.Point,
-          coordinates: [0, 0],
+          coordinates: [8.77069, 50.80904],
         },
         mediaType: PointGeoJsonInputMediaType.ApplicationGeojson,
       },
       year: 2020,
-      month: 1,
+      month: 8,
     } as NDVIProcessInputs,
     outputs: {
       ndvi: true,
@@ -107,11 +107,11 @@ export class CreateNewComponent {
       return;
     });
 
-    min(schema.inputs.year, 2020, { message: 'Year must be 2014 or later.' });
-    max(schema.inputs.year, 2020, { message: 'Year must be 2014 or earlier.' });
+    min(schema.inputs.year, 2020, { message: 'Year must be 2020 or later.' });
+    max(schema.inputs.year, 2020, { message: 'Year must be 2020 or earlier.' });
 
     min(schema.inputs.month, 1, { message: 'Month must be 1 or later.' });
-    max(schema.inputs.month, 12, { message: 'Month must be 6 or earlier.' });
+    max(schema.inputs.month, 12, { message: 'Month must be 12 or earlier.' });
 
     validate(schema.outputs, (outputs) => {
       const { ndvi, kNdvi } = outputs.value();
