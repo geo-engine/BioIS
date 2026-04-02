@@ -1142,8 +1142,8 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.0.33"
-source = "git+https://github.com/geo-engine/openapi-client?branch=ndvi-stac#cad53aa2c2b5b9c61914668d854485deedd1c194"
+version = "0.0.34"
+source = "git+https://github.com/geo-engine/openapi-client?branch=ndvi-stac#70934ee13c4dd22fbd7782229e667ebb9cafacea"
 dependencies = [
  "reqwest",
  "serde",

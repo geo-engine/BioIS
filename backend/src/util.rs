@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use geoengine_openapi_client::models::{
+use geoengine_api_client::models::{
     LegacyTypedOperator, LegacyTypedOperatorOperator, VectorOperator, Workflow,
     legacy_typed_operator::Type as WorkflowType,
 };
@@ -9,7 +9,7 @@ use tracing::error;
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
 pub fn to_api_workflow(
     operator: &VectorOperator,
-) -> Result<geoengine_openapi_client::models::Workflow> {
+) -> Result<geoengine_api_client::models::Workflow> {
     let serde_json::Value::Object(mut json_object) = serde_json::to_value(operator)? else {
         anyhow::bail!("expected operator to serialize `TypedOperator` to a JSON object");
     };
@@ -34,10 +34,10 @@ pub fn to_api_workflow(
 }
 
 pub fn error_response<T>(
-    error: &geoengine_openapi_client::apis::Error<T>,
-) -> Option<geoengine_openapi_client::models::ErrorResponse> {
-    use geoengine_openapi_client::apis::Error as ApiError;
-    use geoengine_openapi_client::models::ErrorResponse as ApiErrorResponse;
+    error: &geoengine_api_client::apis::Error<T>,
+) -> Option<geoengine_api_client::models::ErrorResponse> {
+    use geoengine_api_client::apis::Error as ApiError;
+    use geoengine_api_client::models::ErrorResponse as ApiErrorResponse;
 
     match error {
         ApiError::Reqwest(_) | ApiError::Serde(_) | ApiError::Io(_) => None,
@@ -110,7 +110,7 @@ impl<T> From<T> for Secret<T> {
 mod tests {
 
     use super::*;
-    use geoengine_openapi_client::models::{
+    use geoengine_api_client::models::{
         ColumnNames, Default as ColumnNamesDefault, FeatureAggregationMethod, GdalSource,
         GdalSourceParameters, RasterOperator, RasterVectorJoin, RasterVectorJoinParameters,
         SingleVectorMultipleRasterSources, TemporalAggregationMethod, VectorOperator,
@@ -173,7 +173,7 @@ mod tests {
                             "type": "GdalSource",
                             "params": {
                                 "data": "ndvi"
-                            }
+                            },
                         }],
                         "vector": {
                             "type": "MockPointSource",
@@ -182,7 +182,7 @@ mod tests {
                                 "spatialBounds": {
                                     "type": "derive"
                                 }
-                            }
+                            },
                         }
                     }
                 }

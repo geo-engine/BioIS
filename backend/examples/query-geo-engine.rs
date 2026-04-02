@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::print_stderr)] // ok for example
 
-use geoengine_openapi_client::{
+use geoengine_api_client::{
     apis::{
         configuration::Configuration, general_api::server_info_handler, ogcwfs_api::wfs_handler,
         session_api::anonymous_handler, workflows_api::register_workflow_handler,

@@ -55,12 +55,18 @@ axum = { version = "0.8", features = ["multipart"] }
 bb8 = "0.9" # wrt. `diesel-async`
 chrono = { version = "0.4", features = ["serde"] }
 config = "0.15"
-diesel = { version = "2.3", features = ["postgres", "chrono", "uuid", "r2d2", "serde_json"] }
+diesel = { version = "2.3", features = [
+    "postgres",
+    "chrono",
+    "uuid",
+    "r2d2",
+    "serde_json",
+] }
 diesel-async = { version = "0.7", features = ["migrations", "postgres", "bb8"] }
 diesel-derive-enum = { version = "3.0.0-beta.1", features = ["postgres"] }
 diesel_migrations = "2.3"
 futures = "0.3"
-geoengine-openapi-client = { package = "geoengine-api-client", git = "https://github.com/geo-engine/openapi-client", branch = "ndvi-stac" }
+geoengine-api-client = { package = "geoengine-api-client", git = "https://github.com/geo-engine/openapi-client", branch = "ndvi-stac" }
 indoc = "2.0"
 nom = "8.0"
 ogcapi = { git = "https://github.com/georust/ogcapi", branch = "openapi-fixes", default-features = false, features = [

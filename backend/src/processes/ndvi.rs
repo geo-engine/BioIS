@@ -1,23 +1,24 @@
 use anyhow::{Context, Result};
-use geoengine_openapi_client::{
+use geoengine_api_client::{
     apis::{
         configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
     },
     models::{
-        Aggregation, AggregationOneOf4, BandFilter, BandFilterParameters, BandsByNameOrIndex,
-        ColumnNames, ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
+        Aggregation, BandFilter, BandFilterParameters, BandsByNameOrIndex, ColumnNames,
+        ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
         DeriveOutRasterSpecsSource, Expression, ExpressionParameters, FeatureAggregationMethod,
-        GdalSourceParameters, GeoJson, Interpolation, InterpolationMethod, InterpolationParameters,
-        InterpolationResolution, InterpolationResolutionOneOf1, Measurement, MockPointSource,
-        MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor, RasterDataType,
-        RasterOperator, RasterStacker, RasterStackerParameters, RasterTypeConversion,
-        RasterTypeConversionParameters, RasterVectorJoin, RasterVectorJoinParameters, RenameBands,
-        RenameBandsOneOf, Reprojection, ReprojectionParameters, SingleRasterOrVectorOperator,
-        SingleRasterOrVectorSource, SingleRasterSource, SingleVectorMultipleRasterSources,
-        SpatialBoundsDerive, SpatialBoundsDeriveNone, TemporalAggregationMethod,
-        TemporalRasterAggregation, TemporalRasterAggregationParameters, TimeGranularity, TimeStep,
-        VectorOperator, WfsRequest, WfsService,
+        FirstAggregation, GdalSourceParameters, GeoJson, Interpolation, InterpolationMethod,
+        InterpolationParameters, InterpolationResolution, InterpolationResolutionOneOf1,
+        Measurement, MockPointSource, MockPointSourceParameters, MultiBandGdalSource,
+        RasterBandDescriptor, RasterDataType, RasterOperator, RasterStacker,
+        RasterStackerParameters, RasterTypeConversion, RasterTypeConversionParameters,
+        RasterVectorJoin, RasterVectorJoinParameters, RenameBands, RenameBandsOneOf, Reprojection,
+        ReprojectionParameters, SingleRasterOrVectorOperator, SingleRasterOrVectorSource,
+        SingleRasterSource, SingleVectorMultipleRasterSources, SpatialBoundsDerive,
+        SpatialBoundsDeriveNone, TemporalAggregationMethod, TemporalRasterAggregation,
+        TemporalRasterAggregationParameters, TimeGranularity, TimeStep, VectorOperator, WfsRequest,
+        WfsService,
     },
 };
 use ogcapi::{
@@ -341,14 +342,16 @@ async fn compute_ndvi(
         .into(),
     ))?;
 
-    let workflow_id = match register_workflow_handler(configuration, workflow).await {
+    let workflow_id = match register_workflow_handler(configuration, workflow.clone()).await {
         Ok(id) => id,
         Err(e) => {
+            let workflow_json = serde_json::to_string_pretty(&workflow)
+                .unwrap_or_else(|_| "<failed to serialize workflow>".to_string());
             if let Some(error) = error_response(&e) {
-                anyhow::bail!("Failed to register workflow: {error:?}");
+                anyhow::bail!("Failed to register workflow `{workflow_json}`: {error:?}");
             }
 
-            anyhow::bail!("Failed to register workflow: {e}");
+            anyhow::bail!("Failed to register workflow `{workflow_json}`: {e}");
         }
     };
 
@@ -480,8 +483,8 @@ fn ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::AggregationOneOf4(
-                    AggregationOneOf4 {
+                aggregation: Aggregation::FirstAggregation(
+                    FirstAggregation {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -511,8 +514,8 @@ fn k_ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::AggregationOneOf4(
-                    AggregationOneOf4 {
+                aggregation: Aggregation::FirstAggregation(
+                    FirstAggregation {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -585,7 +588,7 @@ fn stac_raster_source() -> RasterOperator {
                 .into(),
             }
             .into(),
-            sources: geoengine_openapi_client::models::MultipleRasterSources {
+            sources: geoengine_api_client::models::MultipleRasterSources {
                 rasters: vec![scl_source(), nir_red_source()],
             }
             .into(),
@@ -693,7 +696,7 @@ fn k_ndvi_expression() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use geoengine_openapi_client::apis::configuration::Configuration as ApiConfiguration;
+    use geoengine_api_client::apis::configuration::Configuration as ApiConfiguration;
     use httptest::matchers::*;
     use httptest::responders::*;
     use httptest::{Expectation, Server};
