@@ -10,7 +10,7 @@
     <div>
       <mat-form-field>
         <mat-label>Longitude</mat-label>
-        <input matInput type="number" [formField]="form.inputs.coordinate.value.coordinates[0]" />
+        <input matInput type="number" step="any" [formField]="form.inputs.coordinate.value.coordinates[0]" />
         @for (error of form.inputs.coordinate.value.coordinates[0]().errors(); track error) {
           <mat-error>{{ error.message }}</mat-error>
         }
@@ -18,7 +18,7 @@
 
       <mat-form-field>
         <mat-label>Latitude</mat-label>
-        <input matInput type="number" [formField]="form.inputs.coordinate.value.coordinates[1]" />
+        <input matInput type="number" step="any" [formField]="form.inputs.coordinate.value.coordinates[1]" />
         @for (error of form.inputs.coordinate.value.coordinates[1]().errors(); track error) {
           <mat-error>{{ error.message }}</mat-error>
         }
