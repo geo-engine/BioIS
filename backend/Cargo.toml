@@ -63,7 +63,7 @@ futures = "0.3"
 geoengine-api-client = "0.0.33"
 indoc = "2.0"
 nom = "8.0"
-ogcapi = { git = "https://github.com/georust/ogcapi", branch = "openapi-fixes", default-features = false, features = [
+ogcapi = { git = "https://github.com/georust/ogcapi", branch = "main", default-features = false, features = [
     "common",
     "drivers",
     "processes",
