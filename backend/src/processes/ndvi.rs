@@ -382,7 +382,7 @@ async fn compute_ndvi(
         configuration,
         &workflow_id,
         WfsRequest::GetFeature,
-        Some(&format!("{minx},{miny},{maxx},{maxy}")),
+        Some(&format!("{minx},{miny},{maxx},{maxy}")), // TODO
         None,
         None,
         None,
@@ -580,13 +580,7 @@ fn stac_raster_source() -> RasterOperator {
         RasterStacker {
             r#type: Default::default(),
             params: RasterStackerParameters {
-                rename_bands: RenameBands::RenameBandsOneOf(
-                    RenameBandsOneOf {
-                        r#type: Default::default(),
-                    }
-                    .into(),
-                )
-                .into(),
+                rename_bands: RenameBands::Default(Default::default()).into(),
             }
             .into(),
             sources: geoengine_openapi_client::models::MultipleRasterSources {
@@ -613,16 +607,15 @@ fn scl_source() -> RasterOperator {
                         params: InterpolationParameters {
                             interpolation: InterpolationMethod::NearestNeighbor,
                             output_origin_reference: None,
-                            output_resolution:
-                                InterpolationResolution::InterpolationResolutionOneOf1(
-                                    InterpolationResolutionOneOf1 {
-                                        r#type: Default::default(),
-                                        x: 2.0,
-                                        y: 2.0,
-                                    }
-                                    .into(),
-                                )
+                            output_resolution: InterpolationResolution::Fraction(
+                                Fraction {
+                                    r#type: Default::default(),
+                                    x: 2.0,
+                                    y: 2.0,
+                                }
                                 .into(),
+                            )
+                            .into(),
                         }
                         .into(),
                         sources: SingleRasterSource {
