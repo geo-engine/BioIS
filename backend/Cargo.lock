@@ -1142,8 +1142,8 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.0.34"
-source = "git+https://github.com/geo-engine/openapi-client?branch=ndvi-stac#70934ee13c4dd22fbd7782229e667ebb9cafacea"
+version = "0.0.33"
+source = "git+https://github.com/geo-engine/openapi-client?branch=openapi-enum-names#e48da0b9b1bedee707f4e73da29ab48cbc3326e1"
 dependencies = [
  "reqwest",
  "serde",
@@ -4471,7 +4471,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

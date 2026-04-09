@@ -8,17 +8,16 @@ use geoengine_api_client::{
         Aggregation, BandFilter, BandFilterParameters, BandsByNameOrIndex, ColumnNames,
         ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
         DeriveOutRasterSpecsSource, Expression, ExpressionParameters, FeatureAggregationMethod,
-        FirstAggregation, GdalSourceParameters, GeoJson, Interpolation, InterpolationMethod,
-        InterpolationParameters, InterpolationResolution, InterpolationResolutionOneOf1,
-        Measurement, MockPointSource, MockPointSourceParameters, MultiBandGdalSource,
-        RasterBandDescriptor, RasterDataType, RasterOperator, RasterStacker,
-        RasterStackerParameters, RasterTypeConversion, RasterTypeConversionParameters,
-        RasterVectorJoin, RasterVectorJoinParameters, RenameBands, RenameBandsOneOf, Reprojection,
-        ReprojectionParameters, SingleRasterOrVectorOperator, SingleRasterOrVectorSource,
-        SingleRasterSource, SingleVectorMultipleRasterSources, SpatialBoundsDerive,
-        SpatialBoundsDeriveNone, TemporalAggregationMethod, TemporalRasterAggregation,
-        TemporalRasterAggregationParameters, TimeGranularity, TimeStep, VectorOperator, WfsRequest,
-        WfsService,
+        FirstAggregation, Fraction, GdalSourceParameters, GeoJson, Interpolation,
+        InterpolationMethod, InterpolationParameters, InterpolationResolution, Measurement,
+        MockPointSource, MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor,
+        RasterDataType, RasterOperator, RasterStacker, RasterStackerParameters,
+        RasterTypeConversion, RasterTypeConversionParameters, RasterVectorJoin,
+        RasterVectorJoinParameters, RenameBands, Reprojection, ReprojectionParameters,
+        SingleRasterOrVectorOperator, SingleRasterOrVectorSource, SingleRasterSource,
+        SingleVectorMultipleRasterSources, SpatialBoundsDerive, SpatialBoundsDeriveNone,
+        TemporalAggregationMethod, TemporalRasterAggregation, TemporalRasterAggregationParameters,
+        TimeGranularity, TimeStep, VectorOperator, WfsRequest, WfsService,
     },
 };
 use ogcapi::{
@@ -381,7 +380,7 @@ async fn compute_ndvi(
         configuration,
         &workflow_id,
         WfsRequest::GetFeature,
-        Some(&format!("{minx},{miny},{maxx},{maxy}")),
+        Some(&format!("{minx},{miny},{maxx},{maxy}")), // TODO
         None,
         None,
         None,
@@ -579,13 +578,7 @@ fn stac_raster_source() -> RasterOperator {
         RasterStacker {
             r#type: Default::default(),
             params: RasterStackerParameters {
-                rename_bands: RenameBands::RenameBandsOneOf(
-                    RenameBandsOneOf {
-                        r#type: Default::default(),
-                    }
-                    .into(),
-                )
-                .into(),
+                rename_bands: RenameBands::Default(Default::default()).into(),
             }
             .into(),
             sources: geoengine_api_client::models::MultipleRasterSources {
@@ -612,16 +605,15 @@ fn scl_source() -> RasterOperator {
                         params: InterpolationParameters {
                             interpolation: InterpolationMethod::NearestNeighbor,
                             output_origin_reference: None,
-                            output_resolution:
-                                InterpolationResolution::InterpolationResolutionOneOf1(
-                                    InterpolationResolutionOneOf1 {
-                                        r#type: Default::default(),
-                                        x: 2.0,
-                                        y: 2.0,
-                                    }
-                                    .into(),
-                                )
+                            output_resolution: InterpolationResolution::Fraction(
+                                Fraction {
+                                    r#type: Default::default(),
+                                    x: 2.0,
+                                    y: 2.0,
+                                }
                                 .into(),
+                            )
+                            .into(),
                         }
                         .into(),
                         sources: SingleRasterSource {
