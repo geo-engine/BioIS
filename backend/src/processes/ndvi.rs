@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use geoengine_api_client::{
     apis::{
         configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
@@ -260,7 +260,7 @@ impl Processor for NDVIProcess {
             }
         }
 
-        match compute_ndvi(
+        let outputs = compute_ndvi(
             &CONFIG
                 .geoengine
                 .api_config(USER.try_get().ok().map(|user| user.session_token)),
@@ -270,11 +270,9 @@ impl Processor for NDVIProcess {
             should_compute_ndvi,
             should_compute_k_ndvi,
         )
-        .await
-        {
-            Ok(outputs) => Ok(outputs.into()),
-            Err(_e) => Err(anyhow::anyhow!("The server was unable to compute NDVI")),
-        }
+        .await?;
+
+        Ok(outputs.into())
     }
 }
 
@@ -417,14 +415,15 @@ fn outputs_from_feature_collection(
         k_ndvi: None,
     };
 
-    let first_feature = feature_collection
-        .features
-        .first()
-        .context("Feature collection is empty")?;
+    let Some(first_feature) = feature_collection.features.first() else {
+        anyhow::bail!(
+            "Input coordinate is outside of the data bounds. Currently, only coordinates in UTM zone 32N (EPSG:32632) are supported (x range 6.0 - 12.0, y range 0.0 - 84.)."
+        );
+    };
 
-    let properties = first_feature
-        .get("properties")
-        .context("Feature has no properties")?;
+    let Some(properties) = first_feature.get("properties") else {
+        anyhow::bail!("No data found for the given coordinate and time.");
+    };
 
     if let Some(features) = properties.get(ndvi_ref)
         && let Some(value) = features.as_f64()
