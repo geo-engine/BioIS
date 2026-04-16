@@ -25,8 +25,9 @@ use ogcapi::{
     types::{
         common::Link,
         processes::{
-            Execute, ExecuteResult, ExecuteResults, InlineOrRefData, InputValueNoObject,
-            JobControlOptions, Output, Process, ProcessSummary, TransmissionMode,
+            Execute, ExecuteResult, ExecuteResults, Format, InlineOrRefData, InputValue,
+            InputValueNoObject, JobControlOptions, Output, Process, ProcessSummary,
+            QualifiedInputValue, TransmissionMode,
             description::{DescriptionType, InputDescription, Metadata, OutputDescription},
         },
     },
@@ -68,11 +69,33 @@ pub struct Month(u16);
 pub struct NDVIProcessOutputs {
     pub ndvi: Option<f64>,
     pub k_ndvi: Option<f64>,
+    pub inputs: NDVIProcessInputs,
 }
 
 impl From<NDVIProcessOutputs> for ExecuteResults {
     fn from(outputs: NDVIProcessOutputs) -> Self {
         let mut result = ExecuteResults::default();
+
+        if let Ok(serde_json::Value::Object(inputs_map)) = serde_json::to_value(&outputs.inputs) {
+            result.insert(
+                "inputs".to_string(),
+                ExecuteResult {
+                    output: Output {
+                        format: None,
+                        transmission_mode: Default::default(),
+                    },
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value: InputValue::Object(inputs_map),
+                        format: Format {
+                            media_type: Some("application/json".to_string()),
+                            encoding: Some("utf-8".to_string()),
+                            schema: None,
+                        },
+                    }),
+                },
+            );
+        }
+
         if let Some(ndvi) = outputs.ndvi {
             result.insert(
                 "ndvi".to_string(),
@@ -183,6 +206,17 @@ impl Processor for NDVIProcess {
             ]),
             outputs: HashMap::from([
                 (
+                    "inputs".to_string(),
+                    OutputDescription {
+                        description_type: DescriptionType {
+                            title: Some("Input parameters".to_string()),
+                            description: Some("The input parameters (coordinate, year, month) for which the NDVI was calculated.".to_string()),
+                            ..Default::default()
+                        },
+                        schema: generator.root_schema_for::<NDVIProcessInputs>().to_value(),
+                    },
+                ),
+                (
                     "ndvi".to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
@@ -264,9 +298,7 @@ impl Processor for NDVIProcess {
             &CONFIG
                 .geoengine
                 .api_config(USER.try_get().ok().map(|user| user.session_token)),
-            &inputs.coordinate.value.coordinates,
-            inputs.year,
-            inputs.month,
+            inputs,
             should_compute_ndvi,
             should_compute_k_ndvi,
         )
@@ -289,9 +321,7 @@ fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
 #[instrument(skip(configuration), err(Debug))]
 async fn compute_ndvi(
     configuration: &Configuration,
-    coordinate: &Coordinate,
-    Year(year): Year,
-    Month(month): Month,
+    ndvi_process_inputs: NDVIProcessInputs,
     should_compute_ndvi: bool,
     should_compute_k_ndvi: bool,
 ) -> Result<NDVIProcessOutputs> {
@@ -300,7 +330,8 @@ async fn compute_ndvi(
 
     // TODO: upload data instead of mocking it
     // let upload_data_id: String = upload_data(&configuration, coordinate)?;
-    let vector_source = vector_reprojection_source(coordinate);
+    let vector_source =
+        vector_reprojection_source(&ndvi_process_inputs.coordinate.value.coordinates);
 
     let inputs: Vec<RasterOperator> = match (should_compute_ndvi, should_compute_k_ndvi) {
         (true, true) => vec![ndvi_source(), k_ndvi_source()],
@@ -310,6 +341,7 @@ async fn compute_ndvi(
             return Ok(NDVIProcessOutputs {
                 ndvi: None,
                 k_ndvi: None,
+                inputs: ndvi_process_inputs,
             });
         }
     };
@@ -356,12 +388,15 @@ async fn compute_ndvi(
 
     // eprintln!("Registered workflow with ID: {workflow_id}");
 
-    let time_str = format!("{year}-{month:02}-01T00:00:00Z");
+    let time_str = format!(
+        "{}-{:02}-01T00:00:00Z",
+        ndvi_process_inputs.year.0, ndvi_process_inputs.month.0
+    );
 
     // eprintln!("Querying at time: {time_str}");
 
     tracing::info!(
-        coordinate = ?coordinate,
+        coordinate = ?ndvi_process_inputs.coordinate,
         time = time_str,
         workflow_id = workflow_id,
         "Requesting NDVI process"
@@ -395,7 +430,7 @@ async fn compute_ndvi(
 
     // dbg!(&feature_collection);
 
-    outputs_from_feature_collection(&feature_collection, NDVI, K_NDVI)
+    outputs_from_feature_collection(&feature_collection, NDVI, K_NDVI, ndvi_process_inputs)
 }
 
 #[allow(unused)] // TODO: implement
@@ -409,10 +444,12 @@ fn outputs_from_feature_collection(
     feature_collection: &GeoJson,
     ndvi_ref: &str,
     k_ndvi_ref: &str,
+    inputs: NDVIProcessInputs,
 ) -> Result<NDVIProcessOutputs> {
     let mut result = NDVIProcessOutputs {
         ndvi: None,
         k_ndvi: None,
+        inputs,
     };
 
     let Some(first_feature) = feature_collection.features.first() else {
@@ -686,6 +723,10 @@ fn k_ndvi_expression() -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::processes::parameters::PointGeoJson;
+    use crate::processes::parameters::PointGeoJsonInputMediaType;
+    use crate::processes::parameters::PointGeoJsonType;
+
     use super::*;
     use geoengine_api_client::apis::configuration::Configuration as ApiConfiguration;
     use httptest::matchers::*;
@@ -744,9 +785,24 @@ mod tests {
         // Call compute_ndvi with both outputs requested
         let coord = Coordinate([12.34, 56.78]);
 
-        let outputs = compute_ndvi(&api_config, &coord, Year(2014), Month(1), true, true)
-            .await
-            .expect("compute_ndvi should succeed");
+        let outputs = compute_ndvi(
+            &api_config,
+            NDVIProcessInputs {
+                coordinate: PointGeoJsonInput {
+                    value: PointGeoJson {
+                        r#type: PointGeoJsonType::Point,
+                        coordinates: coord,
+                    },
+                    media_type: PointGeoJsonInputMediaType::GeoJson,
+                },
+                year: Year(2014),
+                month: Month(1),
+            },
+            true,
+            true,
+        )
+        .await
+        .expect("compute_ndvi should succeed");
 
         assert!(outputs.ndvi.is_some());
         assert!(outputs.k_ndvi.is_some());

@@ -12,6 +12,9 @@ import { DescriptionType } from '../models/DescriptionType';
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
 import { Format } from '../models/Format';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -252,6 +255,36 @@ export class ObservableProcessesApi {
      */
     public _delete(jobId: string, _options?: ConfigurationOptions): Observable<StatusInfo> {
         return this._deleteWithHttpInfo(jobId, _options).pipe(map((apiResponse: HttpInfo<StatusInfo>) => apiResponse.data));
+    }
+
+    /**
+     * @param habitatDistanceProcessParams
+     */
+    public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<HabitatDistanceProcessOutputs>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.executeHabitatDistance(habitatDistanceProcessParams, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.executeHabitatDistanceWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * @param habitatDistanceProcessParams
+     */
+    public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: ConfigurationOptions): Observable<HabitatDistanceProcessOutputs> {
+        return this.executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams, _options).pipe(map((apiResponse: HttpInfo<HabitatDistanceProcessOutputs>) => apiResponse.data));
     }
 
     /**

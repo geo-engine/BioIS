@@ -10,13 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
+import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
 import { HttpFile } from '../http/http';
 
-export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
-    'inputs': NDVIProcessInputs;
+export class HabitatDistanceProcessInputs {
+    'coordinate': PointGeoJsonInput;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,26 +22,14 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "NDVIProcessInputs",
+            "name": "coordinate",
+            "baseName": "coordinate",
+            "type": "PointGeoJsonInput",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
+        return HabitatDistanceProcessInputs.attributeTypeMap;
     }
 
     public constructor() {
