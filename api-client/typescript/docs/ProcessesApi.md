@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**_delete**](ProcessesApi.md#_delete) | **DELETE** /jobs/{jobId} | Cancel a job execution, remove finished job
+[**executeHabitatDistance**](ProcessesApi.md#executeHabitatDistance) | **POST** /processes/habitatDistance/execution | 
 [**executeNdvi**](ProcessesApi.md#executeNdvi) | **POST** /processes/ndvi/execution | 
 [**execution**](ProcessesApi.md#execution) | **POST** /processes/{processID}/execution | Execute a process
 [**jobs**](ProcessesApi.md#jobs) | **GET** /jobs | Retrieve the list of jobs
@@ -65,6 +66,74 @@ No authorization required
 |-------------|-------------|------------------|
 **200** | The status of a job |  -  |
 **404** | The requested URI was not found. |  -  |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **executeHabitatDistance**
+> HabitatDistanceProcessOutputs executeHabitatDistance(habitatDistanceProcessParams)
+
+
+### Example
+
+
+```typescript
+import { createConfiguration, ProcessesApi } from '';
+import type { ProcessesApiExecuteHabitatDistanceRequest } from '';
+
+const configuration = createConfiguration();
+const apiInstance = new ProcessesApi(configuration);
+
+const request: ProcessesApiExecuteHabitatDistanceRequest = {
+  
+  habitatDistanceProcessParams: {
+    inputs: {
+      coordinate: {
+        value: {
+          type: "Point",
+          coordinates: [
+            3.14,
+          ],
+        },
+        mediaType: "application/geo+json",
+      },
+    },
+    outputs: {
+      "key": null,
+    },
+    response: "raw",
+  },
+};
+
+const data = await apiInstance.executeHabitatDistance(request);
+console.log('API called successfully. Returned data:', data);
+```
+
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **habitatDistanceProcessParams** | **HabitatDistanceProcessParams**|  |
+
+
+### Return type
+
+**HabitatDistanceProcessOutputs**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** |  |  -  |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
