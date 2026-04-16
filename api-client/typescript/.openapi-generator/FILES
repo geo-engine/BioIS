@@ -27,6 +27,9 @@ models/DescriptionType.ts
 models/Exception.ts
 models/Execute.ts
 models/Format.ts
+models/HabitatDistanceProcessInputs.ts
+models/HabitatDistanceProcessOutputs.ts
+models/HabitatDistanceProcessParams.ts
 models/InlineOrRefData.ts
 models/Input.ts
 models/InputDescription.ts

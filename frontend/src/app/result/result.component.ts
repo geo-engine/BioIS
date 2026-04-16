@@ -16,7 +16,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../user.service';
-import { NDVIProcessOutputs, ProcessesApi } from '@geoengine/biois';
+import {
+  NDVIProcessOutputs,
+  ProcessesApi,
+  PointGeoJsonType,
+  PointGeoJsonInputMediaType,
+  InlineOrRefData,
+  QualifiedInputValue,
+} from '@geoengine/biois';
 import { CommonModule } from '@angular/common';
 import { ColorBreakpoint, NumberIndicatorComponent } from './number-indicator.component';
 
@@ -42,14 +49,30 @@ export class DashboardComponent {
 
   readonly processId: Signal<string | undefined>;
 
+  private readonly mockInputs: NDVIProcessOutputs = {
+    ndvi: null,
+    kNdvi: null,
+    inputs: {
+      coordinate: {
+        value: {
+          type: PointGeoJsonType.Point,
+          coordinates: [0, 0],
+        },
+        mediaType: PointGeoJsonInputMediaType.ApplicationGeojson,
+      },
+      year: 0,
+      month: 0,
+    },
+  };
+
   readonly result: ResourceRef<NDVIProcessOutputs> = resource({
     params: () => ({
       processId: this.processId(),
     }),
-    defaultValue: {},
+    defaultValue: this.mockInputs,
     loader: async ({ params }) => {
       const api = new ProcessesApi(this.userService.apiConfiguration());
-      if (!params.processId) return {};
+      if (!params.processId) return this.mockInputs;
 
       const result = await api.results(params.processId);
 
@@ -57,7 +80,36 @@ export class DashboardComponent {
         throw new Error('Expected NDVIProcessOutputs but received HttpFile');
       }
 
-      return result;
+      // Transform Results (with InlineOrRefData wrappers) to NDVIProcessOutputs
+      const outputs: NDVIProcessOutputs = {
+        ndvi: null,
+        kNdvi: null,
+        inputs: this.mockInputs.inputs,
+      };
+
+      // Extract values from InlineOrRefData wrappers
+      if ('ndvi' in result) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const ndviData = result['ndvi'];
+        outputs.ndvi = typeof ndviData === 'number' ? ndviData : null;
+      }
+      if ('kNdvi' in result) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const kNdviData = result['kNdvi'];
+        outputs.kNdvi = typeof kNdviData === 'number' ? kNdviData : null;
+      }
+      if ('inputs' in result) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const inputsData = result['inputs'];
+        // Extract the value from QualifiedInputValue wrapper
+        if (this.isQualifiedInputValue(inputsData) && inputsData.value) {
+          outputs.inputs = inputsData.value as typeof outputs.inputs;
+        }
+      } else {
+        throw new Error('Expected "inputs" in result but it was missing');
+      }
+
+      return outputs;
     },
   });
 
@@ -82,6 +134,10 @@ export class DashboardComponent {
         map((params) => ('resultId' in params ? (params['resultId'] as string) : undefined)),
       ),
     );
+  }
+
+  private isQualifiedInputValue(data: InlineOrRefData): data is QualifiedInputValue {
+    return typeof data === 'object' && data !== null && 'value' in data;
   }
 
   async download(): Promise<void> {

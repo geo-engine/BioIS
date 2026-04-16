@@ -3,24 +3,19 @@
   <div class="grid-container">
     <mat-card class="dashboard-card">
       <mat-card-header>
-        <mat-card-title>
-          Inputs
-          <!-- <button
-              matIconButton
-              class="more-button"
-              [matMenuTriggerFor]="menu"
-              aria-label="Toggle menu"
-            >
-              <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu" xPosition="before">
-              <button mat-menu-item (click)="download()">Download</button>
-            </mat-menu> -->
-        </mat-card-title>
+        <mat-card-title> Inputs </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <!-- TODO: Display the inputs of the selected process -->
-        <em>This will display the inputs of the selected process.</em>
+        @if (result.value().inputs; as inputs) {
+          <div>
+            <p>
+              <strong>Coordinate:</strong> {{ inputs.coordinate.value.coordinates[0] }},
+              {{ inputs.coordinate.value.coordinates[1] }}
+            </p>
+            <p><strong>Year:</strong> {{ inputs.year }}</p>
+            <p><strong>Month:</strong> {{ inputs.month }}</p>
+          </div>
+        }
       </mat-card-content>
     </mat-card>
 

@@ -10,13 +10,17 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { Response } from '../models/Response';
 import { HttpFile } from '../http/http';
 
-export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
-    'inputs': NDVIProcessInputs;
+/**
+* Process execution
+*/
+export class HabitatDistanceProcessParams {
+    'inputs': HabitatDistanceProcessInputs;
+    'outputs'?: { [key: string]: any; };
+    'response'?: Response;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,28 +28,30 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
             "name": "inputs",
             "baseName": "inputs",
-            "type": "NDVIProcessInputs",
+            "type": "HabitatDistanceProcessInputs",
+            "format": ""
+        },
+        {
+            "name": "outputs",
+            "baseName": "outputs",
+            "type": "{ [key: string]: any; }",
+            "format": ""
+        },
+        {
+            "name": "response",
+            "baseName": "response",
+            "type": "Response",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
+        return HabitatDistanceProcessParams.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
+
+
