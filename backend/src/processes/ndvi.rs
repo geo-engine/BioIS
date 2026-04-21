@@ -454,7 +454,7 @@ fn outputs_from_feature_collection(
 
     let Some(first_feature) = feature_collection.features.first() else {
         anyhow::bail!(
-            "Input coordinate is outside of the data bounds. Currently, only coordinates in UTM zone 32N (EPSG:32632) are supported (x range 6.0 - 12.0, y range 0.0 - 84.)."
+            "Input coordinate is outside of the data bounds. Currently, only coordinates inside UTM zone 32N are supported (longitude range 6.0 - 12.0, latitude range 0.0 - 84.0)."
         );
     };
 
