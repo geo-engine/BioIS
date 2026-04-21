@@ -5,7 +5,7 @@ use crate::{
     db::setup_db,
     handler,
     jobs::JobHandler,
-    processes::{HabitatDistanceProcess, NDVIProcess, ProcessesOpenApiSpec},
+    processes::{HabitatDistanceProcess, ImpactMetricsProcess, NDVIProcess, ProcessesOpenApiSpec},
     state::spawn_with_user,
 };
 use ogcapi::{
@@ -32,7 +32,11 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .get_openapi_mut()
         .merge(ProcessesOpenApiSpec::openapi());
 
-    let mut processors: Vec<Box<dyn Processor>> = vec![Box::new(Echo), Box::new(NDVIProcess)];
+    let mut processors: Vec<Box<dyn Processor>> = vec![
+        Box::new(Echo),
+        Box::new(NDVIProcess),
+        Box::new(ImpactMetricsProcess),
+    ];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
 
     let drivers = ogcapi_services::Drivers {
