@@ -13,6 +13,7 @@ use geoengine_api_client::{
         WfsService,
     },
 };
+use geojson::PointType;
 use ogcapi::{
     processes::Processor,
     types::{
@@ -26,13 +27,13 @@ use ogcapi::{
 };
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Index};
 use tracing::instrument;
 use utoipa::ToSchema;
 
 use crate::{
     config::CONFIG,
-    processes::parameters::{Coordinate, PointGeoJsonInput, ToBbox},
+    processes::parameters::{PointGeoJsonInput, ToBbox},
     state::USER,
     util::{error_response, to_api_workflow},
 };
@@ -284,7 +285,7 @@ fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
 #[instrument(skip(configuration), err(Debug))]
 async fn compute_ndvi(
     configuration: &Configuration,
-    coordinate: &Coordinate,
+    coordinate: &PointType,
     Year(year): Year,
     Month(month): Month,
     should_compute_ndvi: bool,
@@ -299,7 +300,10 @@ async fn compute_ndvi(
         MockPointSource {
             r#type: Default::default(),
             params: MockPointSourceParameters {
-                points: vec![Coordinate2D::new(coordinate.0[0], coordinate.0[1])],
+                points: vec![Coordinate2D::new(
+                    *coordinate.index(0),
+                    *coordinate.index(1),
+                )],
                 spatial_bounds: Default::default(),
             }
             .into(),
@@ -397,7 +401,7 @@ async fn compute_ndvi(
 }
 
 #[allow(unused)] // TODO: implement
-async fn upload_data(configuration: &Configuration, coordinate: &Coordinate) -> Result<String> {
+async fn upload_data(configuration: &Configuration, coordinate: &PointType) -> Result<String> {
     upload_handler(configuration, vec![]).await?;
 
     anyhow::bail!("Not implemented: upload_data");
@@ -565,7 +569,7 @@ mod tests {
         api_config.base_path = server.url_str("");
 
         // Call compute_ndvi with both outputs requested
-        let coord = Coordinate([12.34, 56.78]);
+        let coord = PointType::from((12.34, 56.78));
 
         let outputs = compute_ndvi(&api_config, &coord, Year(2014), Month(1), true, true)
             .await
