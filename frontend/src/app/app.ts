@@ -27,5 +27,15 @@ export class App {
       'logo-white',
       this.sanitizer.bypassSecurityTrustResourceUrl('assets/geoengine-white.svg'),
     );
+    this.matIconRegistry.addSvgIconInNamespace(
+      'biois',
+      'logo',
+      this.sanitizer.bypassSecurityTrustResourceUrl('assets/BioIS_Black.svg'),
+    );
+    this.matIconRegistry.addSvgIconInNamespace(
+      'biois',
+      'logo-white',
+      this.sanitizer.bypassSecurityTrustResourceUrl('assets/BioIS_White.svg'),
+    );
   }
 }
