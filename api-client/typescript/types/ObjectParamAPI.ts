@@ -11,6 +11,9 @@ import { DescriptionType } from '../models/DescriptionType';
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
 import { Format } from '../models/Format';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -160,6 +163,15 @@ export interface ProcessesApiDeleteRequest {
     jobId: string
 }
 
+export interface ProcessesApiExecuteHabitatDistanceRequest {
+    /**
+     * 
+     * @type HabitatDistanceProcessParams
+     * @memberof ProcessesApiexecuteHabitatDistance
+     */
+    habitatDistanceProcessParams: HabitatDistanceProcessParams
+}
+
 export interface ProcessesApiExecuteNdviRequest {
     /**
      * 
@@ -260,6 +272,20 @@ export class ObjectProcessesApi {
      */
     public _delete(param: ProcessesApiDeleteRequest, options?: ConfigurationOptions): Promise<StatusInfo> {
         return this.api._delete(param.jobId,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeHabitatDistanceWithHttpInfo(param: ProcessesApiExecuteHabitatDistanceRequest, options?: ConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
+        return this.api.executeHabitatDistanceWithHttpInfo(param.habitatDistanceProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeHabitatDistance(param: ProcessesApiExecuteHabitatDistanceRequest, options?: ConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
+        return this.api.executeHabitatDistance(param.habitatDistanceProcessParams,  options).toPromise();
     }
 
     /**

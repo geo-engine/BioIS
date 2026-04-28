@@ -1,18 +1,36 @@
+use anyhow::{Context, Result};
 use geoengine_api_client::models::{
-    TypedOperator, TypedVectorOperator, VectorOperator, Workflow,
-    typed_vector_operator::Type as VectorType,
+    LegacyTypedOperator, LegacyTypedOperatorOperator, VectorOperator, Workflow,
+    legacy_typed_operator::Type as WorkflowType,
 };
 use std::ops::Deref;
 use tracing::error;
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_workflow(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
-    Workflow::TypedOperator(Box::new(TypedOperator::TypedVectorOperator(Box::new(
-        TypedVectorOperator {
-            operator: Box::new(operator.clone()),
-            r#type: VectorType::Vector,
-        },
-    ))))
+pub fn to_api_workflow(
+    operator: &VectorOperator,
+) -> Result<geoengine_api_client::models::Workflow> {
+    let serde_json::Value::Object(mut json_object) = serde_json::to_value(operator)? else {
+        anyhow::bail!("expected operator to serialize `TypedOperator` to a JSON object");
+    };
+    let serde_json::Value::String(r#type) =
+        json_object.remove("type").context("missing `type` field")?
+    else {
+        anyhow::bail!("`type` field is not a string");
+    };
+
+    Ok(Workflow::LegacyTypedOperator(
+        LegacyTypedOperator {
+            operator: LegacyTypedOperatorOperator {
+                params: json_object.remove("params"),
+                sources: json_object.remove("sources"),
+                r#type,
+            }
+            .into(),
+            r#type: WorkflowType::Vector,
+        }
+        .into(),
+    ))
 }
 
 pub fn error_response<T>(
@@ -133,7 +151,7 @@ mod tests {
             .into(),
         );
 
-        let api_workflow = to_api_workflow(&raster_vector_join);
+        let api_workflow = to_api_workflow(&raster_vector_join).unwrap();
 
         assert_eq!(
             serde_json::to_string_pretty(&api_workflow).unwrap(),

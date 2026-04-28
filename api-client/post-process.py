@@ -21,7 +21,6 @@ def file_modifications() -> Generator[tuple[Path, FileModifier], None, None]:
     yield Path("types/ObjectParamAPI.ts"), object_param_api_ts
     yield Path("types/PromiseAPI.ts"), promise_api_ts
     yield Path("models/ObjectSerializer.ts"), object_serializer_ts
-    yield Path("models/Results.ts"), results_ts
 
 
 def main():
@@ -59,14 +58,6 @@ def promise_api_ts(file_contents: list[str]) -> Generator[str, None, None]:
     for line in file_contents:
         if dedent(line).startswith("public api("):
             line = line.replace("public api(", "public api_(")
-        yield line
-
-
-def results_ts(file_contents: list[str]) -> Generator[str, None, None]:
-    """Modify the Results.ts file."""
-    for line in file_contents:
-        if dedent(line).startswith("import { HttpFile } from '../http/http';"):
-            line = line + "import { InlineOrRefData } from './InlineOrRefData';\n"
         yield line
 
 
