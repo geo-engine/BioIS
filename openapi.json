@@ -1441,10 +1441,10 @@
       "Results": {
         "oneOf": [
           {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/InlineOrRefData"
-            }
+            "$ref": "#/components/schemas/NDVIProcessOutputs"
+          },
+          {
+            "$ref": "#/components/schemas/HabitatDistanceProcessOutputs"
           },
           {
             "type": "string",
