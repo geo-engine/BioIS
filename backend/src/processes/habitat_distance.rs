@@ -1,6 +1,6 @@
 use crate::{
     db::{DbPool, PooledConnection},
-    processes::parameters::{Coordinate, PointGeoJsonInput},
+    processes::parameters::PointGeoJsonInput,
 };
 use anyhow::{Context, Result};
 use diesel::{
@@ -8,6 +8,7 @@ use diesel::{
     sql_types::{Double, Text},
 };
 use diesel_async::RunQueryDsl;
+use geojson::PointType;
 use ogcapi::{
     processes::Processor,
     types::{
@@ -274,9 +275,12 @@ struct Natura2000NearestHabitat {
 #[instrument(skip(connection), err(Debug))]
 async fn compute_habitat_distance(
     mut connection: PooledConnection<'_>,
-    coordinate: &Coordinate,
+    coordinate: &PointType,
 ) -> Result<HabitatDistanceProcessOutputs> {
-    let [lon, lat] = coordinate.0;
+    let [lon, lat] = coordinate.as_slice() else {
+        debug_assert!(false, "Expected PointType to have exactly 2 coordinates");
+        return Err(anyhow::anyhow!("Invalid coordinate"));
+    };
     let point_geometry = format!("SRID=4326;POINT({lon} {lat})");
     let table: Natura2000NearestHabitat = sql_query(indoc::indoc! {"
         WITH reference AS (
@@ -359,7 +363,7 @@ mod tests {
         .unwrap();
 
         // consume the same connection in the computation (transaction stays open for test cleanup)
-        let outputs = compute_habitat_distance(conn, &Coordinate([8.46, 50.49]))
+        let outputs = compute_habitat_distance(conn, &PointType::from((8.46, 50.49)))
             .await
             .unwrap();
 

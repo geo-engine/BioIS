@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 use crate::processes::{
     habitat_distance::{HabitatDistanceProcessInputs, HabitatDistanceProcessOutputs},
+    impact_metrics::{ImpactMetricsProcessInputs, ImpactMetricsProcessOutputs},
     ndvi::{NDVIProcessInputs, NDVIProcessOutputs},
 };
 use axum::Json;
@@ -57,10 +58,31 @@ pub struct HabitatDistanceProcessParams {
 )]
 fn execute_habitat_distance(Json(_input): Json<HabitatDistanceProcessParams>) {}
 
+/// Process execution (Impact metrics - ESRS E4 B5)
+#[allow(unused, reason = "Placeholder for spec only")]
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct ImpactMetricsProcessParams {
+    pub inputs: ImpactMetricsProcessInputs,
+    #[serde(default)]
+    #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
+    pub outputs: HashMap<String, ()>,
+    #[serde(default)]
+    pub response: Response,
+}
+
+#[allow(unused, reason = "Placeholder for spec only")]
+#[utoipa::path(
+    post,
+    path = "/processes/impact-metrics-biodiversity/execution",
+    tag = "Processes",
+    responses((status = OK, body = ImpactMetricsProcessOutputs))
+)]
+fn execute_impact_metrics(Json(_input): Json<ImpactMetricsProcessParams>) {}
+
 /// OpenAPI extension to include process endpoints in the generated documentation
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(OpenApi)]
-#[openapi(paths(execute_ndvi, execute_habitat_distance))]
+#[openapi(paths(execute_ndvi, execute_habitat_distance, execute_impact_metrics))]
 pub struct ProcessesOpenApiSpec;
 
 #[cfg(test)]
