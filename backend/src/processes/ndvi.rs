@@ -5,19 +5,19 @@ use geoengine_api_client::{
         workflows_api::register_workflow_handler,
     },
     models::{
-        Aggregation, AggregationOneOf4, BandFilter, BandFilterParameters, BandsByNameOrIndex,
-        ColumnNames, ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
+        Aggregation, BandFilter, BandFilterParameters, BandsByNameOrIndex, ColumnNames,
+        ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
         DeriveOutRasterSpecsSource, Expression, ExpressionParameters, FeatureAggregationMethod,
-        GdalSourceParameters, GeoJson, Interpolation, InterpolationMethod, InterpolationParameters,
-        InterpolationResolution, InterpolationResolutionOneOf1, Measurement, MockPointSource,
-        MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor, RasterDataType,
-        RasterOperator, RasterStacker, RasterStackerParameters, RasterTypeConversion,
-        RasterTypeConversionParameters, RasterVectorJoin, RasterVectorJoinParameters, RenameBands,
-        RenameBandsOneOf, Reprojection, ReprojectionParameters, SingleRasterOrVectorOperator,
-        SingleRasterOrVectorSource, SingleRasterSource, SingleVectorMultipleRasterSources,
-        SpatialBoundsDerive, SpatialBoundsDeriveNone, TemporalAggregationMethod,
-        TemporalRasterAggregation, TemporalRasterAggregationParameters, TimeGranularity, TimeStep,
-        VectorOperator, WfsRequest, WfsService,
+        FirstAggregation, Fraction, GdalSourceParameters, GeoJson, Interpolation,
+        InterpolationMethod, InterpolationParameters, InterpolationResolution, Measurement,
+        MockPointSource, MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor,
+        RasterDataType, RasterOperator, RasterStacker, RasterStackerParameters,
+        RasterTypeConversion, RasterTypeConversionParameters, RasterVectorJoin,
+        RasterVectorJoinParameters, RenameBands, Reprojection, ReprojectionParameters,
+        SingleRasterOrVectorOperator, SingleRasterOrVectorSource, SingleRasterSource,
+        SingleVectorMultipleRasterSources, SpatialBoundsDerive, SpatialBoundsDeriveNone,
+        TemporalAggregationMethod, TemporalRasterAggregation, TemporalRasterAggregationParameters,
+        TimeGranularity, TimeStep, VectorOperator, WfsRequest, WfsService,
     },
 };
 use ogcapi::{
@@ -371,8 +371,6 @@ async fn compute_ndvi(
         .into(),
     ));
 
-    eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
-
     let workflow_id = match register_workflow_handler(configuration, workflow.clone()).await {
         Ok(id) => id,
         Err(e) => {
@@ -520,8 +518,8 @@ fn ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::AggregationOneOf4(
-                    AggregationOneOf4 {
+                aggregation: Aggregation::FirstAggregation(
+                    FirstAggregation {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -551,8 +549,8 @@ fn k_ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::AggregationOneOf4(
-                    AggregationOneOf4 {
+                aggregation: Aggregation::FirstAggregation(
+                    FirstAggregation {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -619,7 +617,7 @@ fn stac_raster_source() -> RasterOperator {
                 rename_bands: RenameBands::Default(Default::default()).into(),
             }
             .into(),
-            sources: geoengine_openapi_client::models::MultipleRasterSources {
+            sources: geoengine_api_client::models::MultipleRasterSources {
                 rasters: vec![scl_source(), nir_red_source()],
             }
             .into(),

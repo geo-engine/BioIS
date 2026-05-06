@@ -10,26 +10,25 @@
  * Do not edit the class manually.
  */
 
-import { HabitatDistanceProcessOutputs } from "../models/HabitatDistanceProcessOutputs";
-import { NDVIProcessOutputs } from "../models/NDVIProcessOutputs";
-import { HttpFile } from "../http/http";
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { HttpFile } from '../http/http';
 
 /**
  * @type Results
  * Type
  * @export
  */
-export type Results =
-  | HabitatDistanceProcessOutputs
-  | HttpFile
-  | NDVIProcessOutputs;
+export type Results = HabitatDistanceProcessOutputs | HttpFile | NDVIProcessOutputs;
 
 /**
- * @type ResultsClass
- * @export
- */
+* @type ResultsClass
+* @export
+*/
 export class ResultsClass {
-  static readonly discriminator: string | undefined = undefined;
+    static readonly discriminator: string | undefined = undefined;
 
-  static readonly mapping: { [index: string]: string } | undefined = undefined;
+    static readonly mapping: {[index: string]: string} | undefined = undefined;
 }
+
+
