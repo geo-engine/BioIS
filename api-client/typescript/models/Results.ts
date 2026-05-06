@@ -10,15 +10,16 @@
  * Do not edit the class manually.
  */
 
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { HttpFile } from '../http/http';
-import { InlineOrRefData } from './InlineOrRefData';
 
 /**
  * @type Results
  * Type
  * @export
  */
-export type Results = HttpFile | { [key: string]: InlineOrRefData; };
+export type Results = HabitatDistanceProcessOutputs | HttpFile | NDVIProcessOutputs;
 
 /**
 * @type ResultsClass
@@ -29,4 +30,5 @@ export class ResultsClass {
 
     static readonly mapping: {[index: string]: string} | undefined = undefined;
 }
+
 

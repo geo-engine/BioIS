@@ -1,5 +1,5 @@
 # @name anonymousSession
-POST http://localhost:3030/api/anonymous
+POST https://geoengine.biois.app.geoengine.io/api/anonymous
 
 ###
 
@@ -17,11 +17,11 @@ Content-Type: application/json
         "coordinate": {
             "value": {
                 "type": "Point",
-                "coordinates": [9.77, 49.54]
+                "coordinates": [8.77069, 50.80904]
             },
             "mediaType": "application/geo+json"
         },
-        "year": 2014,
+        "year": 2020,
         "month": 3
     },
     "response": "document"
@@ -42,8 +42,8 @@ Content-Type: application/json
             },
             "mediaType": "application/geo+json"
         },
-        "year": 2014,
-        "month": 3
+        "year": 2020,
+        "month": 1
     },
     "outputs": {
         "ndvi": {}

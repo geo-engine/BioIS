@@ -14,8 +14,11 @@ use ogcapi::{
 };
 use std::mem;
 use utoipa::{
-    OpenApi as _,
-    openapi::{ContactBuilder, OpenApi},
+    Modify, OpenApi as _,
+    openapi::{
+        ContactBuilder, OpenApi, Ref,
+        schema::{KnownFormat, ObjectBuilder, OneOfBuilder, Schema, SchemaFormat, Type},
+    },
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -66,6 +69,8 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
 
 /// Modify the OpenAPI spec to add general information about the API, such as title, version, description, contact, etc.
 fn add_openapi_info(openapi: &mut OpenApi) {
+    ResultsSchemaModifier.modify(openapi);
+
     openapi.info = utoipa::openapi::InfoBuilder::new()
         .title("BioIS API")
         .version(env!("CARGO_PKG_VERSION"))
@@ -80,6 +85,34 @@ fn add_openapi_info(openapi: &mut OpenApi) {
         // .terms_of_service(None) // TODO: add link to ToS
         .license(None) // TODO: add link to license
         .build();
+}
+
+struct ResultsSchemaModifier;
+
+impl Modify for ResultsSchemaModifier {
+    fn modify(&self, openapi: &mut OpenApi) {
+        let Some(components) = openapi.components.as_mut() else {
+            tracing::warn!("OpenAPI components missing; skipping typed Results schema override");
+            return;
+        };
+
+        let binary_schema = Schema::Object(
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .format(Some(SchemaFormat::KnownFormat(KnownFormat::Binary)))
+                .build(),
+        );
+
+        let results_schema = OneOfBuilder::new()
+            .item(Ref::from_schema_name("NDVIProcessOutputs"))
+            .item(Ref::from_schema_name("HabitatDistanceProcessOutputs"))
+            .item(binary_schema)
+            .title(Some("ExecuteResults"));
+
+        components
+            .schemas
+            .insert("Results".to_string(), results_schema.into());
+    }
 }
 
 async fn add_habitat_distance_process(
