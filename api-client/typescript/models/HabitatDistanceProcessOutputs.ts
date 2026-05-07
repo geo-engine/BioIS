@@ -10,13 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { HttpFile } from '../http/http';
 
-export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
-    'inputs': NDVIProcessInputs;
+export class HabitatDistanceProcessOutputs {
+    'habitatCode'?: string | null;
+    'habitatName'?: string | null;
+    'distanceM'?: number | null;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,26 +23,26 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "NDVIProcessInputs",
+            "name": "habitatCode",
+            "baseName": "habitatCode",
+            "type": "string",
             "format": ""
+        },
+        {
+            "name": "habitatName",
+            "baseName": "habitatName",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "distanceM",
+            "baseName": "distanceM",
+            "type": "number",
+            "format": "int64"
         }    ];
 
     static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
+        return HabitatDistanceProcessOutputs.attributeTypeMap;
     }
 
     public constructor() {

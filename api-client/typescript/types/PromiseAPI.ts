@@ -11,6 +11,9 @@ import { DescriptionType } from '../models/DescriptionType';
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
 import { Format } from '../models/Format';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -189,6 +192,24 @@ export class PromiseProcessesApi {
     public _delete(jobId: string, _options?: PromiseConfigurationOptions): Promise<StatusInfo> {
         const observableOptions = wrapOptions(_options);
         const result = this.api._delete(jobId, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param habitatDistanceProcessParams
+     */
+    public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param habitatDistanceProcessParams
+     */
+    public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeHabitatDistance(habitatDistanceProcessParams, observableOptions);
         return result.toPromise();
     }
 

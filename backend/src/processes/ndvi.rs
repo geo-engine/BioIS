@@ -1,16 +1,23 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use geoengine_api_client::{
     apis::{
         configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
         workflows_api::register_workflow_handler,
     },
     models::{
-        ColumnNames, Coordinate2D, Expression, ExpressionParameters, FeatureAggregationMethod,
-        GdalSource, GdalSourceParameters, GeoJson, Measurement, MockPointSource,
-        MockPointSourceParameters, Names, RasterBandDescriptor, RasterDataType, RasterOperator,
-        RasterVectorJoin, RasterVectorJoinParameters, SingleRasterSource,
-        SingleVectorMultipleRasterSources, TemporalAggregationMethod, VectorOperator, WfsRequest,
-        WfsService,
+        Aggregation, BandFilter, BandFilterParameters, BandsByNameOrIndex, ColumnNames,
+        ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
+        DeriveOutRasterSpecsSource, Expression, ExpressionParameters, FeatureAggregationMethod,
+        FirstAggregation, Fraction, GdalSourceParameters, GeoJson, Interpolation,
+        InterpolationMethod, InterpolationParameters, InterpolationResolution, Measurement,
+        MockPointSource, MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor,
+        RasterDataType, RasterOperator, RasterStacker, RasterStackerParameters,
+        RasterTypeConversion, RasterTypeConversionParameters, RasterVectorJoin,
+        RasterVectorJoinParameters, RenameBands, Reprojection, ReprojectionParameters,
+        SingleRasterOrVectorOperator, SingleRasterOrVectorSource, SingleRasterSource,
+        SingleVectorMultipleRasterSources, SpatialBoundsDerive, SpatialBoundsDeriveNone,
+        TemporalAggregationMethod, TemporalRasterAggregation, TemporalRasterAggregationParameters,
+        TimeGranularity, TimeStep, VectorOperator, WfsRequest, WfsService,
     },
 };
 use ogcapi::{
@@ -18,8 +25,9 @@ use ogcapi::{
     types::{
         common::Link,
         processes::{
-            Execute, ExecuteResult, ExecuteResults, InlineOrRefData, InputValueNoObject,
-            JobControlOptions, Output, Process, ProcessSummary, TransmissionMode,
+            Execute, ExecuteResult, ExecuteResults, Format, InlineOrRefData, InputValue,
+            InputValueNoObject, JobControlOptions, Output, Process, ProcessSummary,
+            QualifiedInputValue, TransmissionMode,
             description::{DescriptionType, InputDescription, Metadata, OutputDescription},
         },
     },
@@ -32,7 +40,7 @@ use utoipa::ToSchema;
 
 use crate::{
     config::CONFIG,
-    processes::parameters::{Coordinate, PointGeoJsonInput, ToBbox},
+    processes::parameters::{Coordinate, PointGeoJsonInput},
     state::USER,
     util::{error_response, to_api_workflow},
 };
@@ -61,11 +69,33 @@ pub struct Month(u16);
 pub struct NDVIProcessOutputs {
     pub ndvi: Option<f64>,
     pub k_ndvi: Option<f64>,
+    pub inputs: NDVIProcessInputs,
 }
 
 impl From<NDVIProcessOutputs> for ExecuteResults {
     fn from(outputs: NDVIProcessOutputs) -> Self {
         let mut result = ExecuteResults::default();
+
+        if let Ok(serde_json::Value::Object(inputs_map)) = serde_json::to_value(&outputs.inputs) {
+            result.insert(
+                "inputs".to_string(),
+                ExecuteResult {
+                    output: Output {
+                        format: None,
+                        transmission_mode: Default::default(),
+                    },
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value: InputValue::Object(inputs_map),
+                        format: Format {
+                            media_type: Some("application/json".to_string()),
+                            encoding: Some("utf-8".to_string()),
+                            schema: None,
+                        },
+                    }),
+                },
+            );
+        }
+
         if let Some(ndvi) = outputs.ndvi {
             result.insert(
                 "ndvi".to_string(),
@@ -176,6 +206,17 @@ impl Processor for NDVIProcess {
             ]),
             outputs: HashMap::from([
                 (
+                    "inputs".to_string(),
+                    OutputDescription {
+                        description_type: DescriptionType {
+                            title: Some("Input parameters".to_string()),
+                            description: Some("The input parameters (coordinate, year, month) for which the NDVI was calculated.".to_string()),
+                            ..Default::default()
+                        },
+                        schema: generator.root_schema_for::<NDVIProcessInputs>().to_value(),
+                    },
+                ),
+                (
                     "ndvi".to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
@@ -253,30 +294,26 @@ impl Processor for NDVIProcess {
             }
         }
 
-        match compute_ndvi(
+        let outputs = compute_ndvi(
             &CONFIG
                 .geoengine
                 .api_config(USER.try_get().ok().map(|user| user.session_token)),
-            &inputs.coordinate.value.coordinates,
-            inputs.year,
-            inputs.month,
+            inputs,
             should_compute_ndvi,
             should_compute_k_ndvi,
         )
-        .await
-        {
-            Ok(outputs) => Ok(outputs.into()),
-            Err(_e) => Err(anyhow::anyhow!("The server was unable to compute NDVI")),
-        }
+        .await?;
+
+        Ok(outputs.into())
     }
 }
 
 fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
-    if year != 2014 {
-        anyhow::bail!("Year must be 2014");
+    if year != 2020 {
+        anyhow::bail!("Year must be 2020");
     }
-    if !(1..=6).contains(&month) {
-        anyhow::bail!("Month must be between 1 and 6");
+    if !(1..=12).contains(&month) {
+        anyhow::bail!("Month must be between 1 and 12");
     }
     Ok(())
 }
@@ -284,9 +321,7 @@ fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
 #[instrument(skip(configuration), err(Debug))]
 async fn compute_ndvi(
     configuration: &Configuration,
-    coordinate: &Coordinate,
-    Year(year): Year,
-    Month(month): Month,
+    ndvi_process_inputs: NDVIProcessInputs,
     should_compute_ndvi: bool,
     should_compute_k_ndvi: bool,
 ) -> Result<NDVIProcessOutputs> {
@@ -295,42 +330,36 @@ async fn compute_ndvi(
 
     // TODO: upload data instead of mocking it
     // let upload_data_id: String = upload_data(&configuration, coordinate)?;
-    let vector_source = VectorOperator::MockPointSource(
-        MockPointSource {
-            r#type: Default::default(),
-            params: MockPointSourceParameters {
-                points: vec![Coordinate2D::new(coordinate.0[0], coordinate.0[1])],
-                spatial_bounds: Default::default(),
-            }
-            .into(),
-        }
-        .into(),
-    );
+    let vector_source =
+        vector_reprojection_source(&ndvi_process_inputs.coordinate.value.coordinates);
 
-    let (names, inputs): (Vec<String>, Vec<RasterOperator>) =
-        match (should_compute_ndvi, should_compute_k_ndvi) {
-            (true, true) => (
-                vec![NDVI.into(), K_NDVI.into()],
-                vec![ndvi_source(), k_ndvi_source()],
-            ),
-            (true, false) => (vec![NDVI.into()], vec![ndvi_source()]),
-            (false, true) => (vec![K_NDVI.into()], vec![k_ndvi_source()]),
-            (false, false) => {
-                return Ok(NDVIProcessOutputs {
-                    ndvi: None,
-                    k_ndvi: None,
-                });
-            }
-        };
+    let inputs: Vec<RasterOperator> = match (should_compute_ndvi, should_compute_k_ndvi) {
+        (true, true) => vec![ndvi_source(), k_ndvi_source()],
+        (true, false) => vec![ndvi_source()],
+        (false, true) => vec![k_ndvi_source()],
+        (false, false) => {
+            return Ok(NDVIProcessOutputs {
+                ndvi: None,
+                k_ndvi: None,
+                inputs: ndvi_process_inputs,
+            });
+        }
+    };
     let workflow = to_api_workflow(&VectorOperator::RasterVectorJoin(
         RasterVectorJoin {
             r#type: Default::default(),
             params: RasterVectorJoinParameters {
-                names: ColumnNames::Names(Names::new(Default::default(), names).into()).into(),
+                names: ColumnNames::Default(
+                    ColumnNamesDefault {
+                        r#type: Default::default(),
+                    }
+                    .into(),
+                )
+                .into(),
                 feature_aggregation: FeatureAggregationMethod::First,
-                feature_aggregation_ignore_no_data: Some(true),
+                feature_aggregation_ignore_no_data: Some(false),
                 temporal_aggregation: TemporalAggregationMethod::None,
-                temporal_aggregation_ignore_no_data: Some(true),
+                temporal_aggregation_ignore_no_data: Some(false),
             }
             .into(),
             sources: SingleVectorMultipleRasterSources {
@@ -341,8 +370,6 @@ async fn compute_ndvi(
         }
         .into(),
     ));
-
-    // eprintln!("{}", serde_json::to_string_pretty(&workflow).unwrap());
 
     let workflow_id = match register_workflow_handler(configuration, workflow.clone()).await {
         Ok(id) => id,
@@ -361,22 +388,32 @@ async fn compute_ndvi(
 
     // eprintln!("Registered workflow with ID: {workflow_id}");
 
-    let time_str = format!("{year}-{month:02}-01T00:00:00Z");
+    let time_str = format!(
+        "{}-{:02}-01T00:00:00Z",
+        ndvi_process_inputs.year.0, ndvi_process_inputs.month.0
+    );
 
     // eprintln!("Querying at time: {time_str}");
 
     tracing::info!(
-        coordinate = ?coordinate,
+        coordinate = ?ndvi_process_inputs.coordinate,
         time = time_str,
         workflow_id = workflow_id,
         "Requesting NDVI process"
     );
 
+    // query the whole UTM zone 32N (EPSG:32632), as the result only contains a single coordinate, but the wfs call requires specifying a bbox
+    // TODO: create a workflow that works with points of any UTM zone
+    let minx = 399_960;
+    let miny = 5_590_200;
+    let maxx = 509_760;
+    let maxy = 5_700_000;
+
     let feature_collection = wfs_handler(
         configuration,
         &workflow_id,
         WfsRequest::GetFeature,
-        Some(&coordinate.to_bbox(0.0).to_string()),
+        Some(&format!("{minx},{miny},{maxx},{maxy}")), // TODO
         None,
         None,
         None,
@@ -384,7 +421,7 @@ async fn compute_ndvi(
         None,
         Some(WfsService::Wfs),
         None,
-        Some("EPSG:4326"),
+        Some("EPSG:32632"),
         Some(&time_str),
         Some(&workflow_id),
         None,
@@ -393,7 +430,7 @@ async fn compute_ndvi(
 
     // dbg!(&feature_collection);
 
-    outputs_from_feature_collection(&feature_collection, NDVI, K_NDVI)
+    outputs_from_feature_collection(&feature_collection, NDVI, K_NDVI, ndvi_process_inputs)
 }
 
 #[allow(unused)] // TODO: implement
@@ -407,20 +444,23 @@ fn outputs_from_feature_collection(
     feature_collection: &GeoJson,
     ndvi_ref: &str,
     k_ndvi_ref: &str,
+    inputs: NDVIProcessInputs,
 ) -> Result<NDVIProcessOutputs> {
     let mut result = NDVIProcessOutputs {
         ndvi: None,
         k_ndvi: None,
+        inputs,
     };
 
-    let first_feature = feature_collection
-        .features
-        .first()
-        .context("Feature collection is empty")?;
+    let Some(first_feature) = feature_collection.features.first() else {
+        anyhow::bail!(
+            "Input coordinate is outside of the data bounds. Currently, only coordinates inside UTM zone 32N are supported (longitude range 6.0 - 12.0, latitude range 0.0 - 84.0)."
+        );
+    };
 
-    let properties = first_feature
-        .get("properties")
-        .context("Feature has no properties")?;
+    let Some(properties) = first_feature.get("properties") else {
+        anyhow::bail!("No data found for the given coordinate and time.");
+    };
 
     if let Some(features) = properties.get(ndvi_ref)
         && let Some(value) = features.as_f64()
@@ -437,25 +477,35 @@ fn outputs_from_feature_collection(
     Ok(result)
 }
 
-fn ndvi_source() -> RasterOperator {
-    RasterOperator::Expression(
-        Expression {
+fn vector_reprojection_source(coordinate: &Coordinate) -> VectorOperator {
+    let mock_source = VectorOperator::MockPointSource(
+        MockPointSource {
             r#type: Default::default(),
-            params: ExpressionParameters {
-                expression: "min((A / (127.50)) - 1, 1)".into(),
-                output_type: RasterDataType::F64,
-                output_band: Some(
-                    RasterBandDescriptor {
-                        name: "NDVI".into(),
-                        measurement: Measurement::Unitless(Default::default()).into(),
+            params: MockPointSourceParameters {
+                points: vec![Coordinate2D::new(coordinate.0[0], coordinate.0[1])],
+                spatial_bounds: SpatialBoundsDerive::None(
+                    SpatialBoundsDeriveNone {
+                        r#type: Default::default(),
                     }
                     .into(),
-                ),
-                map_no_data: false,
+                )
+                .into(),
             }
             .into(),
-            sources: SingleRasterSource {
-                raster: ndvi_u8_source().into(),
+        }
+        .into(),
+    );
+
+    VectorOperator::Reprojection(
+        Reprojection {
+            r#type: Default::default(),
+            params: ReprojectionParameters {
+                derive_out_spec: Some(DeriveOutRasterSpecsSource::ProjectionBounds),
+                target_spatial_reference: "EPSG:32632".to_string(),
+            }
+            .into(),
+            sources: SingleRasterOrVectorSource {
+                source: SingleRasterOrVectorOperator::VectorOperator(mock_source.into()).into(),
             }
             .into(),
         }
@@ -463,13 +513,30 @@ fn ndvi_source() -> RasterOperator {
     )
 }
 
-fn ndvi_u8_source() -> RasterOperator {
-    RasterOperator::GdalSource(
-        GdalSource {
+fn ndvi_source() -> RasterOperator {
+    RasterOperator::TemporalRasterAggregation(
+        TemporalRasterAggregation {
             r#type: Default::default(),
-            params: GdalSourceParameters {
-                data: "ndvi".to_string(),
-                overview_level: None,
+            params: TemporalRasterAggregationParameters {
+                aggregation: Aggregation::FirstAggregation(
+                    FirstAggregation {
+                        ignore_no_data: true,
+                        r#type: Default::default(),
+                    }
+                    .into(),
+                )
+                .into(),
+                output_type: None,
+                window: TimeStep {
+                    granularity: TimeGranularity::Months,
+                    step: 1,
+                }
+                .into(),
+                window_reference: None,
+            }
+            .into(),
+            sources: SingleRasterSource {
+                raster: ndvi_expression_source("NDVI", ndvi_expression()).into(),
             }
             .into(),
         }
@@ -478,28 +545,29 @@ fn ndvi_u8_source() -> RasterOperator {
 }
 
 fn k_ndvi_source() -> RasterOperator {
-    RasterOperator::Expression(
-        Expression {
+    RasterOperator::TemporalRasterAggregation(
+        TemporalRasterAggregation {
             r#type: Default::default(),
-            params: ExpressionParameters {
-                expression: indoc::indoc! {"
-                let ndvi = min((A / (127.50)) - 1, 1);
-                tanh(pow(ndvi, 2))
-            "}
-                .into(),
-                output_type: RasterDataType::F64,
-                output_band: Some(
-                    RasterBandDescriptor {
-                        name: "kNDVI".into(),
-                        measurement: Measurement::Unitless(Default::default()).into(),
+            params: TemporalRasterAggregationParameters {
+                aggregation: Aggregation::FirstAggregation(
+                    FirstAggregation {
+                        ignore_no_data: true,
+                        r#type: Default::default(),
                     }
                     .into(),
-                ),
-                map_no_data: false,
+                )
+                .into(),
+                output_type: None,
+                window: TimeStep {
+                    granularity: TimeGranularity::Months,
+                    step: 1,
+                }
+                .into(),
+                window_reference: None,
             }
             .into(),
             sources: SingleRasterSource {
-                raster: ndvi_u8_source().into(),
+                raster: ndvi_expression_source("kNDVI", k_ndvi_expression()).into(),
             }
             .into(),
         }
@@ -507,8 +575,158 @@ fn k_ndvi_source() -> RasterOperator {
     )
 }
 
+fn ndvi_expression_source(band_name: &str, expression: String) -> RasterOperator {
+    RasterOperator::Expression(
+        Expression {
+            r#type: Default::default(),
+            params: ExpressionParameters {
+                expression,
+                output_type: RasterDataType::F32,
+                output_band: Some(
+                    RasterBandDescriptor {
+                        name: band_name.to_string(),
+                        measurement: Measurement::Continuous(
+                            ContinuousMeasurement {
+                                measurement: "NDVI".to_string(),
+                                r#type: Default::default(),
+                                unit: Some(Some("NDVI".to_string())),
+                            }
+                            .into(),
+                        )
+                        .into(),
+                    }
+                    .into(),
+                ),
+                map_no_data: false,
+            }
+            .into(),
+            sources: SingleRasterSource {
+                raster: stac_raster_source().into(),
+            }
+            .into(),
+        }
+        .into(),
+    )
+}
+
+fn stac_raster_source() -> RasterOperator {
+    RasterOperator::RasterStacker(
+        RasterStacker {
+            r#type: Default::default(),
+            params: RasterStackerParameters {
+                rename_bands: RenameBands::Default(Default::default()).into(),
+            }
+            .into(),
+            sources: geoengine_api_client::models::MultipleRasterSources {
+                rasters: vec![scl_source(), nir_red_source()],
+            }
+            .into(),
+        }
+        .into(),
+    )
+}
+
+fn scl_source() -> RasterOperator {
+    RasterOperator::RasterTypeConversion(
+        RasterTypeConversion {
+            r#type: Default::default(),
+            params: RasterTypeConversionParameters {
+                output_data_type: RasterDataType::U16,
+            }
+            .into(),
+            sources: SingleRasterSource {
+                raster: RasterOperator::Interpolation(
+                    Interpolation {
+                        r#type: Default::default(),
+                        params: InterpolationParameters {
+                            interpolation: InterpolationMethod::NearestNeighbor,
+                            output_origin_reference: None,
+                            output_resolution: InterpolationResolution::Fraction(
+                                Fraction {
+                                    r#type: Default::default(),
+                                    x: 2.0,
+                                    y: 2.0,
+                                }
+                                .into(),
+                            )
+                            .into(),
+                        }
+                        .into(),
+                        sources: SingleRasterSource {
+                            raster: RasterOperator::MultiBandGdalSource(
+                                MultiBandGdalSource {
+                                    r#type: Default::default(),
+                                    params: GdalSourceParameters {
+                                        data: "sentinel-2-l2a_EPSG32632_U8_20".to_string(),
+                                        overview_level: None,
+                                    }
+                                    .into(),
+                                }
+                                .into(),
+                            )
+                            .into(),
+                        }
+                        .into(),
+                    }
+                    .into(),
+                )
+                .into(),
+            }
+            .into(),
+        }
+        .into(),
+    )
+}
+
+fn nir_red_source() -> RasterOperator {
+    RasterOperator::BandFilter(
+        BandFilter {
+            r#type: Default::default(),
+            params: BandFilterParameters {
+                bands: BandsByNameOrIndex::ArrayVecString(vec!["nir".into(), "red".into()]).into(),
+            }
+            .into(),
+            sources: SingleRasterSource {
+                raster: RasterOperator::MultiBandGdalSource(
+                    MultiBandGdalSource {
+                        r#type: Default::default(),
+                        params: GdalSourceParameters {
+                            data: "sentinel-2-l2a_EPSG32632_U16_10".to_string(),
+                            overview_level: None,
+                        }
+                        .into(),
+                    }
+                    .into(),
+                )
+                .into(),
+            }
+            .into(),
+        }
+        .into(),
+    )
+}
+
+fn ndvi_expression() -> String {
+    "if (A == 3 || (A >= 7 && A <= 11)) { NODATA } else { (B - C) / (B + C) }".to_string()
+}
+
+fn k_ndvi_expression() -> String {
+    indoc::indoc! {
+        "if (A == 3 || (A >= 7 && A <= 11)) {
+            NODATA
+        } else {
+            tanh(pow((B - C) / (B + C), 2))
+        }"
+    }
+    .to_string()
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::processes::parameters::PointGeoJson;
+    use crate::processes::parameters::PointGeoJsonInputMediaType;
+    use crate::processes::parameters::PointGeoJsonType;
+
     use super::*;
     use geoengine_api_client::apis::configuration::Configuration as ApiConfiguration;
     use httptest::matchers::*;
@@ -567,9 +785,24 @@ mod tests {
         // Call compute_ndvi with both outputs requested
         let coord = Coordinate([12.34, 56.78]);
 
-        let outputs = compute_ndvi(&api_config, &coord, Year(2014), Month(1), true, true)
-            .await
-            .expect("compute_ndvi should succeed");
+        let outputs = compute_ndvi(
+            &api_config,
+            NDVIProcessInputs {
+                coordinate: PointGeoJsonInput {
+                    value: PointGeoJson {
+                        r#type: PointGeoJsonType::Point,
+                        coordinates: coord,
+                    },
+                    media_type: PointGeoJsonInputMediaType::GeoJson,
+                },
+                year: Year(2014),
+                month: Month(1),
+            },
+            true,
+            true,
+        )
+        .await
+        .expect("compute_ndvi should succeed");
 
         assert!(outputs.ndvi.is_some());
         assert!(outputs.k_ndvi.is_some());

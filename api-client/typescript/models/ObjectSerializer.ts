@@ -7,6 +7,9 @@ export * from '../models/DescriptionType';
 export * from '../models/Exception';
 export * from '../models/Execute';
 export * from '../models/Format';
+export * from '../models/HabitatDistanceProcessInputs';
+export * from '../models/HabitatDistanceProcessOutputs';
+export * from '../models/HabitatDistanceProcessParams';
 export * from '../models/InlineOrRefData';
 export * from '../models/Input';
 export * from '../models/InputDescription';
@@ -50,6 +53,9 @@ import { DescriptionType } from '../models/DescriptionType';
 import { Exception } from '../models/Exception';
 import { Execute     } from '../models/Execute';
 import { Format } from '../models/Format';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { HabitatDistanceProcessParams    } from '../models/HabitatDistanceProcessParams';
 import { InlineOrRefDataClass } from '../models/InlineOrRefData';
 import { InputClass } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -116,6 +122,9 @@ let typeMap: {[index: string]: any} = {
     "Exception": Exception,
     "Execute": Execute,
     "Format": Format,
+    "HabitatDistanceProcessInputs": HabitatDistanceProcessInputs,
+    "HabitatDistanceProcessOutputs": HabitatDistanceProcessOutputs,
+    "HabitatDistanceProcessParams": HabitatDistanceProcessParams,
     "InlineOrRefData": InlineOrRefDataClass,
     "Input": InputClass,
     "InputDescription": InputDescription,

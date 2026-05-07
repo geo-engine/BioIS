@@ -631,6 +631,36 @@
           }
         }
       }
+    },
+    "/processes/habitatDistance/execution": {
+      "post": {
+        "tags": [
+          "Processes"
+        ],
+        "operationId": "execute_habitat_distance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HabitatDistanceProcessParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HabitatDistanceProcessOutputs"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -847,6 +877,65 @@
           },
           "schema": {
             "$ref": "#/components/schemas/Schema"
+          }
+        }
+      },
+      "HabitatDistanceProcessInputs": {
+        "type": "object",
+        "required": [
+          "coordinate"
+        ],
+        "properties": {
+          "coordinate": {
+            "$ref": "#/components/schemas/PointGeoJsonInput"
+          }
+        }
+      },
+      "HabitatDistanceProcessOutputs": {
+        "type": "object",
+        "properties": {
+          "habitatCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "habitatName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "distanceM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "HabitatDistanceProcessParams": {
+        "type": "object",
+        "description": "Process execution",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/HabitatDistanceProcessInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
           }
         }
       },
@@ -1118,6 +1207,9 @@
       },
       "NDVIProcessOutputs": {
         "type": "object",
+        "required": [
+          "inputs"
+        ],
         "properties": {
           "ndvi": {
             "type": [
@@ -1132,6 +1224,9 @@
               "null"
             ],
             "format": "double"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/NDVIProcessInputs"
           }
         }
       },
@@ -1346,10 +1441,10 @@
       "Results": {
         "oneOf": [
           {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/InlineOrRefData"
-            }
+            "$ref": "#/components/schemas/NDVIProcessOutputs"
+          },
+          {
+            "$ref": "#/components/schemas/HabitatDistanceProcessOutputs"
           },
           {
             "type": "string",

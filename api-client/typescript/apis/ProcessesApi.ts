@@ -10,6 +10,8 @@ import {SecurityAuthentication} from '../auth/auth';
 
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
 import { JobList } from '../models/JobList';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { NDVIProcessParams } from '../models/NDVIProcessParams';
@@ -45,6 +47,46 @@ export class ProcessesApiRequestFactory extends BaseAPIRequestFactory {
         const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
         requestContext.setHeaderParam("Accept", "application/json, */*;q=0.8")
 
+
+        
+        const defaultAuth: SecurityAuthentication | undefined = _config?.authMethods?.default
+        if (defaultAuth?.applySecurityAuthentication) {
+            await defaultAuth?.applySecurityAuthentication(requestContext);
+        }
+
+        return requestContext;
+    }
+
+    /**
+     * @param habitatDistanceProcessParams 
+     */
+    public async executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: Configuration): Promise<RequestContext> {
+        let _config = _options || this.configuration;
+
+        // verify required parameter 'habitatDistanceProcessParams' is not null or undefined
+        if (habitatDistanceProcessParams === null || habitatDistanceProcessParams === undefined) {
+            throw new RequiredError("ProcessesApi", "executeHabitatDistance", "habitatDistanceProcessParams");
+        }
+
+
+        // Path Params
+        const localVarPath = '/processes/habitatDistance/execution';
+
+        // Make Request Context
+        const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
+        requestContext.setHeaderParam("Accept", "application/json, */*;q=0.8")
+
+
+        // Body Params
+        const contentType = ObjectSerializer.getPreferredMediaType([
+            "application/json"
+        ]);
+        requestContext.setHeaderParam("Content-Type", contentType);
+        const serializedBody = ObjectSerializer.stringify(
+            ObjectSerializer.serialize(habitatDistanceProcessParams, "HabitatDistanceProcessParams", ""),
+            contentType
+        );
+        requestContext.setBody(serializedBody);
 
         
         const defaultAuth: SecurityAuthentication | undefined = _config?.authMethods?.default
@@ -337,6 +379,35 @@ export class ProcessesApiResponseProcessor {
                 ObjectSerializer.parse(await response.body.text(), contentType),
                 "StatusInfo", ""
             ) as StatusInfo;
+            return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
+        }
+
+        throw new ApiException<string | Blob | undefined>(response.httpStatusCode, "Unknown API Status Code!", await response.getBodyAsAny(), response.headers);
+    }
+
+    /**
+     * Unwraps the actual response sent by the server from the response context and deserializes the response content
+     * to the expected objects
+     *
+     * @params response Response returned by the server for a request to executeHabitatDistance
+     * @throws ApiException if the response code was not in [200, 299]
+     */
+     public async executeHabitatDistanceWithHttpInfo(response: ResponseContext): Promise<HttpInfo<HabitatDistanceProcessOutputs >> {
+        const contentType = ObjectSerializer.normalizeMediaType(response.headers["content-type"]);
+        if (isCodeInRange("200", response.httpStatusCode)) {
+            const body: HabitatDistanceProcessOutputs = ObjectSerializer.deserialize(
+                ObjectSerializer.parse(await response.body.text(), contentType),
+                "HabitatDistanceProcessOutputs", ""
+            ) as HabitatDistanceProcessOutputs;
+            return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
+        }
+
+        // Work around for missing responses in specification, e.g. for petstore.yaml
+        if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+            const body: HabitatDistanceProcessOutputs = ObjectSerializer.deserialize(
+                ObjectSerializer.parse(await response.body.text(), contentType),
+                "HabitatDistanceProcessOutputs", ""
+            ) as HabitatDistanceProcessOutputs;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
 
