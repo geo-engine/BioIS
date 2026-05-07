@@ -28,14 +28,20 @@ RUN cargo build --release --bin biois
 # Strip the binary to reduce size if possible
 RUN strip target/release/biois || true
 
+# Create an empty directory to use as workdir in the final image
+RUN mkdir /emptydir
+
 # Final image: distroless for minimal attack surface and size
 FROM gcr.io/distroless/cc-debian13:nonroot
 
 # Copy ca-certificates and the built binary
 COPY --from=builder /usr/src/biois/target/release/biois /usr/local/bin/biois
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /emptydir /biois
 
 WORKDIR /biois
+
+# ENV PUBLIC_URL="https://biois.app.geoengine.io/api"
 
 USER nonroot
 EXPOSE 4040

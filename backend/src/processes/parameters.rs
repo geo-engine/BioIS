@@ -1,5 +1,5 @@
 use geoengine_api_client::models::SpatialPartition2D;
-use geojson::{PointType, PolygonType};
+use geojson::{FeatureCollection, PointType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -14,7 +14,7 @@ macro_rules! impl_extern_schema {
             }
             fn json_schema(_gen: &mut schemars::generate::SchemaGenerator) -> schemars::Schema {
                 schemars::json_schema!({
-                    "reference": $url.to_string(),
+                    "$ref": $url.to_string(),
                 })
             }
         }
@@ -40,9 +40,9 @@ impl_extern_schema!(
 );
 
 impl_extern_schema!(
-    PolygonGeoJson,
-    "GeoJSON Polygon",
-    "https://geojson.org/schema/Polygon.json"
+    GeoJsonFeatureCollection,
+    "GeoJSON FeatureCollection",
+    "https://geojson.org/schema/FeatureCollection.json"
 );
 
 pub trait ToBbox {
@@ -70,75 +70,70 @@ impl ToBbox for PointType {
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PointGeoJsonInput {
+    #[schema(inline)]
     pub value: PointGeoJson,
     pub media_type: GeoJsonInputMediaType,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum GeoJsonInputMediaType {
     #[serde(rename = "application/geo+json")]
     GeoJson,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PointGeoJson {
     pub r#type: PointGeoJsonType,
     pub coordinates: PointType,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, ToSchema)]
 pub enum PointGeoJsonType {
     Point,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+/// A `GeoJSON` `FeatureCollection` containing only Polygon features.
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct GeoJsonFeatureCollection(FeatureCollection);
+
+impl AsRef<FeatureCollection> for GeoJsonFeatureCollection {
+    fn as_ref(&self) -> &FeatureCollection {
+        &self.0
+    }
+}
+
+impl From<FeatureCollection> for GeoJsonFeatureCollection {
+    fn from(fc: FeatureCollection) -> Self {
+        GeoJsonFeatureCollection(fc)
+    }
+}
+
+/// A `GeoJSON` `FeatureCollection` input
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct PolygonGeoJsonInput {
-    pub value: PolygonGeoJson,
+pub struct FeatureCollectionGeoJsonInput {
+    #[schema(inline)]
+    pub value: GeoJsonFeatureCollection,
     pub media_type: GeoJsonInputMediaType,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PolygonGeoJson {
-    pub r#type: PolygonGeoJsonType,
-    pub coordinates: PolygonType,
-}
-
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub enum PolygonGeoJsonType {
-    Polygon,
-}
-
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub enum FeatureGeoJsonType {
-    Feature,
-}
-
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub enum FeatureCollectionGeoJsonType {
-    FeatureCollection,
-}
-
-/// A GeoJSON FeatureCollection containing only Polygon features.
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub struct GeoJsonPolygonFeatureCollection {
-    pub r#type: FeatureCollectionGeoJsonType,
-    pub features: Vec<GeoJsonPolygonFeature>,
-}
-
-/// A GeoJSON Feature containing polygon geometry.
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub struct GeoJsonPolygonFeature {
-    pub r#type: FeatureGeoJsonType,
-    pub geometry: PolygonGeoJson,
+impl FeatureCollectionGeoJsonInput {
+    pub fn value(&self) -> &FeatureCollection {
+        self.value.as_ref()
+    }
 }
 
 /// Area in hectares
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, JsonSchema, ToSchema, Copy, Clone)]
 pub struct Hectare(pub f64);
+
+impl From<f64> for Hectare {
+    fn from(ha: f64) -> Self {
+        Hectare(ha)
+    }
+}
 
 /// Area in square meters
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
@@ -158,11 +153,55 @@ impl From<Hectare> for SquareMeter {
 
 /// Year of reporting or change (e.g., 2023, 2024, etc.)
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+#[serde(transparent)]
+#[allow(
+    unused,
+    reason = "Currently not used, but may be needed for future processes that require a year parameter"
+)]
 pub struct Year(pub u16);
+
+/// Distance in kilometers
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+#[serde(transparent)]
+pub struct Kilometers(pub f64);
+
+/// Documentation source for audit and provenance, e.g. a Geo Engine workflow or a scientific paper.
+/// This is included in the outputs of the process for traceability and auditing purposes.
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct DocumentationSource {
+    /// A human-readable identifier of the documentation source (e.g. "Geo Engine workflow XYZ")
+    pub data: String,
+    /// A description, citation or URL pointing to the source of the documentation (e.g. a link to a Geo Engine workflow, or a scientific paper)
+    pub documentation_source: String,
+}
+
+/// A property of the input data that is relevant for the process, e.g. a property field in a input `GeoJSON`.
+#[derive(Deserialize, Serialize, Debug, Clone, JsonSchema, ToSchema)]
+#[serde(transparent)]
+#[schema(value_type = String, format = "relative-json-pointer")]
+#[schemars(transform = relative_json_pointer_format)]
+pub struct RelativeJsonPointer(String);
+
+fn relative_json_pointer_format(schema: &mut schemars::Schema) {
+    schema.insert("format".into(), "relative-json-pointer".into());
+}
+
+impl AsRef<str> for RelativeJsonPointer {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<&str> for RelativeJsonPointer {
+    fn from(s: &str) -> Self {
+        RelativeJsonPointer(s.to_string())
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn it_deserializes_geo_json() {
@@ -184,15 +223,16 @@ mod tests {
                     "geometry": {
                         "type": "Polygon",
                         "coordinates": [[[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [102.0, 0.0]]]
-                    }
+                    },
+                    "properties": null
                 }
             ]
         });
 
-        let polygon_feature_collection: GeoJsonPolygonFeatureCollection =
+        let polygon_feature_collection: GeoJsonFeatureCollection =
             serde_json::from_value(polygon_feature_collection_json.clone())
                 .expect("Failed to parse Polygon GeoJSON");
-        assert_eq!(polygon_feature_collection.features.len(), 1);
+        assert_eq!(polygon_feature_collection.0.features.len(), 1);
 
         assert_eq!(
             serde_json::to_value(&polygon_feature_collection).unwrap(),

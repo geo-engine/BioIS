@@ -5,8 +5,10 @@
 use std::collections::HashMap;
 
 use crate::processes::{
+    biodiversity_sensitive_areas::{
+        BiodiversitySensitiveAreasProcessInputs, BiodiversitySensitiveAreasProcessOutputs,
+    },
     habitat_distance::{HabitatDistanceProcessInputs, HabitatDistanceProcessOutputs},
-    impact_metrics::{ImpactMetricsProcessInputs, ImpactMetricsProcessOutputs},
     ndvi::{NDVIProcessInputs, NDVIProcessOutputs},
 };
 use axum::Json;
@@ -58,11 +60,11 @@ pub struct HabitatDistanceProcessParams {
 )]
 fn execute_habitat_distance(Json(_input): Json<HabitatDistanceProcessParams>) {}
 
-/// Process execution (Impact metrics - ESRS E4 B5)
+/// Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(Deserialize, ToSchema, Debug)]
 pub struct ImpactMetricsProcessParams {
-    pub inputs: ImpactMetricsProcessInputs,
+    pub inputs: BiodiversitySensitiveAreasProcessInputs,
     #[serde(default)]
     #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
     pub outputs: HashMap<String, ()>,
@@ -73,9 +75,9 @@ pub struct ImpactMetricsProcessParams {
 #[allow(unused, reason = "Placeholder for spec only")]
 #[utoipa::path(
     post,
-    path = "/processes/impact-metrics-biodiversity/execution",
+    path = "/processes/biodiversity-sensitive-areas/execution",
     tag = "Processes",
-    responses((status = OK, body = ImpactMetricsProcessOutputs))
+    responses((status = OK, body = BiodiversitySensitiveAreasProcessOutputs))
 )]
 fn execute_impact_metrics(Json(_input): Json<ImpactMetricsProcessParams>) {}
 

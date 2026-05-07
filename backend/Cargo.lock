@@ -312,6 +312,7 @@ dependencies = [
  "diesel-derive-enum",
  "diesel_migrations",
  "futures",
+ "geo-types",
  "geoengine-api-client",
  "geojson 1.0.0",
  "httptest",
@@ -333,6 +334,7 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "uuid",
+ "wkt",
 ]
 
 [[package]]
@@ -1193,6 +1195,15 @@ checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
 dependencies = [
  "typenum",
  "version_check",
+]
+
+[[package]]
+name = "geo-traits"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e7c353d12a704ccfab1ba8bfb1a7fe6cb18b665bf89d37f4f7890edcd260206"
+dependencies = [
+ "geo-types",
 ]
 
 [[package]]
@@ -5152,6 +5163,19 @@ dependencies = [
  "serde_json",
  "unicode-xid",
  "wasmparser",
+]
+
+[[package]]
+name = "wkt"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efb2b923ccc882312e559ffaa832a055ba9d1ac0cc8e86b3e25453247e4b81d7"
+dependencies = [
+ "geo-traits",
+ "geo-types",
+ "log",
+ "num-traits",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

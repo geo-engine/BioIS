@@ -1,11 +1,11 @@
-use crate::processes::parameters::{Hectare, Year};
+use crate::processes::parameters::{Hectare, PolygonGeoJsonInput, Year};
 use anyhow::Result;
 use ogcapi::{
     processes::Processor,
     types::{
         common::Link,
         processes::{
-            Execute, ExecuteResult, ExecuteResults, InlineOrRefData, InputValueNoObject,
+            Execute, ExecuteResult, ExecuteResults, Format, InlineOrRefData, InputValueNoObject,
             JobControlOptions, Output, Process, ProcessSummary, TransmissionMode,
             description::{DescriptionType, InputDescription, Metadata, OutputDescription},
         },
@@ -16,14 +16,21 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::ToSchema;
 
-/// Impact metrics related to biodiversity and ecosystems change (ESRS E4 B5) - scaffold implementation
+/// Biodiversity impact metrics related to biodiversity and ecosystems change (ESRS E4 B5) - scaffold implementation
 #[derive(Debug, Clone)]
-pub struct ImpactMetricsProcess;
+pub struct BiodiversityImpactMetricsProcess;
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub struct ImpactMetricsProcessInputs {
-    /// Sites as a `GeoJSON` `FeatureCollection` (placeholder)
-    pub sites: serde_json::Value,
+pub struct BiodiversityImpactMetricsProcessInputs {
+    /// Low impact sites (e.g. office buildings, light manufacturing, parking lots, etc.).
+    /// The impact will include an impact radius of 5 km.
+    pub low_impact_sites: PolygonGeoJsonInput,
+    /// High impact sites (e.g. industrial facilities, mines, large-scale agriculture, or heavy industrial plants, etc.)
+    /// The impact will include an impact radius of 10 km.
+    pub high_impact_sites: PolygonGeoJsonInput,
+    /// Compensation sites (e.g. reforestation areas, wetlands, etc.)
+    /// They will be used to calculate the off-site nature-oriented land use.
+    pub compensation_sites: PolygonGeoJsonInput,
     /// Reporting year
     pub reporting_year: Year,
     /// Previous year (optional). If omitted, only the current year will be reported without change metrics.
@@ -32,10 +39,10 @@ pub struct ImpactMetricsProcessInputs {
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 pub struct SiteRow {
-    pub location: Option<String>,
+    pub location: String,
     pub area_ha: f64,
     pub biodiversity_sensitive_area_ha: f64,
-    pub specification: Option<String>,
+    pub specification: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Clone)]
@@ -47,27 +54,63 @@ pub struct TotalsPerYear {
 }
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
-pub struct ImpactMetricsProcessOutputs {
-    pub site_table: Vec<SiteRow>,
-    pub totals_previous_year: TotalsPerYear,
-    pub totals_reporting_year: TotalsPerYear,
-    pub percent_change: TotalsPerYear,
-    pub inputs: serde_json::Value,
-    pub sources: Vec<String>,
+pub struct BiodiversityImpactMetricsProcessOutputs {
+    /// Sites in or near biodiversity-sensitive areas
+    pub biodiversity_sensitive_areas: Option<BiodiversitySensitiveAreasOutput>,
+
+    /// Report on the land use for the reporting year, previous year and percent change.
+    pub land_use: Option<LandUseOutput>,
+
+    /// Echo of inputs for auditing and traceability
+    pub inputs: Option<BiodiversityImpactMetricsProcessInputs>,
+
+    /// Data sources and workflow references used for audits and provenance
+    pub documentation_sources: Option<Vec<DocumentationSource>>,
 }
 
-impl From<ImpactMetricsProcessOutputs> for ExecuteResults {
-    fn from(outputs: ImpactMetricsProcessOutputs) -> Self {
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct BiodiversitySensitiveAreasOutput {
+    pub sites: Vec<SiteRow>,
+}
+
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct LandUseOutput {
+    pub totals_reporting_year: TotalsPerYear,
+    pub totals_previous_year: Option<TotalsPerYear>,
+    pub percent_change: Option<TotalsPerYear>,
+}
+
+/// Documentation source for audit and provenance, e.g. a Geo Engine workflow or a scientific paper.
+/// This is included in the outputs of the process for traceability and auditing purposes.
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct DocumentationSource {
+    /// A human-readable identifier of the documentation source (e.g. "Geo Engine workflow XYZ")
+    pub data: String,
+    /// A description, citation or URL pointing to the source of the documentation (e.g. a link to a Geo Engine workflow, or a scientific paper)
+    pub documentation_source: String,
+}
+
+fn json_format() -> Format {
+    Format {
+        media_type: Some("application/json".to_string()),
+        encoding: None,
+        schema: None, // TODO: include JSON schema for outputs
+    }
+}
+
+impl From<BiodiversityImpactMetricsProcessOutputs> for ExecuteResults {
+    fn from(outputs: BiodiversityImpactMetricsProcessOutputs) -> Self {
         let mut result = ExecuteResults::default();
 
-        // Serialize tables as JSON strings as a simple inline representation for now
-        if let Ok(site_table_str) = serde_json::to_string(&outputs.site_table) {
+        if let Some(biodiversity_sensitive_areas) = outputs.biodiversity_sensitive_areas
+            && let Ok(site_table_str) = serde_json::to_string(&biodiversity_sensitive_areas)
+        {
             result.insert(
-                "siteTable".to_string(),
+                "biodiversitySensitiveAreas".to_string(),
                 ExecuteResult {
                     output: Output {
-                        format: None,
-                        transmission_mode: Default::default(),
+                        format: Some(json_format()),
+                        transmission_mode: TransmissionMode::Value,
                     },
                     data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
                         site_table_str,
@@ -76,58 +119,32 @@ impl From<ImpactMetricsProcessOutputs> for ExecuteResults {
             );
         }
 
-        if let Ok(totals_prev_str) = serde_json::to_string(&outputs.totals_previous_year) {
+        if let Some(land_use) = outputs.land_use
+            && let Ok(land_use_str) = serde_json::to_string(&land_use)
+        {
             result.insert(
-                "totalsPreviousYear".to_string(),
+                "landUse".to_string(),
                 ExecuteResult {
                     output: Output {
-                        format: None,
-                        transmission_mode: Default::default(),
+                        format: Some(json_format()),
+                        transmission_mode: TransmissionMode::Value,
                     },
                     data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        totals_prev_str,
+                        land_use_str,
                     )),
                 },
             );
         }
 
-        if let Ok(totals_rep_str) = serde_json::to_string(&outputs.totals_reporting_year) {
-            result.insert(
-                "totalsReportingYear".to_string(),
-                ExecuteResult {
-                    output: Output {
-                        format: None,
-                        transmission_mode: Default::default(),
-                    },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        totals_rep_str,
-                    )),
-                },
-            );
-        }
-
-        if let Ok(percent_change_str) = serde_json::to_string(&outputs.percent_change) {
-            result.insert(
-                "percentChange".to_string(),
-                ExecuteResult {
-                    output: Output {
-                        format: None,
-                        transmission_mode: Default::default(),
-                    },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        percent_change_str,
-                    )),
-                },
-            );
-        }
-
-        if let Ok(inputs_log_str) = serde_json::to_string(&outputs.inputs) {
+        if let Some(inputs) = outputs.inputs
+            && let Ok(inputs_log_str) = serde_json::to_string(&inputs)
+        {
             result.insert(
                 "inputsLog".to_string(),
                 ExecuteResult {
                     output: Output {
-                        format: None,
-                        transmission_mode: Default::default(),
+                        format: Some(json_format()),
+                        transmission_mode: TransmissionMode::Value,
                     },
                     data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
                         inputs_log_str,
@@ -136,16 +153,18 @@ impl From<ImpactMetricsProcessOutputs> for ExecuteResults {
             );
         }
 
-        if let Ok(sources_str) = serde_json::to_string(&outputs.sources) {
+        if let Some(documentation_sources) = outputs.documentation_sources
+            && let Ok(documentation_sources_str) = serde_json::to_string(&documentation_sources)
+        {
             result.insert(
-                "sources".to_string(),
+                "documentationSources".to_string(),
                 ExecuteResult {
                     output: Output {
-                        format: None,
-                        transmission_mode: Default::default(),
+                        format: Some(json_format()),
+                        transmission_mode: TransmissionMode::Value,
                     },
                     data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        sources_str,
+                        documentation_sources_str,
                     )),
                 },
             );
@@ -160,8 +179,8 @@ impl From<ImpactMetricsProcessOutputs> for ExecuteResults {
 /// in the `sources` output for auditing. The spatial computations are placeholders and
 /// should be replaced by Geo Engine workflow calls in future.
 pub async fn compute_impact_metrics(
-    inputs: ImpactMetricsProcessInputs,
-) -> anyhow::Result<ImpactMetricsProcessOutputs> {
+    inputs: BiodiversityImpactMetricsProcessInputs,
+) -> anyhow::Result<BiodiversityImpactMetricsProcessOutputs> {
     // Placeholder computation: extract feature properties if available and aggregate
     let mut site_table: Vec<SiteRow> = Vec::new();
 
@@ -219,21 +238,23 @@ pub async fn compute_impact_metrics(
     };
 
     // sources: placeholder for provenance / audit
-    let sources: Vec<String> = vec!["Geo Engine workflow XYZ (placeholder)".to_string()];
+    let documentation_sources: Vec<String> =
+        vec!["Geo Engine workflow XYZ (placeholder)".to_string()];
 
-    let outputs = ImpactMetricsProcessOutputs {
+    let outputs = BiodiversityImpactMetricsProcessOutputs {
         site_table,
         totals_previous_year: totals_previous,
         totals_reporting_year: totals_reporting,
         percent_change,
         inputs: serde_json::to_value(&inputs)?,
+        documentation_sources,
         sources,
     };
 
     Ok(outputs)
 }
 #[async_trait::async_trait]
-impl Processor for ImpactMetricsProcess {
+impl Processor for BiodiversityImpactMetricsProcess {
     fn id(&self) -> &'static str {
         "impact-metrics-biodiversity"
     }
@@ -337,7 +358,7 @@ impl Processor for ImpactMetricsProcess {
 
     async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
         let value = serde_json::to_value(execute.inputs)?;
-        let inputs: ImpactMetricsProcessInputs = serde_json::from_value(value)?;
+        let inputs: BiodiversityImpactMetricsProcessInputs = serde_json::from_value(value)?;
 
         let outputs = compute_impact_metrics(inputs).await?;
         Ok(outputs.into())
@@ -362,7 +383,7 @@ mod tests {
 
         let inputs: HashMap<String, Input> = serde_json::from_value(json).unwrap();
         let json = serde_json::to_value(&inputs).unwrap();
-        let _inputs: ImpactMetricsProcessInputs = serde_json::from_value(json).unwrap();
+        let _inputs: BiodiversityImpactMetricsProcessInputs = serde_json::from_value(json).unwrap();
     }
 
     #[tokio::test]
@@ -384,7 +405,7 @@ mod tests {
             ]
         });
 
-        let inputs = ImpactMetricsProcessInputs {
+        let inputs = BiodiversityImpactMetricsProcessInputs {
             sites: sites.clone(),
             reporting_year: Year(2025),
             previous_year: Some(Year(2024)),

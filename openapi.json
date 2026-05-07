@@ -631,6 +631,66 @@
           }
         }
       }
+    },
+    "/processes/habitatDistance/execution": {
+      "post": {
+        "tags": [
+          "Processes"
+        ],
+        "operationId": "execute_habitat_distance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HabitatDistanceProcessParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HabitatDistanceProcessOutputs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/processes/biodiversity-sensitive-areas/execution": {
+      "post": {
+        "tags": [
+          "Processes"
+        ],
+        "operationId": "execute_impact_metrics",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImpactMetricsProcessParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessOutputs"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -710,6 +770,74 @@
         ],
         "description": "Each bounding box is provided as four or six numbers, depending on\nwhether the coordinate reference system includes a vertical axis\n(height or depth):\n\n* Lower left corner, coordinate axis 1\n\n* Lower left corner, coordinate axis 2\n\n* Minimum value, coordinate axis 3 (optional)\n\n* Upper right corner, coordinate axis 1\n\n* Upper right corner, coordinate axis 2\n\n* Maximum value, coordinate axis 3 (optional)\n\nThe coordinate reference system of the values is WGS 84 longitude/latitude\n(http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate\nreference system is specified in `crs`.\n\nFor WGS 84 longitude/latitude the values are in most cases the sequence of\nminimum longitude, minimum latitude, maximum longitude and maximum latitude.\nHowever, in cases where the box spans the antimeridian the first value\n(west-most box edge) is larger than the third value (east-most box edge).\n\nIf the vertical axis is included, the third and the sixth number are\nthe bottom and the top of the 3-dimensional bounding box.\n\nIf a feature has multiple spatial geometry properties, it is the decision of the\nserver whether only a single spatial geometry property is used to determine\nthe extent or all relevant geometries."
       },
+      "BiodiversitySensitiveAreasProcessInputs": {
+        "type": "object",
+        "required": [
+          "sites",
+          "locationProperty",
+          "siteTypeProperty"
+        ],
+        "properties": {
+          "sites": {
+            "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput",
+            "description": "Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.).\nThe impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.)."
+          },
+          "locationProperty": {
+            "$ref": "#/components/schemas/RelativeJsonPointer",
+            "description": "Name of the property in the input `GeoJSON` features that contains the location information."
+          },
+          "siteTypeProperty": {
+            "$ref": "#/components/schemas/RelativeJsonPointer",
+            "description": "Name of the property in the input `GeoJSON` features that contains the site type information."
+          }
+        }
+      },
+      "BiodiversitySensitiveAreasProcessOutputs": {
+        "type": "object",
+        "properties": {
+          "biodiversitySensitiveAreas": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SiteRow"
+            },
+            "description": "Sites in or near biodiversity-sensitive areas"
+          },
+          "inputs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessInputs",
+                "description": "Echo of inputs for auditing and traceability"
+              }
+            ]
+          },
+          "errors": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Errors encountered during processing, if any (e.g. invalid geometries, missing properties, etc.)"
+          },
+          "documentationSources": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DocumentationSource"
+            },
+            "description": "Data sources and workflow references used for audits and provenance"
+          }
+        }
+      },
       "BoundingBox": {
         "type": "object",
         "required": [
@@ -739,13 +867,6 @@
           }
         }
       },
-      "Coordinate": {
-        "type": "array",
-        "items": {
-          "type": "number",
-          "format": "double"
-        }
-      },
       "DescriptionType": {
         "type": "object",
         "description": "Basic description type",
@@ -770,6 +891,24 @@
           },
           "additionalParameters": {
             "$ref": "#/components/schemas/AdditionalParameters"
+          }
+        }
+      },
+      "DocumentationSource": {
+        "type": "object",
+        "description": "Documentation source for audit and provenance, e.g. a Geo Engine workflow or a scientific paper.\nThis is included in the outputs of the process for traceability and auditing purposes.",
+        "required": [
+          "data",
+          "documentation_source"
+        ],
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "A human-readable identifier of the documentation source (e.g. \"Geo Engine workflow XYZ\")"
+          },
+          "documentation_source": {
+            "type": "string",
+            "description": "A description, citation or URL pointing to the source of the documentation (e.g. a link to a Geo Engine workflow, or a scientific paper)"
           }
         }
       },
@@ -836,6 +975,22 @@
         },
         "additionalProperties": false
       },
+      "FeatureCollectionGeoJsonInput": {
+        "type": "object",
+        "description": "A `GeoJSON` `FeatureCollection` input",
+        "required": [
+          "value",
+          "mediaType"
+        ],
+        "properties": {
+          "value": {
+            "$ref": "https://geojson.org/schema/FeatureCollection.json"
+          },
+          "mediaType": {
+            "$ref": "#/components/schemas/GeoJsonInputMediaType"
+          }
+        }
+      },
       "Format": {
         "type": "object",
         "properties": {
@@ -847,6 +1002,100 @@
           },
           "schema": {
             "$ref": "#/components/schemas/Schema"
+          }
+        }
+      },
+      "GeoJsonInputMediaType": {
+        "type": "string",
+        "enum": [
+          "application/geo+json"
+        ]
+      },
+      "HabitatDistanceProcessInputs": {
+        "type": "object",
+        "required": [
+          "coordinate"
+        ],
+        "properties": {
+          "coordinate": {
+            "$ref": "#/components/schemas/PointGeoJsonInput"
+          }
+        }
+      },
+      "HabitatDistanceProcessOutputs": {
+        "type": "object",
+        "properties": {
+          "habitatCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "habitatName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "distanceM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "HabitatDistanceProcessParams": {
+        "type": "object",
+        "description": "Process execution",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/HabitatDistanceProcessInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
+          }
+        }
+      },
+      "Hectare": {
+        "type": "number",
+        "format": "double",
+        "description": "Area in hectares"
+      },
+      "ImpactMetricsProcessParams": {
+        "type": "object",
+        "description": "Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
           }
         }
       },
@@ -1188,21 +1437,6 @@
         ],
         "description": "Process output description"
       },
-      "PointGeoJson": {
-        "type": "object",
-        "required": [
-          "type",
-          "coordinates"
-        ],
-        "properties": {
-          "type": {
-            "$ref": "#/components/schemas/PointGeoJsonType"
-          },
-          "coordinates": {
-            "$ref": "#/components/schemas/Coordinate"
-          }
-        }
-      },
       "PointGeoJsonInput": {
         "type": "object",
         "required": [
@@ -1211,24 +1445,12 @@
         ],
         "properties": {
           "value": {
-            "$ref": "#/components/schemas/PointGeoJson"
+            "$ref": "https://geojson.org/schema/Point.json"
           },
           "mediaType": {
-            "$ref": "#/components/schemas/PointGeoJsonInputMediaType"
+            "$ref": "#/components/schemas/GeoJsonInputMediaType"
           }
         }
-      },
-      "PointGeoJsonInputMediaType": {
-        "type": "string",
-        "enum": [
-          "application/geo+json"
-        ]
-      },
-      "PointGeoJsonType": {
-        "type": "string",
-        "enum": [
-          "Point"
-        ]
       },
       "Process": {
         "allOf": [
@@ -1335,6 +1557,11 @@
           }
         ]
       },
+      "RelativeJsonPointer": {
+        "type": "string",
+        "format": "relative-json-pointer",
+        "description": "A property of the input data that is relevant for the process, e.g. a property field in a input `GeoJSON`."
+      },
       "Response": {
         "type": "string",
         "default": "raw",
@@ -1371,6 +1598,30 @@
             }
           }
         ]
+      },
+      "SiteRow": {
+        "type": "object",
+        "required": [
+          "location",
+          "area_ha",
+          "biodiversity_sensitive_area_ha",
+          "specification"
+        ],
+        "properties": {
+          "location": {
+            "type": "string"
+          },
+          "area_ha": {
+            "type": "number",
+            "format": "double"
+          },
+          "biodiversity_sensitive_area_ha": {
+            "$ref": "#/components/schemas/Hectare"
+          },
+          "specification": {
+            "type": "string"
+          }
+        }
       },
       "StatusCode": {
         "type": "string",
