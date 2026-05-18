@@ -10,13 +10,17 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { Response } from '../models/Response';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+/**
+* Process execution
+*/
+export class HabitatDistanceProcessParams {
+    'inputs': HabitatDistanceProcessInputs;
+    'outputs'?: { [key: string]: any; };
+    'response'?: Response;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,20 +28,26 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
+            "name": "inputs",
+            "baseName": "inputs",
+            "type": "HabitatDistanceProcessInputs",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "outputs",
+            "baseName": "outputs",
+            "type": "{ [key: string]: any; }",
+            "format": ""
+        },
+        {
+            "name": "response",
+            "baseName": "response",
+            "type": "Response",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return HabitatDistanceProcessParams.attributeTypeMap;
     }
 
     public constructor() {

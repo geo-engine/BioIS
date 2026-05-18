@@ -10,13 +10,16 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+export class SiteRow {
+    'location': string;
+    'areaHa': number;
+    /**
+    * Area in hectares
+    */
+    'biodiversitySensitiveAreaHa': number;
+    'specification': string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,24 +27,34 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
+            "name": "location",
+            "baseName": "location",
+            "type": "string",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "areaHa",
+            "baseName": "area_ha",
+            "type": "number",
+            "format": "double"
+        },
+        {
+            "name": "biodiversitySensitiveAreaHa",
+            "baseName": "biodiversity_sensitive_area_ha",
+            "type": "number",
+            "format": "double"
+        },
+        {
+            "name": "specification",
+            "baseName": "specification",
+            "type": "string",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return SiteRow.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
-
-

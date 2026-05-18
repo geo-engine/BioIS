@@ -1,8 +1,11 @@
 use crate::{
     db::{DbPool, PooledConnection},
-    processes::parameters::{
-        DocumentationSource, FeatureCollectionGeoJsonInput, Hectare, Kilometers,
-        RelativeJsonPointer,
+    processes::{
+        parameters::{
+            DataResource, DataResourceSchema, DocumentationSource, FeatureCollectionGeoJsonInput,
+            Fields, Hectare, Kilometers, RelativeJsonPointer, TableSchemaField, TableSchemaType,
+        },
+        util::json_input_value,
     },
     util::{md_content, md_heading},
 };
@@ -14,7 +17,7 @@ use ogcapi::{
     processes::Processor,
     types::processes::{
         Execute, ExecuteResult, ExecuteResults, Format, InlineOrRefData, InputValueNoObject,
-        JobControlOptions, Output, Process, ProcessSummary, TransmissionMode,
+        JobControlOptions, Output, Process, ProcessSummary, QualifiedInputValue, TransmissionMode,
         description::{DescriptionType, InputDescription, Metadata, OutputDescription},
     },
 };
@@ -101,11 +104,12 @@ mod input_keys {
     pub const SITE_TYPE_PROPERTY: &str = "siteTypeProperty";
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+#[derive(Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct BiodiversitySensitiveAreasProcessOutputs {
     /// Sites in or near biodiversity-sensitive areas
-    pub biodiversity_sensitive_areas: Option<Vec<SiteRow>>,
+    #[schema(value_type = Option<DataResourceSchema>)]
+    pub biodiversity_sensitive_areas: Option<DataResource<Vec<SiteRow>>>,
 
     /// Echo of inputs for auditing and traceability
     pub inputs: Option<BiodiversitySensitiveAreasProcessInputs>,
@@ -114,7 +118,8 @@ pub struct BiodiversitySensitiveAreasProcessOutputs {
     pub errors: Option<Vec<String>>,
 
     /// Data sources and workflow references used for audits and provenance
-    pub documentation_sources: Option<Vec<DocumentationSource>>,
+    #[schema(value_type = Option<DataResourceSchema>)]
+    pub documentation_sources: Option<DataResource<Vec<DocumentationSource>>>,
 }
 
 mod output_keys {
@@ -184,8 +189,10 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                                 .into(),
                             metadata: vec![Metadata {
                                 title: Some("GeoJSON Property Pointer".to_string()),
-                                role: Some("geojson-property-pointer".to_string()),
-                                href: Some("#/inputs/sites".to_string()),
+                                role: Some("json-pointer-base".to_string()),
+                                href: Some(
+                                    "#/inputs/sites/value/features/0/properties".to_string(),
+                                ),
                             }],
                             ..Default::default()
                         },
@@ -207,8 +214,10 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                                 .into(),
                             metadata: vec![Metadata {
                                 title: Some("GeoJSON Property Pointer".to_string()),
-                                role: Some("geojson-property-pointer".to_string()),
-                                href: Some("#/inputs/sites".to_string()),
+                                role: Some("json-pointer-base".to_string()),
+                                href: Some(
+                                    "#/inputs/sites/value/features/0/properties".to_string(),
+                                ),
                             }],
                             ..Default::default()
                         },
@@ -235,7 +244,9 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                             .into(),
                             ..Default::default()
                         },
-                        schema: generator.root_schema_for::<Vec<SiteRow>>().to_value(),
+                        schema: generator
+                            .root_schema_for::<DataResource<Vec<SiteRow>>>()
+                            .to_value(),
                     },
                 ),
                 (
@@ -282,7 +293,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                             ..Default::default()
                         },
                         schema: generator
-                            .root_schema_for::<Vec<DocumentationSource>>()
+                            .root_schema_for::<DataResource<Vec<DocumentationSource>>>()
                             .to_value(),
                     },
                 ),
@@ -324,7 +335,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     vec![DocumentationSource {
                         data: "Natura 2000 sites (state of 2024).".to_string(), // TODO: get state from dataset metadata
                         documentation_source: "https://environment.ec.europa.eu/topics/nature-and-biodiversity/natura-2000_en".to_string(),
-                    }]
+                    }].into()
                 },
             ),
         };
@@ -345,7 +356,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             outputs.biodiversity_sensitive_areas = execute
                 .outputs
                 .contains_key(output_keys::BIODIVERSITY_SENSITIVE_AREAS)
-                .then_some(site_table);
+                .then_some(site_table.into());
 
             outputs.errors = execute
                 .outputs
@@ -411,7 +422,7 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
         let mut result = ExecuteResults::default();
 
         if let Some(biodiversity_sensitive_areas) = outputs.biodiversity_sensitive_areas
-            && let Ok(site_table_str) = serde_json::to_string(&biodiversity_sensitive_areas)
+            && let Ok(value) = biodiversity_sensitive_areas.to_input_value()
         {
             result.insert(
                 output_keys::BIODIVERSITY_SENSITIVE_AREAS.to_string(),
@@ -420,15 +431,20 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
                         format: Some(json_format()),
                         transmission_mode: TransmissionMode::Value,
                     },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        site_table_str,
-                    )),
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value,
+                        format: Format {
+                            media_type: Some("application/vnd.dataresource+json".to_string()),
+                            encoding: None,
+                            schema: None,
+                        },
+                    }),
                 },
             );
         }
 
         if let Some(inputs) = outputs.inputs
-            && let Ok(inputs_log_str) = serde_json::to_string(&inputs)
+            && let Ok(inputs_log) = serde_json::to_value(&inputs)
         {
             result.insert(
                 output_keys::INPUTS.to_string(),
@@ -437,15 +453,20 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
                         format: Some(json_format()),
                         transmission_mode: TransmissionMode::Value,
                     },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        inputs_log_str,
-                    )),
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value: json_input_value(inputs_log),
+                        format: Format {
+                            media_type: Some("application/json".to_string()),
+                            encoding: None,
+                            schema: None,
+                        },
+                    }),
                 },
             );
         }
 
         if let Some(documentation_sources) = outputs.documentation_sources
-            && let Ok(documentation_sources_str) = serde_json::to_string(&documentation_sources)
+            && let Ok(value) = documentation_sources.to_input_value()
         {
             result.insert(
                 output_keys::DOCUMENTATION_SOURCES.to_string(),
@@ -454,16 +475,19 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
                         format: Some(json_format()),
                         transmission_mode: TransmissionMode::Value,
                     },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        documentation_sources_str,
-                    )),
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value,
+                        format: Format {
+                            media_type: Some("application/vnd.dataresource+json".to_string()),
+                            encoding: None,
+                            schema: None,
+                        },
+                    }),
                 },
             );
         }
 
-        if let Some(errors) = outputs.errors
-            && let Ok(errors_str) = serde_json::to_string(&errors)
-        {
+        if let Some(errors) = outputs.errors {
             result.insert(
                 output_keys::ERRORS.to_string(),
                 ExecuteResult {
@@ -471,9 +495,7 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
                         format: Some(json_format()),
                         transmission_mode: TransmissionMode::Value,
                     },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::String(
-                        errors_str,
-                    )),
+                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::Array(errors)),
                 },
             );
         }
@@ -609,6 +631,7 @@ fn was_point(feature: &geojson::Feature) -> bool {
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, JsonSchema, ToSchema, QueryableByName)]
+#[serde(rename_all = "camelCase")]
 pub struct SiteRow {
     #[diesel(sql_type = sql_types::Text)]
     pub location: String,
@@ -619,6 +642,38 @@ pub struct SiteRow {
     pub biodiversity_sensitive_area_ha: Hectare,
     #[diesel(sql_type = sql_types::Text)]
     pub specification: String,
+}
+
+impl From<Vec<SiteRow>> for DataResource<Vec<SiteRow>> {
+    fn from(value: Vec<SiteRow>) -> Self {
+        Self {
+            data: value,
+            schema: Fields {
+                fields: vec![
+                    TableSchemaField {
+                        name: "location".into(),
+                        r#type: Some(TableSchemaType::String),
+                        title: Some("Location".into()),
+                    },
+                    TableSchemaField {
+                        name: "areaHa".into(),
+                        r#type: Some(TableSchemaType::Number),
+                        title: Some("Area (ha)".into()),
+                    },
+                    TableSchemaField {
+                        name: "biodiversitySensitiveAreaHa".into(),
+                        r#type: Some(TableSchemaType::Number),
+                        title: Some("Biodiversity Sensitive Area (ha)".into()),
+                    },
+                    TableSchemaField {
+                        name: "specification".into(),
+                        r#type: Some(TableSchemaType::String),
+                        title: Some("Specification".into()),
+                    },
+                ],
+            },
+        }
+    }
 }
 
 /// Compute the impact metrics from inputs. This helper performs optional HTTP GET requests

@@ -18,10 +18,11 @@ INDENT = "    "
 def file_modifications() -> Generator[tuple[Path, FileModifier], None, None]:
     """Return a generator of file paths and their corresponding modification functions."""
 
-    yield Path("types/ObjectParamAPI.ts"), object_param_api_ts
-    yield Path("types/PromiseAPI.ts"), promise_api_ts
+    yield Path("models/all.ts"), all_ts
     yield Path("models/ObjectSerializer.ts"), object_serializer_ts
     yield Path("models/Results.ts"), results_ts
+    yield Path("types/ObjectParamAPI.ts"), object_param_api_ts
+    yield Path("types/PromiseAPI.ts"), promise_api_ts
 
 
 def main():
@@ -75,7 +76,18 @@ def object_serializer_ts(file_contents: list[str]) -> Generator[str, None, None]
     for line in file_contents:
         if dedent(line).startswith('"Results": ResultsClass,'):
             line = ""  # lead to call of missing `getAttributeTypeMap` method
+        if dedent(line).startswith('"Input": InputClass,'):
+            line = ""  # lead to call of missing `getAttributeTypeMap` method
         yield line
+
+
+def all_ts(file_contents: list[str]) -> Generator[str, None, None]:
+    """Modify all TypeScript files."""
+    for line in file_contents:
+        yield line
+
+    # add to bottom
+    yield "export * from '../models/ObjectSerializer';" + "\n"
 
 
 if __name__ == "__main__":

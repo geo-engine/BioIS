@@ -10,12 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
+import { GeoJSONFeatureCollection } from '../models/GeoJSONFeatureCollection';
 import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
+/**
+* A `GeoJSON` `FeatureCollection` input
+*/
+export class FeatureCollectionGeoJsonInput {
+    'value': GeoJSONFeatureCollection;
     'mediaType': GeoJsonInputMediaType;
 
     static readonly discriminator: string | undefined = undefined;
@@ -26,7 +29,7 @@ export class PointGeoJsonInput {
         {
             "name": "value",
             "baseName": "value",
-            "type": "GeoJSONPoint",
+            "type": "GeoJSONFeatureCollection",
             "format": ""
         },
         {
@@ -37,7 +40,7 @@ export class PointGeoJsonInput {
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return FeatureCollectionGeoJsonInput.attributeTypeMap;
     }
 
     public constructor() {

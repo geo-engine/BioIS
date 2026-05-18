@@ -19,8 +19,9 @@ use ogcapi::{
     types::{
         common::Link,
         processes::{
-            Execute, ExecuteResult, ExecuteResults, InlineOrRefData, InputValueNoObject,
-            JobControlOptions, Output, Process, ProcessSummary, TransmissionMode,
+            Execute, ExecuteResult, ExecuteResults, Format, InlineOrRefData, InputValue,
+            InputValueNoObject, JobControlOptions, Output, Process, ProcessSummary,
+            QualifiedInputValue, TransmissionMode,
             description::{DescriptionType, InputDescription, Metadata, OutputDescription},
         },
     },
@@ -33,7 +34,7 @@ use utoipa::ToSchema;
 
 use crate::{
     config::CONFIG,
-    processes::parameters::{PointGeoJsonInput, ToBbox},
+    processes::parameters::{Month, PointGeoJsonInput, ToBbox, Year},
     state::USER,
     util::{error_response, to_api_workflow},
 };
@@ -50,12 +51,6 @@ pub struct NDVIProcessInputs {
     #[schema(minimum = 1, maximum = 6)]
     pub month: Month,
 }
-
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
-pub struct Year(u16);
-
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
-pub struct Month(u16);
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -75,7 +70,14 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
                         format: None,
                         transmission_mode: Default::default(),
                     },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::Number(ndvi)),
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value: InputValue::InputValueNoObject(InputValueNoObject::Number(ndvi)),
+                        format: Format {
+                            media_type: Some("text/plain; spectral=ndvi".to_string()),
+                            encoding: None,
+                            schema: None,
+                        },
+                    }),
                 },
             );
         }
@@ -87,7 +89,14 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
                         format: None,
                         transmission_mode: Default::default(),
                     },
-                    data: InlineOrRefData::InputValueNoObject(InputValueNoObject::Number(k_ndvi)),
+                    data: InlineOrRefData::QualifiedInputValue(QualifiedInputValue {
+                        value: InputValue::InputValueNoObject(InputValueNoObject::Number(k_ndvi)),
+                        format: Format {
+                            media_type: Some("text/plain; spectral=ndvi".to_string()),
+                            encoding: None,
+                            schema: None,
+                        },
+                    }),
                 },
             );
         }

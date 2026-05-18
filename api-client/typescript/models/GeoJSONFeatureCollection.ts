@@ -10,13 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { GeoJSONFeature } from '../models/GeoJSONFeature';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+export class GeoJSONFeatureCollection {
+    'type': GeoJSONFeatureCollectionTypeEnum;
+    'features': Array<GeoJSONFeature>;
+    'bbox'?: Array<number>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,24 +24,33 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
+            "name": "type",
+            "baseName": "type",
+            "type": "GeoJSONFeatureCollectionTypeEnum",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "features",
+            "baseName": "features",
+            "type": "Array<GeoJSONFeature>",
+            "format": ""
+        },
+        {
+            "name": "bbox",
+            "baseName": "bbox",
+            "type": "Array<number>",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return GeoJSONFeatureCollection.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
 
+export enum GeoJSONFeatureCollectionTypeEnum {
+    FeatureCollection = 'FeatureCollection'
+}
 

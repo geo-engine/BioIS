@@ -10,13 +10,20 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+/**
+* Documentation source for audit and provenance, e.g. a Geo Engine workflow or a scientific paper. This is included in the outputs of the process for traceability and auditing purposes.
+*/
+export class DocumentationSource {
+    /**
+    * A human-readable identifier of the documentation source (e.g. \"Geo Engine workflow XYZ\")
+    */
+    'data': string;
+    /**
+    * A description, citation or URL pointing to the source of the documentation (e.g. a link to a Geo Engine workflow, or a scientific paper)
+    */
+    'documentationSource': string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,24 +31,22 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
+            "name": "data",
+            "baseName": "data",
+            "type": "string",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "documentationSource",
+            "baseName": "documentation_source",
+            "type": "string",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return DocumentationSource.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
-
-

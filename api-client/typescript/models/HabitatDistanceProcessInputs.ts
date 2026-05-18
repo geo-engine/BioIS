@@ -10,13 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+export class HabitatDistanceProcessInputs {
+    'coordinate': PointGeoJsonInput;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,24 +22,16 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
-            "format": ""
-        },
-        {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "coordinate",
+            "baseName": "coordinate",
+            "type": "PointGeoJsonInput",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return HabitatDistanceProcessInputs.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
-
-

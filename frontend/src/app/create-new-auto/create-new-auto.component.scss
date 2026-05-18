@@ -1,0 +1,51 @@
+@use '@angular/material' as mat;
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 100%;
+  padding: 1rem;
+}
+
+mat-form-field {
+  width: 100%;
+  max-width: 16rem;
+
+  &:not(:last-child) {
+    margin-right: 1rem;
+  }
+}
+
+button {
+  align-self: flex-start;
+}
+
+fieldset {
+  border-color: var(--mat-sys-surface-container-lowest);
+  border-radius: var(--mat-sys-corner-medium);
+  padding: 1rem;
+
+  legend {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+mat-icon {
+  margin-left: 0.5rem;
+
+  @include mat.icon-overrides(
+    (
+      color: var(--mat-sys-primary),
+    )
+  );
+}
+
+p > mat-icon {
+  vertical-align: text-bottom;
+}
+
+mat-checkbox ~ mat-icon {
+  vertical-align: middle;
+}

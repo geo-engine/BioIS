@@ -10,13 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HttpFile } from '../http/http';
 
-export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+export class GeoJSONMultiPolygon {
+    'type': GeoJSONMultiPolygonTypeEnum;
+    'coordinates': Array<Array<Array<Array<number>>>>;
+    'bbox'?: Array<number>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,24 +23,33 @@ export class PointGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
+            "name": "type",
+            "baseName": "type",
+            "type": "GeoJSONMultiPolygonTypeEnum",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "coordinates",
+            "baseName": "coordinates",
+            "type": "Array<Array<Array<Array<number>>>>",
+            "format": ""
+        },
+        {
+            "name": "bbox",
+            "baseName": "bbox",
+            "type": "Array<number>",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
+        return GeoJSONMultiPolygon.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
 
+export enum GeoJSONMultiPolygonTypeEnum {
+    MultiPolygon = 'MultiPolygon'
+}
 
