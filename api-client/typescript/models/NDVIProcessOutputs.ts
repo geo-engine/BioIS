@@ -10,11 +10,13 @@
  * Do not edit the class manually.
  */
 
+import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { HttpFile } from '../http/http';
 
 export class NDVIProcessOutputs {
     'ndvi'?: number | null;
     'kNdvi'?: number | null;
+    'inputs': NDVIProcessInputs;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -32,6 +34,12 @@ export class NDVIProcessOutputs {
             "baseName": "kNdvi",
             "type": "number",
             "format": "double"
+        },
+        {
+            "name": "inputs",
+            "baseName": "inputs",
+            "type": "NDVIProcessInputs",
+            "format": ""
         }    ];
 
     static getAttributeTypeMap() {
