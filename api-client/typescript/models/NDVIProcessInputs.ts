@@ -15,6 +15,9 @@ import { HttpFile } from '../http/http';
 
 export class NDVIProcessInputs {
     'coordinate': PointGeoJsonInput;
+    /**
+    * Year of reporting or change (e.g., 2023, 2024, etc.)
+    */
     'year': number;
     'month': number;
 

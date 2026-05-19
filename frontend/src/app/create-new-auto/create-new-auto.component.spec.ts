@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { Process, ProcessesApi } from '@geoengine/biois';
 
 import { CreateNewAutoComponent } from './create-new-auto.component';
+import { inputBinding } from '@angular/core';
 
 describe('CreateNewAutoComponent', () => {
   let component: CreateNewAutoComponent;
@@ -16,12 +17,15 @@ describe('CreateNewAutoComponent', () => {
       imports: [CreateNewAutoComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CreateNewAutoComponent);
+    fixture = TestBed.createComponent(CreateNewAutoComponent, {
+      bindings: [inputBinding('processId', () => 'ndvi')],
+    });
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
   it('should create', () => {
+    // fixture.componentRef.setInput('processId', 'ndvi');
     expect(component).toBeTruthy();
   });
 });
@@ -33,17 +37,80 @@ function ndviProcess(): Process {
     coordinate: {
       title: 'Coordinate',
       description: 'The coordinate to calculate the NDVI for',
-      schema: null,
+      schema: {
+        $defs: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'GeoJSON Point': {
+            $ref: 'https://geojson.org/schema/Point.json',
+          },
+          GeoJsonInputMediaType: {
+            enum: ['application/geo+json'],
+            type: 'string',
+          },
+        },
+        properties: {
+          mediaType: {
+            $ref: '#/$defs/GeoJsonInputMediaType',
+          },
+          value: {
+            $ref: '#/$defs/GeoJSON%20Point',
+            examples: [
+              {
+                coordinates: [8.771796, 50.808453],
+                type: 'Point',
+              },
+            ],
+          },
+        },
+        required: ['value', 'mediaType'],
+        title: 'PointGeoJsonInput',
+        type: 'object',
+      },
     },
     year: {
       title: 'Year',
       description: 'The year to calculate the NDVI for',
-      schema: null,
+      schema: {
+        $defs: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'GeoJSON Point': {
+            $ref: 'https://geojson.org/schema/Point.json',
+          },
+          GeoJsonInputMediaType: {
+            enum: ['application/geo+json'],
+            type: 'string',
+          },
+        },
+        description: 'Year of reporting or change (e.g., 2023, 2024, etc.)',
+        examples: [2020],
+        format: 'uint16',
+        maximum: 2100,
+        minimum: 2000,
+        title: 'Year',
+        type: 'integer',
+      },
     },
     month: {
       title: 'Month',
       description: 'The month to calculate the NDVI for',
-      schema: null,
+      schema: {
+        $defs: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'GeoJSON Point': {
+            $ref: 'https://geojson.org/schema/Point.json',
+          },
+          GeoJsonInputMediaType: {
+            enum: ['application/geo+json'],
+            type: 'string',
+          },
+        },
+        examples: [1],
+        format: 'uint8',
+        maximum: 12,
+        minimum: 1,
+        title: 'Month',
+        type: 'integer',
+      },
     },
   };
   process.outputs = {

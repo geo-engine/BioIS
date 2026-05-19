@@ -1,26 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NavigationComponent } from './navigation.component';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
+import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { ProcessesApi, ProcessList, ProcessSummary } from '@geoengine/biois';
 
 describe('NavigationComponent', () => {
   let component: NavigationComponent;
   let fixture: ComponentFixture<NavigationComponent>;
 
   beforeEach(async () => {
+    // mock ProcessesApi.processes early so resource loaders in the component don't perform real network fetches
+    vi.spyOn(ProcessesApi.prototype, 'processes').mockResolvedValue(processes());
+
     await TestBed.configureTestingModule({
-      imports: [
-        MatButtonModule,
-        MatIconModule,
-        MatListModule,
-        MatSidenavModule,
-        MatToolbarModule,
-        RouterModule.forRoot([]),
-      ],
+      imports: [MatIconTestingModule, NavigationComponent, RouterModule.forRoot([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NavigationComponent);
@@ -32,3 +25,12 @@ describe('NavigationComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+
+function processes(): ProcessList {
+  const processList = new ProcessList();
+  const ndviProcessSummary = new ProcessSummary();
+  ndviProcessSummary.id = 'ndvi';
+  ndviProcessSummary.version = '0.1.0';
+  processList.processes = [ndviProcessSummary];
+  return processList;
+}

@@ -11,15 +11,11 @@
  */
 
 import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
-import { DocumentationSource } from '../models/DocumentationSource';
-import { SiteRow } from '../models/SiteRow';
+import { DataResource } from '../models/DataResource';
 import { HttpFile } from '../http/http';
 
 export class BiodiversitySensitiveAreasProcessOutputs {
-    /**
-    * Sites in or near biodiversity-sensitive areas
-    */
-    'biodiversitySensitiveAreas'?: Array<SiteRow> | null;
+    'biodiversitySensitiveAreas'?: DataResource | null;
     /**
     * Echo of inputs for auditing and traceability
     */
@@ -28,10 +24,7 @@ export class BiodiversitySensitiveAreasProcessOutputs {
     * Errors encountered during processing, if any (e.g. invalid geometries, missing properties, etc.)
     */
     'errors'?: Array<string> | null;
-    /**
-    * Data sources and workflow references used for audits and provenance
-    */
-    'documentationSources'?: Array<DocumentationSource> | null;
+    'documentationSources'?: DataResource | null;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -41,7 +34,7 @@ export class BiodiversitySensitiveAreasProcessOutputs {
         {
             "name": "biodiversitySensitiveAreas",
             "baseName": "biodiversitySensitiveAreas",
-            "type": "Array<SiteRow>",
+            "type": "DataResource",
             "format": ""
         },
         {
@@ -59,7 +52,7 @@ export class BiodiversitySensitiveAreasProcessOutputs {
         {
             "name": "documentationSources",
             "baseName": "documentationSources",
-            "type": "Array<DocumentationSource>",
+            "type": "DataResource",
             "format": ""
         }    ];
 

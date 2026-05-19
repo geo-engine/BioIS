@@ -1,246 +1,225 @@
-export * from "../models/AdditionalParameter";
-export * from "../models/AdditionalParameters";
-export * from "../models/AuthCodeResponse";
-export * from "../models/BiodiversitySensitiveAreasProcessInputs";
-export * from "../models/BiodiversitySensitiveAreasProcessOutputs";
-export * from "../models/BoundingBox";
-export * from "../models/Conformance";
-export * from "../models/DescriptionType";
-export * from "../models/DocumentationSource";
-export * from "../models/Exception";
-export * from "../models/Execute";
-export * from "../models/FeatureCollectionGeoJsonInput";
-export * from "../models/Format";
-export * from "../models/GeoJSONFeature";
-export * from "../models/GeoJSONFeatureCollection";
-export * from "../models/GeoJSONFeatureGeometry";
-export * from "../models/GeoJSONFeatureId";
-export * from "../models/GeoJSONGeometryCollection";
-export * from "../models/GeoJSONGeometryCollectionGeometriesInner";
-export * from "../models/GeoJSONLineString";
-export * from "../models/GeoJSONMultiLineString";
-export * from "../models/GeoJSONMultiPoint";
-export * from "../models/GeoJSONMultiPolygon";
-export * from "../models/GeoJSONPoint";
-export * from "../models/GeoJSONPolygon";
-export * from "../models/GeoJsonInputMediaType";
-export * from "../models/HabitatDistanceProcessInputs";
-export * from "../models/HabitatDistanceProcessOutputs";
-export * from "../models/HabitatDistanceProcessParams";
-export * from "../models/ImpactMetricsProcessParams";
-export * from "../models/InlineOrRefData";
-export * from "../models/Input";
-export * from "../models/InputDescription";
-export * from "../models/InputValue";
-export * from "../models/JobControlOptions";
-export * from "../models/JobList";
-export * from "../models/JobType";
-export * from "../models/LandingPage";
-export * from "../models/Link";
-export * from "../models/MaxOccurs";
-export * from "../models/Metadata";
-export * from "../models/NDVIProcessInputs";
-export * from "../models/NDVIProcessOutputs";
-export * from "../models/NDVIProcessParams";
-export * from "../models/Output";
-export * from "../models/OutputDescription";
-export * from "../models/PointGeoJsonInput";
-export * from "../models/Process";
-export * from "../models/ProcessList";
-export * from "../models/ProcessSummary";
-export * from "../models/QualifiedInputValue";
-export * from "../models/Response";
-export * from "../models/Results";
-export * from "../models/Schema";
-export * from "../models/SiteRow";
-export * from "../models/StatusCode";
-export * from "../models/StatusInfo";
-export * from "../models/Subscriber";
-export * from "../models/TransmissionMode";
-export * from "../models/UserInfo";
-export * from "../models/UserSession";
+export * from '../models/AdditionalParameter';
+export * from '../models/AdditionalParameters';
+export * from '../models/AuthCodeResponse';
+export * from '../models/BiodiversitySensitiveAreasProcessInputs';
+export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
+export * from '../models/BoundingBox';
+export * from '../models/Conformance';
+export * from '../models/DataResource';
+export * from '../models/DescriptionType';
+export * from '../models/Exception';
+export * from '../models/Execute';
+export * from '../models/FeatureCollectionGeoJsonInput';
+export * from '../models/Format';
+export * from '../models/GeoJSONFeature';
+export * from '../models/GeoJSONFeatureCollection';
+export * from '../models/GeoJSONFeatureGeometry';
+export * from '../models/GeoJSONFeatureId';
+export * from '../models/GeoJSONGeometryCollection';
+export * from '../models/GeoJSONGeometryCollectionGeometriesInner';
+export * from '../models/GeoJSONLineString';
+export * from '../models/GeoJSONMultiLineString';
+export * from '../models/GeoJSONMultiPoint';
+export * from '../models/GeoJSONMultiPolygon';
+export * from '../models/GeoJSONPoint';
+export * from '../models/GeoJSONPolygon';
+export * from '../models/GeoJsonInputMediaType';
+export * from '../models/HabitatDistanceProcessInputs';
+export * from '../models/HabitatDistanceProcessOutputs';
+export * from '../models/HabitatDistanceProcessParams';
+export * from '../models/ImpactMetricsProcessParams';
+export * from '../models/InlineOrRefData';
+export * from '../models/Input';
+export * from '../models/InputDescription';
+export * from '../models/InputValue';
+export * from '../models/JobControlOptions';
+export * from '../models/JobList';
+export * from '../models/JobType';
+export * from '../models/LandingPage';
+export * from '../models/License';
+export * from '../models/Link';
+export * from '../models/MaxOccurs';
+export * from '../models/Metadata';
+export * from '../models/NDVIProcessInputs';
+export * from '../models/NDVIProcessOutputs';
+export * from '../models/NDVIProcessParams';
+export * from '../models/Output';
+export * from '../models/OutputDescription';
+export * from '../models/Path';
+export * from '../models/PointGeoJsonInput';
+export * from '../models/Process';
+export * from '../models/ProcessList';
+export * from '../models/ProcessSummary';
+export * from '../models/QualifiedInputValue';
+export * from '../models/Response';
+export * from '../models/Results';
+export * from '../models/Schema';
+export * from '../models/Source';
+export * from '../models/StatusCode';
+export * from '../models/StatusInfo';
+export * from '../models/Subscriber';
+export * from '../models/TransmissionMode';
+export * from '../models/UserInfo';
+export * from '../models/UserSession';
 
-import { AdditionalParameter } from "../models/AdditionalParameter";
-import { AdditionalParameters } from "../models/AdditionalParameters";
-import { AuthCodeResponse } from "../models/AuthCodeResponse";
-import { BiodiversitySensitiveAreasProcessInputs } from "../models/BiodiversitySensitiveAreasProcessInputs";
-import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
-import { BoundingBox } from "../models/BoundingBox";
-import { Conformance } from "../models/Conformance";
-import { DescriptionType } from "../models/DescriptionType";
-import { DocumentationSource } from "../models/DocumentationSource";
-import { Exception } from "../models/Exception";
-import { Execute } from "../models/Execute";
-import { FeatureCollectionGeoJsonInput } from "../models/FeatureCollectionGeoJsonInput";
-import { Format } from "../models/Format";
-import {
-  GeoJSONFeature,
-  GeoJSONFeatureTypeEnum,
-} from "../models/GeoJSONFeature";
-import {
-  GeoJSONFeatureCollection,
-  GeoJSONFeatureCollectionTypeEnum,
-} from "../models/GeoJSONFeatureCollection";
-import { GeoJSONFeatureGeometryClass } from "../models/GeoJSONFeatureGeometry";
-import { GeoJSONFeatureIdClass } from "../models/GeoJSONFeatureId";
-import {
-  GeoJSONGeometryCollection,
-  GeoJSONGeometryCollectionTypeEnum,
-} from "../models/GeoJSONGeometryCollection";
-import { GeoJSONGeometryCollectionGeometriesInnerClass } from "../models/GeoJSONGeometryCollectionGeometriesInner";
-import {
-  GeoJSONLineString,
-  GeoJSONLineStringTypeEnum,
-} from "../models/GeoJSONLineString";
-import {
-  GeoJSONMultiLineString,
-  GeoJSONMultiLineStringTypeEnum,
-} from "../models/GeoJSONMultiLineString";
-import {
-  GeoJSONMultiPoint,
-  GeoJSONMultiPointTypeEnum,
-} from "../models/GeoJSONMultiPoint";
-import {
-  GeoJSONMultiPolygon,
-  GeoJSONMultiPolygonTypeEnum,
-} from "../models/GeoJSONMultiPolygon";
-import { GeoJSONPoint, GeoJSONPointTypeEnum } from "../models/GeoJSONPoint";
-import {
-  GeoJSONPolygon,
-  GeoJSONPolygonTypeEnum,
-} from "../models/GeoJSONPolygon";
-import { GeoJsonInputMediaType } from "../models/GeoJsonInputMediaType";
-import { HabitatDistanceProcessInputs } from "../models/HabitatDistanceProcessInputs";
-import { HabitatDistanceProcessOutputs } from "../models/HabitatDistanceProcessOutputs";
-import { HabitatDistanceProcessParams } from "../models/HabitatDistanceProcessParams";
-import { ImpactMetricsProcessParams } from "../models/ImpactMetricsProcessParams";
-import { InlineOrRefDataClass } from "../models/InlineOrRefData";
-import { InputClass } from "../models/Input";
-import { InputDescription } from "../models/InputDescription";
-import { InputValueClass } from "../models/InputValue";
-import { JobControlOptions } from "../models/JobControlOptions";
-import { JobList } from "../models/JobList";
-import { JobType } from "../models/JobType";
-import { LandingPage } from "../models/LandingPage";
-import { Link } from "../models/Link";
-import { MaxOccursClass } from "../models/MaxOccurs";
-import { Metadata } from "../models/Metadata";
-import { NDVIProcessInputs } from "../models/NDVIProcessInputs";
-import { NDVIProcessOutputs } from "../models/NDVIProcessOutputs";
-import { NDVIProcessParams } from "../models/NDVIProcessParams";
-import { Output } from "../models/Output";
-import { OutputDescription } from "../models/OutputDescription";
-import { PointGeoJsonInput } from "../models/PointGeoJsonInput";
-import { Process } from "../models/Process";
-import { ProcessList } from "../models/ProcessList";
-import { ProcessSummary } from "../models/ProcessSummary";
-import { QualifiedInputValue } from "../models/QualifiedInputValue";
-import { Response } from "../models/Response";
-import { ResultsClass } from "../models/Results";
-import { SchemaClass } from "../models/Schema";
-import { SiteRow } from "../models/SiteRow";
-import { StatusCode } from "../models/StatusCode";
-import { StatusInfo } from "../models/StatusInfo";
-import { Subscriber } from "../models/Subscriber";
-import { TransmissionMode } from "../models/TransmissionMode";
-import { UserInfo } from "../models/UserInfo";
-import { UserSession } from "../models/UserSession";
+import { AdditionalParameter } from '../models/AdditionalParameter';
+import { AdditionalParameters } from '../models/AdditionalParameters';
+import { AuthCodeResponse } from '../models/AuthCodeResponse';
+import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
+import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BoundingBox } from '../models/BoundingBox';
+import { Conformance } from '../models/Conformance';
+import { DataResourceClass } from '../models/DataResource';
+import { DescriptionType } from '../models/DescriptionType';
+import { Exception } from '../models/Exception';
+import { Execute     } from '../models/Execute';
+import { FeatureCollectionGeoJsonInput   } from '../models/FeatureCollectionGeoJsonInput';
+import { Format } from '../models/Format';
+import { GeoJSONFeature, GeoJSONFeatureTypeEnum       } from '../models/GeoJSONFeature';
+import { GeoJSONFeatureCollection, GeoJSONFeatureCollectionTypeEnum     } from '../models/GeoJSONFeatureCollection';
+import { GeoJSONFeatureGeometryClass } from '../models/GeoJSONFeatureGeometry';
+import { GeoJSONFeatureIdClass } from '../models/GeoJSONFeatureId';
+import { GeoJSONGeometryCollection, GeoJSONGeometryCollectionTypeEnum     } from '../models/GeoJSONGeometryCollection';
+import { GeoJSONGeometryCollectionGeometriesInnerClass } from '../models/GeoJSONGeometryCollectionGeometriesInner';
+import { GeoJSONLineString, GeoJSONLineStringTypeEnum     } from '../models/GeoJSONLineString';
+import { GeoJSONMultiLineString, GeoJSONMultiLineStringTypeEnum     } from '../models/GeoJSONMultiLineString';
+import { GeoJSONMultiPoint, GeoJSONMultiPointTypeEnum     } from '../models/GeoJSONMultiPoint';
+import { GeoJSONMultiPolygon, GeoJSONMultiPolygonTypeEnum     } from '../models/GeoJSONMultiPolygon';
+import { GeoJSONPoint, GeoJSONPointTypeEnum     } from '../models/GeoJSONPoint';
+import { GeoJSONPolygon, GeoJSONPolygonTypeEnum     } from '../models/GeoJSONPolygon';
+import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
+import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
+import { HabitatDistanceProcessParams    } from '../models/HabitatDistanceProcessParams';
+import { ImpactMetricsProcessParams    } from '../models/ImpactMetricsProcessParams';
+import { InlineOrRefDataClass } from '../models/InlineOrRefData';
+import { InputClass } from '../models/Input';
+import { InputDescription } from '../models/InputDescription';
+import { InputValueClass } from '../models/InputValue';
+import { JobControlOptions } from '../models/JobControlOptions';
+import { JobList } from '../models/JobList';
+import { JobType } from '../models/JobType';
+import { LandingPage } from '../models/LandingPage';
+import { License } from '../models/License';
+import { Link } from '../models/Link';
+import { MaxOccursClass } from '../models/MaxOccurs';
+import { Metadata } from '../models/Metadata';
+import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
+import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
+import { NDVIProcessParams    } from '../models/NDVIProcessParams';
+import { Output   } from '../models/Output';
+import { OutputDescription } from '../models/OutputDescription';
+import { PathClass } from '../models/Path';
+import { PointGeoJsonInput   } from '../models/PointGeoJsonInput';
+import { Process } from '../models/Process';
+import { ProcessList } from '../models/ProcessList';
+import { ProcessSummary } from '../models/ProcessSummary';
+import { QualifiedInputValue } from '../models/QualifiedInputValue';
+import { Response } from '../models/Response';
+import { ResultsClass } from '../models/Results';
+import { SchemaClass } from '../models/Schema';
+import { Source } from '../models/Source';
+import { StatusCode } from '../models/StatusCode';
+import { StatusInfo           } from '../models/StatusInfo';
+import { Subscriber } from '../models/Subscriber';
+import { TransmissionMode } from '../models/TransmissionMode';
+import { UserInfo } from '../models/UserInfo';
+import { UserSession } from '../models/UserSession';
 
 /* tslint:disable:no-unused-variable */
 let primitives = [
-  "string",
-  "boolean",
-  "double",
-  "integer",
-  "long",
-  "float",
-  "number",
-  "any",
-];
+                    "string",
+                    "boolean",
+                    "double",
+                    "integer",
+                    "long",
+                    "float",
+                    "number",
+                    "any"
+                 ];
 
 let enumsMap: Set<string> = new Set<string>([
-  "GeoJSONFeatureTypeEnum",
-  "GeoJSONFeatureCollectionTypeEnum",
-  "GeoJSONFeatureGeometryTypeEnum",
-  "GeoJSONGeometryCollectionTypeEnum",
-  "GeoJSONGeometryCollectionGeometriesInnerTypeEnum",
-  "GeoJSONLineStringTypeEnum",
-  "GeoJSONMultiLineStringTypeEnum",
-  "GeoJSONMultiPointTypeEnum",
-  "GeoJSONMultiPolygonTypeEnum",
-  "GeoJSONPointTypeEnum",
-  "GeoJSONPolygonTypeEnum",
-  "GeoJsonInputMediaType",
-  "JobControlOptions",
-  "JobType",
-  "Response",
-  "StatusCode",
-  "TransmissionMode",
+    "GeoJSONFeatureTypeEnum",
+    "GeoJSONFeatureCollectionTypeEnum",
+    "GeoJSONFeatureGeometryTypeEnum",
+    "GeoJSONGeometryCollectionTypeEnum",
+    "GeoJSONGeometryCollectionGeometriesInnerTypeEnum",
+    "GeoJSONLineStringTypeEnum",
+    "GeoJSONMultiLineStringTypeEnum",
+    "GeoJSONMultiPointTypeEnum",
+    "GeoJSONMultiPolygonTypeEnum",
+    "GeoJSONPointTypeEnum",
+    "GeoJSONPolygonTypeEnum",
+    "GeoJsonInputMediaType",
+    "JobControlOptions",
+    "JobType",
+    "Response",
+    "StatusCode",
+    "TransmissionMode",
 ]);
 
-let typeMap: { [index: string]: any } = {
-  AdditionalParameter: AdditionalParameter,
-  AdditionalParameters: AdditionalParameters,
-  AuthCodeResponse: AuthCodeResponse,
-  BiodiversitySensitiveAreasProcessInputs:
-    BiodiversitySensitiveAreasProcessInputs,
-  BiodiversitySensitiveAreasProcessOutputs:
-    BiodiversitySensitiveAreasProcessOutputs,
-  BoundingBox: BoundingBox,
-  Conformance: Conformance,
-  DescriptionType: DescriptionType,
-  DocumentationSource: DocumentationSource,
-  Exception: Exception,
-  Execute: Execute,
-  FeatureCollectionGeoJsonInput: FeatureCollectionGeoJsonInput,
-  Format: Format,
-  GeoJSONFeature: GeoJSONFeature,
-  GeoJSONFeatureCollection: GeoJSONFeatureCollection,
-  GeoJSONFeatureGeometry: GeoJSONFeatureGeometryClass,
-  GeoJSONFeatureId: GeoJSONFeatureIdClass,
-  GeoJSONGeometryCollection: GeoJSONGeometryCollection,
-  GeoJSONGeometryCollectionGeometriesInner:
-    GeoJSONGeometryCollectionGeometriesInnerClass,
-  GeoJSONLineString: GeoJSONLineString,
-  GeoJSONMultiLineString: GeoJSONMultiLineString,
-  GeoJSONMultiPoint: GeoJSONMultiPoint,
-  GeoJSONMultiPolygon: GeoJSONMultiPolygon,
-  GeoJSONPoint: GeoJSONPoint,
-  GeoJSONPolygon: GeoJSONPolygon,
-  HabitatDistanceProcessInputs: HabitatDistanceProcessInputs,
-  HabitatDistanceProcessOutputs: HabitatDistanceProcessOutputs,
-  HabitatDistanceProcessParams: HabitatDistanceProcessParams,
-  ImpactMetricsProcessParams: ImpactMetricsProcessParams,
-  InlineOrRefData: InlineOrRefDataClass,
-  InputDescription: InputDescription,
-  InputValue: InputValueClass,
-  JobList: JobList,
-  LandingPage: LandingPage,
-  Link: Link,
-  MaxOccurs: MaxOccursClass,
-  Metadata: Metadata,
-  NDVIProcessInputs: NDVIProcessInputs,
-  NDVIProcessOutputs: NDVIProcessOutputs,
-  NDVIProcessParams: NDVIProcessParams,
-  Output: Output,
-  OutputDescription: OutputDescription,
-  PointGeoJsonInput: PointGeoJsonInput,
-  Process: Process,
-  ProcessList: ProcessList,
-  ProcessSummary: ProcessSummary,
-  QualifiedInputValue: QualifiedInputValue,
-  Schema: SchemaClass,
-  SiteRow: SiteRow,
-  StatusInfo: StatusInfo,
-  Subscriber: Subscriber,
-  UserInfo: UserInfo,
-  UserSession: UserSession,
-};
+let typeMap: {[index: string]: any} = {
+    "AdditionalParameter": AdditionalParameter,
+    "AdditionalParameters": AdditionalParameters,
+    "AuthCodeResponse": AuthCodeResponse,
+    "BiodiversitySensitiveAreasProcessInputs": BiodiversitySensitiveAreasProcessInputs,
+    "BiodiversitySensitiveAreasProcessOutputs": BiodiversitySensitiveAreasProcessOutputs,
+    "BoundingBox": BoundingBox,
+    "Conformance": Conformance,
+    "DataResource": DataResourceClass,
+    "DescriptionType": DescriptionType,
+    "Exception": Exception,
+    "Execute": Execute,
+    "FeatureCollectionGeoJsonInput": FeatureCollectionGeoJsonInput,
+    "Format": Format,
+    "GeoJSONFeature": GeoJSONFeature,
+    "GeoJSONFeatureCollection": GeoJSONFeatureCollection,
+    "GeoJSONFeatureGeometry": GeoJSONFeatureGeometryClass,
+    "GeoJSONFeatureId": GeoJSONFeatureIdClass,
+    "GeoJSONGeometryCollection": GeoJSONGeometryCollection,
+    "GeoJSONGeometryCollectionGeometriesInner": GeoJSONGeometryCollectionGeometriesInnerClass,
+    "GeoJSONLineString": GeoJSONLineString,
+    "GeoJSONMultiLineString": GeoJSONMultiLineString,
+    "GeoJSONMultiPoint": GeoJSONMultiPoint,
+    "GeoJSONMultiPolygon": GeoJSONMultiPolygon,
+    "GeoJSONPoint": GeoJSONPoint,
+    "GeoJSONPolygon": GeoJSONPolygon,
+    "HabitatDistanceProcessInputs": HabitatDistanceProcessInputs,
+    "HabitatDistanceProcessOutputs": HabitatDistanceProcessOutputs,
+    "HabitatDistanceProcessParams": HabitatDistanceProcessParams,
+    "ImpactMetricsProcessParams": ImpactMetricsProcessParams,
+    "InlineOrRefData": InlineOrRefDataClass,
+    "InputDescription": InputDescription,
+    "InputValue": InputValueClass,
+    "JobList": JobList,
+    "LandingPage": LandingPage,
+    "License": License,
+    "Link": Link,
+    "MaxOccurs": MaxOccursClass,
+    "Metadata": Metadata,
+    "NDVIProcessInputs": NDVIProcessInputs,
+    "NDVIProcessOutputs": NDVIProcessOutputs,
+    "NDVIProcessParams": NDVIProcessParams,
+    "Output": Output,
+    "OutputDescription": OutputDescription,
+    "Path": PathClass,
+    "PointGeoJsonInput": PointGeoJsonInput,
+    "Process": Process,
+    "ProcessList": ProcessList,
+    "ProcessSummary": ProcessSummary,
+    "QualifiedInputValue": QualifiedInputValue,
+    "Schema": SchemaClass,
+    "Source": Source,
+    "StatusInfo": StatusInfo,
+    "Subscriber": Subscriber,
+    "UserInfo": UserInfo,
+    "UserSession": UserSession,
+}
 
 type MimeTypeDescriptor = {
-  type: string;
-  subtype: string;
-  subtypeTokens: string[];
+    type: string;
+    subtype: string;
+    subtypeTokens: string[];
 };
 
 /**
@@ -253,57 +232,40 @@ type MimeTypeDescriptor = {
  * the payload.
  */
 const parseMimeType = (mimeType: string): MimeTypeDescriptor => {
-  const [type = "", subtype = ""] = mimeType.split("/");
-  return {
-    type,
-    subtype,
-    subtypeTokens: subtype.split("+"),
-  };
+    const [type = '', subtype = ''] = mimeType.split('/');
+    return {
+        type,
+        subtype,
+        subtypeTokens: subtype.split('+'),
+    };
 };
 
 type MimeTypePredicate = (mimeType: string) => boolean;
 
 // This factory creates a predicate function that checks a string mime-type against defined rules.
-const mimeTypePredicateFactory =
-  (predicate: (descriptor: MimeTypeDescriptor) => boolean): MimeTypePredicate =>
-  (mimeType) =>
-    predicate(parseMimeType(mimeType));
+const mimeTypePredicateFactory = (predicate: (descriptor: MimeTypeDescriptor) => boolean): MimeTypePredicate => (mimeType) => predicate(parseMimeType(mimeType));
 
 // Use this factory when you need to define a simple predicate based only on type and, if applicable, subtype.
-const mimeTypeSimplePredicateFactory = (
-  type: string,
-  subtype?: string,
-): MimeTypePredicate =>
-  mimeTypePredicateFactory((descriptor) => {
+const mimeTypeSimplePredicateFactory = (type: string, subtype?: string): MimeTypePredicate => mimeTypePredicateFactory((descriptor) => {
     if (descriptor.type !== type) return false;
     if (subtype != null && descriptor.subtype !== subtype) return false;
     return true;
-  });
+});
 
 // Creating a set of named predicates that will help us determine how to handle different mime-types
-const isTextLikeMimeType = mimeTypeSimplePredicateFactory("text");
-const isJsonMimeType = mimeTypeSimplePredicateFactory("application", "json");
-const isJsonLikeMimeType = mimeTypePredicateFactory(
-  (descriptor) =>
-    descriptor.type === "application" &&
-    descriptor.subtypeTokens.some((item) => item === "json"),
-);
-const isOctetStreamMimeType = mimeTypeSimplePredicateFactory(
-  "application",
-  "octet-stream",
-);
-const isFormUrlencodedMimeType = mimeTypeSimplePredicateFactory(
-  "application",
-  "x-www-form-urlencoded",
-);
+const isTextLikeMimeType = mimeTypeSimplePredicateFactory('text');
+const isJsonMimeType = mimeTypeSimplePredicateFactory('application', 'json');
+const isJsonLikeMimeType = mimeTypePredicateFactory((descriptor) => descriptor.type === 'application' && descriptor.subtypeTokens.some((item) => item === 'json'));
+const isOctetStreamMimeType = mimeTypeSimplePredicateFactory('application', 'octet-stream');
+const isFormUrlencodedMimeType = mimeTypeSimplePredicateFactory('application', 'x-www-form-urlencoded');
 
 // Defining a list of mime-types in the order of prioritization for handling.
 const supportedMimeTypePredicatesWithPriority: MimeTypePredicate[] = [
-  isJsonMimeType,
-  isJsonLikeMimeType,
-  isTextLikeMimeType,
-  isOctetStreamMimeType,
-  isFormUrlencodedMimeType,
+    isJsonMimeType,
+    isJsonLikeMimeType,
+    isTextLikeMimeType,
+    isOctetStreamMimeType,
+    isFormUrlencodedMimeType,
 ];
 
 const nullableSuffix = " | null";
@@ -314,257 +276,231 @@ const mapPrefix = "{ [key: string]: ";
 const mapSuffix = "; }";
 
 export class ObjectSerializer {
-  public static findCorrectType(data: any, expectedType: string) {
-    if (data == undefined) {
-      return expectedType;
-    } else if (primitives.indexOf(expectedType.toLowerCase()) !== -1) {
-      return expectedType;
-    } else if (expectedType === "Date") {
-      return expectedType;
-    } else {
-      if (enumsMap.has(expectedType)) {
-        return expectedType;
-      }
-
-      if (!typeMap[expectedType]) {
-        return expectedType; // w/e we don't know the type
-      }
-
-      // Check the discriminator
-      let discriminatorProperty = typeMap[expectedType].discriminator;
-      if (discriminatorProperty == null) {
-        return expectedType; // the type does not have a discriminator. use it.
-      } else {
-        if (data[discriminatorProperty]) {
-          var discriminatorType = data[discriminatorProperty];
-          let mapping = typeMap[expectedType].mapping;
-          if (mapping != undefined && mapping[discriminatorType]) {
-            return mapping[discriminatorType]; // use the type given in the discriminator
-          } else if (typeMap[discriminatorType]) {
-            return discriminatorType;
-          } else {
-            return expectedType; // discriminator did not map to a type
-          }
+    public static findCorrectType(data: any, expectedType: string) {
+        if (data == undefined) {
+            return expectedType;
+        } else if (primitives.indexOf(expectedType.toLowerCase()) !== -1) {
+            return expectedType;
+        } else if (expectedType === "Date") {
+            return expectedType;
         } else {
-          return expectedType; // discriminator was not present (or an empty string)
+            if (enumsMap.has(expectedType)) {
+                return expectedType;
+            }
+
+            if (!typeMap[expectedType]) {
+                return expectedType; // w/e we don't know the type
+            }
+
+            // Check the discriminator
+            let discriminatorProperty = typeMap[expectedType].discriminator;
+            if (discriminatorProperty == null) {
+                return expectedType; // the type does not have a discriminator. use it.
+            } else {
+                if (data[discriminatorProperty]) {
+                    var discriminatorType = data[discriminatorProperty];
+                    let mapping = typeMap[expectedType].mapping;
+                    if (mapping != undefined && mapping[discriminatorType]) {
+                        return mapping[discriminatorType]; // use the type given in the discriminator
+                    } else if(typeMap[discriminatorType]) {
+                        return discriminatorType;
+                    } else {
+                        return expectedType; // discriminator did not map to a type
+                    }
+                } else {
+                    return expectedType; // discriminator was not present (or an empty string)
+                }
+            }
         }
-      }
     }
-  }
 
-  public static serialize(data: any, type: string, format: string): any {
-    if (data == undefined) {
-      return data;
-    } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
-      return data;
-    } else if (type.endsWith(nullableSuffix)) {
-      let subType: string = type.slice(0, -nullableSuffix.length); // Type | null => Type
-      return ObjectSerializer.serialize(data, subType, format);
-    } else if (type.endsWith(optionalSuffix)) {
-      let subType: string = type.slice(0, -optionalSuffix.length); // Type | undefined => Type
-      return ObjectSerializer.serialize(data, subType, format);
-    } else if (type.startsWith(arrayPrefix)) {
-      let subType: string = type.slice(arrayPrefix.length, -arraySuffix.length); // Array<Type> => Type
-      let transformedData: any[] = [];
-      for (let date of data) {
-        transformedData.push(ObjectSerializer.serialize(date, subType, format));
-      }
-      return transformedData;
-    } else if (type.startsWith(mapPrefix)) {
-      let subType: string = type.slice(mapPrefix.length, -mapSuffix.length); // { [key: string]: Type; } => Type
-      let transformedData: { [key: string]: any } = {};
-      for (let key in data) {
-        transformedData[key] = ObjectSerializer.serialize(
-          data[key],
-          subType,
-          format,
-        );
-      }
-      return transformedData;
-    } else if (type === "Date") {
-      if (!(data instanceof Date)) {
-        return data;
-      }
-      if (format == "date") {
-        let month = data.getMonth() + 1;
-        let monthStr = month < 10 ? "0" + month.toString() : month.toString();
-        let day = data.getDate();
-        let dayStr = day < 10 ? "0" + day.toString() : day.toString();
+    public static serialize(data: any, type: string, format: string): any {
+        if (data == undefined) {
+            return data;
+        } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
+            return data;
+        } else if (type.endsWith(nullableSuffix)) {
+            let subType: string = type.slice(0, -nullableSuffix.length); // Type | null => Type
+            return ObjectSerializer.serialize(data, subType, format);
+        } else if (type.endsWith(optionalSuffix)) {
+            let subType: string = type.slice(0, -optionalSuffix.length); // Type | undefined => Type
+            return ObjectSerializer.serialize(data, subType, format);
+        } else if (type.startsWith(arrayPrefix)) {
+            let subType: string = type.slice(arrayPrefix.length, -arraySuffix.length); // Array<Type> => Type
+            let transformedData: any[] = [];
+            for (let date of data) {
+                transformedData.push(ObjectSerializer.serialize(date, subType, format));
+            }
+            return transformedData;
+        } else if (type.startsWith(mapPrefix)) {
+            let subType: string = type.slice(mapPrefix.length, -mapSuffix.length); // { [key: string]: Type; } => Type
+            let transformedData: { [key: string]: any } = {};
+            for (let key in data) {
+                transformedData[key] = ObjectSerializer.serialize(
+                    data[key],
+                    subType,
+                    format,
+                );
+            }
+            return transformedData;
+        } else if (type === "Date") {
+            if (!(data instanceof Date)) {
+                return data;
+            }
+            if (format == "date") {
+                let month = data.getMonth()+1
+                let monthStr = month < 10 ? "0" + month.toString() : month.toString()
+                let day = data.getDate();
+                let dayStr = day < 10 ? "0" + day.toString() : day.toString();
 
-        return data.getFullYear() + "-" + monthStr + "-" + dayStr;
-      } else {
-        return data.toISOString();
-      }
-    } else {
-      if (enumsMap.has(type)) {
-        return data;
-      }
-      if (!typeMap[type]) {
-        // in case we dont know the type
-        return data;
-      }
+                return data.getFullYear() + "-" + monthStr + "-" + dayStr;
+            } else {
+                return data.toISOString();
+            }
+        } else {
+            if (enumsMap.has(type)) {
+                return data;
+            }
+            if (!typeMap[type]) { // in case we dont know the type
+                return data;
+            }
 
-      // Get the actual type of this object
-      type = this.findCorrectType(data, type);
+            // Get the actual type of this object
+            type = this.findCorrectType(data, type);
 
-      // get the map for the correct type.
-      let attributeTypes = typeMap[type].getAttributeTypeMap();
-      let instance: { [index: string]: any } = {};
-      for (let attributeType of attributeTypes) {
-        instance[attributeType.baseName] = ObjectSerializer.serialize(
-          data[attributeType.name],
-          attributeType.type,
-          attributeType.format,
-        );
-      }
-      return instance;
-    }
-  }
-
-  public static deserialize(data: any, type: string, format: string): any {
-    // polymorphism may change the actual type.
-    type = ObjectSerializer.findCorrectType(data, type);
-    if (data == undefined) {
-      return data;
-    } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
-      return data;
-    } else if (type.endsWith(nullableSuffix)) {
-      let subType: string = type.slice(0, -nullableSuffix.length); // Type | null => Type
-      return ObjectSerializer.deserialize(data, subType, format);
-    } else if (type.endsWith(optionalSuffix)) {
-      let subType: string = type.slice(0, -optionalSuffix.length); // Type | undefined => Type
-      return ObjectSerializer.deserialize(data, subType, format);
-    } else if (type.startsWith(arrayPrefix)) {
-      let subType: string = type.slice(arrayPrefix.length, -arraySuffix.length); // Array<Type> => Type
-      let transformedData: any[] = [];
-      for (let date of data) {
-        transformedData.push(
-          ObjectSerializer.deserialize(date, subType, format),
-        );
-      }
-      return transformedData;
-    } else if (type.startsWith(mapPrefix)) {
-      let subType: string = type.slice(mapPrefix.length, -mapSuffix.length); // { [key: string]: Type; } => Type
-      let transformedData: { [key: string]: any } = {};
-      for (let key in data) {
-        transformedData[key] = ObjectSerializer.deserialize(
-          data[key],
-          subType,
-          format,
-        );
-      }
-      return transformedData;
-    } else if (type === "Date") {
-      return new Date(data);
-    } else {
-      if (enumsMap.has(type)) {
-        // is Enum
-        return data;
-      }
-
-      if (!typeMap[type]) {
-        // dont know the type
-        return data;
-      }
-      let instance = new typeMap[type]();
-      let attributeTypes = typeMap[type].getAttributeTypeMap();
-      for (let attributeType of attributeTypes) {
-        let value = ObjectSerializer.deserialize(
-          data[attributeType.baseName],
-          attributeType.type,
-          attributeType.format,
-        );
-        if (value !== undefined) {
-          instance[attributeType.name] = value;
+            // get the map for the correct type.
+            let attributeTypes = typeMap[type].getAttributeTypeMap();
+            let instance: {[index: string]: any} = {};
+            for (let attributeType of attributeTypes) {
+                instance[attributeType.baseName] = ObjectSerializer.serialize(data[attributeType.name], attributeType.type, attributeType.format);
+            }
+            return instance;
         }
-      }
-      return instance;
-    }
-  }
-
-  /**
-   * Normalize media type
-   *
-   * We currently do not handle any media types attributes, i.e. anything
-   * after a semicolon. All content is assumed to be UTF-8 compatible.
-   */
-  public static normalizeMediaType(
-    mediaType: string | undefined,
-  ): string | undefined {
-    if (mediaType === undefined) {
-      return undefined;
-    }
-    return (mediaType.split(";")[0] ?? "").trim().toLowerCase();
-  }
-
-  /**
-   * From a list of possible media types, choose the one we can handle best.
-   *
-   * The order of the given media types does not have any impact on the choice
-   * made.
-   */
-  public static getPreferredMediaType(mediaTypes: Array<string>): string {
-    /** According to OAS 3 we should default to json */
-    if (mediaTypes.length === 0) {
-      return "application/json";
     }
 
-    const normalMediaTypes = mediaTypes.map(
-      ObjectSerializer.normalizeMediaType,
-    );
+    public static deserialize(data: any, type: string, format: string): any {
+        // polymorphism may change the actual type.
+        type = ObjectSerializer.findCorrectType(data, type);
+        if (data == undefined) {
+            return data;
+        } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
+            return data;
+        } else if (type.endsWith(nullableSuffix)) {
+            let subType: string = type.slice(0, -nullableSuffix.length); // Type | null => Type
+            return ObjectSerializer.deserialize(data, subType, format);
+        } else if (type.endsWith(optionalSuffix)) {
+            let subType: string = type.slice(0, -optionalSuffix.length); // Type | undefined => Type
+            return ObjectSerializer.deserialize(data, subType, format);
+        } else if (type.startsWith(arrayPrefix)) {
+            let subType: string = type.slice(arrayPrefix.length, -arraySuffix.length); // Array<Type> => Type
+            let transformedData: any[] = [];
+            for (let date of data) {
+                transformedData.push(ObjectSerializer.deserialize(date, subType, format));
+            }
+            return transformedData;
+        } else if (type.startsWith(mapPrefix)) {
+            let subType: string = type.slice(mapPrefix.length, -mapSuffix.length); // { [key: string]: Type; } => Type
+            let transformedData: { [key: string]: any } = {};
+            for (let key in data) {
+                transformedData[key] = ObjectSerializer.deserialize(
+                    data[key],
+                    subType,
+                    format,
+                );
+            }
+            return transformedData;
+        } else if (type === "Date") {
+            return new Date(data);
+        } else {
+            if (enumsMap.has(type)) {// is Enum
+                return data;
+            }
 
-    for (const predicate of supportedMimeTypePredicatesWithPriority) {
-      for (const mediaType of normalMediaTypes) {
-        if (mediaType != null && predicate(mediaType)) {
-          return mediaType;
+            if (!typeMap[type]) { // dont know the type
+                return data;
+            }
+            let instance = new typeMap[type]();
+            let attributeTypes = typeMap[type].getAttributeTypeMap();
+            for (let attributeType of attributeTypes) {
+                let value = ObjectSerializer.deserialize(data[attributeType.baseName], attributeType.type, attributeType.format);
+                if (value !== undefined) {
+                    instance[attributeType.name] = value;
+                }
+            }
+            return instance;
         }
-      }
     }
 
-    throw new Error(
-      "None of the given media types are supported: " + mediaTypes.join(", "),
-    );
-  }
 
-  /**
-   * Convert data to a string according the given media type
-   */
-  public static stringify(data: any, mediaType: string): string {
-    if (isTextLikeMimeType(mediaType)) {
-      return String(data);
+    /**
+     * Normalize media type
+     *
+     * We currently do not handle any media types attributes, i.e. anything
+     * after a semicolon. All content is assumed to be UTF-8 compatible.
+     */
+    public static normalizeMediaType(mediaType: string | undefined): string | undefined {
+        if (mediaType === undefined) {
+            return undefined;
+        }
+        return (mediaType.split(";")[0] ?? '').trim().toLowerCase();
     }
 
-    if (isJsonLikeMimeType(mediaType)) {
-      return JSON.stringify(data);
+    /**
+     * From a list of possible media types, choose the one we can handle best.
+     *
+     * The order of the given media types does not have any impact on the choice
+     * made.
+     */
+    public static getPreferredMediaType(mediaTypes: Array<string>): string {
+        /** According to OAS 3 we should default to json */
+        if (mediaTypes.length === 0) {
+            return "application/json";
+        }
+
+        const normalMediaTypes = mediaTypes.map(ObjectSerializer.normalizeMediaType);
+
+        for (const predicate of supportedMimeTypePredicatesWithPriority) {
+            for (const mediaType of normalMediaTypes) {
+                if (mediaType != null && predicate(mediaType)) {
+                    return mediaType;
+                }
+            }
+        }
+
+        throw new Error("None of the given media types are supported: " + mediaTypes.join(", "));
     }
 
-    throw new Error(
-      "The mediaType " +
-        mediaType +
-        " is not supported by ObjectSerializer.stringify.",
-    );
-  }
+    /**
+     * Convert data to a string according the given media type
+     */
+    public static stringify(data: any, mediaType: string): string {
+        if (isTextLikeMimeType(mediaType)) {
+            return String(data);
+        }
 
-  /**
-   * Parse data from a string according to the given media type
-   */
-  public static parse(rawData: string, mediaType: string | undefined) {
-    if (mediaType === undefined) {
-      throw new Error("Cannot parse content. No Content-Type defined.");
+        if (isJsonLikeMimeType(mediaType)) {
+            return JSON.stringify(data);
+        }
+
+        throw new Error("The mediaType " + mediaType + " is not supported by ObjectSerializer.stringify.");
     }
 
-    if (isTextLikeMimeType(mediaType)) {
-      return rawData;
-    }
+    /**
+     * Parse data from a string according to the given media type
+     */
+    public static parse(rawData: string, mediaType: string | undefined) {
+        if (mediaType === undefined) {
+            throw new Error("Cannot parse content. No Content-Type defined.");
+        }
 
-    if (isJsonLikeMimeType(mediaType)) {
-      return JSON.parse(rawData);
-    }
+        if (isTextLikeMimeType(mediaType)) {
+            return rawData;
+        }
 
-    throw new Error(
-      "The mediaType " +
-        mediaType +
-        " is not supported by ObjectSerializer.parse.",
-    );
-  }
+        if (isJsonLikeMimeType(mediaType)) {
+            return JSON.parse(rawData);
+        }
+
+        throw new Error("The mediaType " + mediaType + " is not supported by ObjectSerializer.parse.");
+    }
 }

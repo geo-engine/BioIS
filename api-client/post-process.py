@@ -63,6 +63,14 @@ def promise_api_ts(file_contents: list[str]) -> Generator[str, None, None]:
         yield line
 
 
+def results_ts(file_contents: list[str]) -> Generator[str, None, None]:
+    """Modify the Results.ts file."""
+    for line in file_contents:
+        if dedent(line).startswith("import { HttpFile } from '../http/http';"):
+            line = line + "import { InlineOrRefData } from './InlineOrRefData';\n"
+        yield line
+
+
 def object_serializer_ts(file_contents: list[str]) -> Generator[str, None, None]:
     """Modify the ObjectSerializer.ts file."""
     for line in file_contents:

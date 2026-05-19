@@ -182,8 +182,8 @@ test-backend-with-coverage-report: _clear
 [group('frontend')]
 [group('test')]
 [working-directory('frontend')]
-test-frontend: _clear
-    npm run test
+test-frontend filter="": _clear
+    npm run test -- {{ if filter == "" { "" } else { '--filter="' + filter + '"' } }}
 
 ### RUN ###
 

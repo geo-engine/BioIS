@@ -1,5 +1,4 @@
 use crate::processes::util::json_input_value;
-use geoengine_api_client::models::SpatialPartition2D;
 use geojson::{FeatureCollection, PointType};
 use ogcapi::types::processes::InputValue;
 use schemars::JsonSchema;
@@ -85,28 +84,6 @@ impl_extern_schema!(
     "Data Resource",
     "https://specs.frictionlessdata.io/schemas/data-resource.json",
 );
-
-pub trait ToBbox {
-    fn to_bbox(&self, buffer: f64) -> SpatialPartition2D;
-}
-
-impl ToBbox for PointType {
-    fn to_bbox(&self, buffer: f64) -> SpatialPartition2D {
-        use geoengine_api_client::models::Coordinate2D;
-
-        let [x, y] = self.as_slice() else {
-            debug_assert!(false, "Expected PointType to have exactly 2 coordinates");
-            return SpatialPartition2D::new(
-                Coordinate2D::new(0.0, 0.0),
-                Coordinate2D::new(0.0, 0.0),
-            );
-        };
-        SpatialPartition2D::new(
-            Coordinate2D::new(x + buffer, y - buffer),
-            Coordinate2D::new(x - buffer, y + buffer),
-        )
-    }
-}
 
 /// Cf. <https://github.com/juhaku/utoipa/issues/1346>
 #[derive(Debug)]

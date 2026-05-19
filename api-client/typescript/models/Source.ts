@@ -10,13 +10,24 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { HttpFile } from '../http/http';
 
-export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
-    'inputs'?: NDVIProcessInputs | null;
+/**
+* A source file.
+*/
+export class Source {
+    /**
+    * A human-readable title.
+    */
+    'title': string;
+    /**
+    * A fully qualified URL, or a POSIX file path.
+    */
+    'path'?: string;
+    /**
+    * An email address.
+    */
+    'email'?: string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,26 +35,26 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "NDVIProcessInputs",
+            "name": "title",
+            "baseName": "title",
+            "type": "string",
             "format": ""
+        },
+        {
+            "name": "path",
+            "baseName": "path",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string",
+            "format": "email"
         }    ];
 
     static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
+        return Source.attributeTypeMap;
     }
 
     public constructor() {

@@ -54,29 +54,22 @@ export class ResultComponent {
 
   readonly processId: Signal<string | undefined>;
 
-  readonly result: ResourceRef<NDVIProcessOutputs> = resource({
+  readonly result: ResourceRef<Record<string, InlineOrRefData>> = resource({
     params: () => ({
       processId: this.processId(),
     }),
-    defaultValue: this.mockInputs,
+    defaultValue: {},
     loader: async ({ params }) => {
       const api = new ProcessesApi(this.userService.apiConfiguration());
-      if (!params.processId) return this.mockInputs;
+      if (!params.processId) return {};
 
-      const [status, result] = await Promise.all([
-        api.status(params.processId),
-        api.results(params.processId),
-      ]);
-
-      if (status.processID !== 'ndvi') {
-        throw new Error(`Expected NDVI job but got process: ${status.processID ?? 'unknown'}`);
-      }
+      const result = await api.results(params.processId);
 
       if (result instanceof Blob) {
         throw new Error('Expected document output but received HttpFile');
       }
 
-      return result as NDVIProcessOutputs;
+      return result;
     },
   });
 

@@ -1,7 +1,8 @@
 import { DataSource } from '@angular/cdk/collections';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { Observable, startWith, switchMap } from 'rxjs';
+import { defer, Observable, repeat, startWith, switchMap, tap, timer } from 'rxjs';
 import { Configuration, ProcessesApi, StatusInfo } from '@geoengine/biois';
+import { ChangeDetectorRef } from '@angular/core';
 
 /**
  * Data source for the Table view. This class should
@@ -14,7 +15,10 @@ export class JobsDataSource extends DataSource<StatusInfo> {
 
   protected readonly api: ProcessesApi;
 
-  constructor(config: Configuration) {
+  constructor(
+    config: Configuration,
+    protected readonly changeDetectorRef: ChangeDetectorRef,
+  ) {
     super();
     this.api = new ProcessesApi(config);
   }
@@ -32,7 +36,24 @@ export class JobsDataSource extends DataSource<StatusInfo> {
     return this.paginator.page.pipe(
       startWith(currentPageAsEvent(this.paginator)),
       switchMap((pageEvent) =>
-        this.queryDataPage(pageEvent.pageIndex * pageEvent.pageSize, pageEvent.pageSize),
+        defer(() =>
+          this.queryDataPage(pageEvent.pageIndex * pageEvent.pageSize, pageEvent.pageSize),
+        ).pipe(
+          repeat({
+            delay: (count) => {
+              const baseDelay = 5_000; // Start with a 5-second delay
+              const maxDelay = 60_000; // Cap the delay at 60 seconds
+
+              // Calculate exponential delay: 5s, 10s, 20s, 40s, 60s…
+              const nextDelay = Math.min(baseDelay * Math.pow(2, count - 1), maxDelay);
+
+              return timer(nextDelay);
+            },
+          }),
+        ),
+      ),
+      tap(
+        () => this.changeDetectorRef.markForCheck(), // Ensure the table updates when new data arrives
       ),
     );
   }

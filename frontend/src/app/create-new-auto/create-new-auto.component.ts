@@ -49,6 +49,7 @@ import { findByPointer } from '@jsonjoy.com/json-pointer';
   imports: [
     CommonModule,
     FormField,
+    GeoJsonFormFieldComponent,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -57,7 +58,6 @@ import { findByPointer } from '@jsonjoy.com/json-pointer';
     MatSelectModule,
     MatTooltipModule,
     SimpleFormFieldComponent,
-    GeoJsonFormFieldComponent,
   ],
   templateUrl: './create-new-auto.component.html',
   styleUrls: ['./create-new-auto.component.scss'],

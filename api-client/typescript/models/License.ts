@@ -10,13 +10,24 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { HttpFile } from '../http/http';
 
-export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
-    'inputs'?: NDVIProcessInputs | null;
+/**
+* A license for this descriptor.
+*/
+export class License {
+    /**
+    * MUST be an Open Definition license identifier, see http://licenses.opendefinition.org/
+    */
+    'name'?: string;
+    /**
+    * A fully qualified URL, or a POSIX file path.
+    */
+    'path'?: string;
+    /**
+    * A human-readable title.
+    */
+    'title'?: string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,26 +35,26 @@ export class NDVIProcessOutputs {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
+            "name": "name",
+            "baseName": "name",
+            "type": "string",
+            "format": ""
         },
         {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
+            "name": "path",
+            "baseName": "path",
+            "type": "string",
+            "format": ""
         },
         {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "NDVIProcessInputs",
+            "name": "title",
+            "baseName": "title",
+            "type": "string",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
+        return License.attributeTypeMap;
     }
 
     public constructor() {

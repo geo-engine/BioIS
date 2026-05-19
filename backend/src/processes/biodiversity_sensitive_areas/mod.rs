@@ -108,7 +108,7 @@ mod input_keys {
 #[serde(rename_all = "camelCase")]
 pub struct BiodiversitySensitiveAreasProcessOutputs {
     /// Sites in or near biodiversity-sensitive areas
-    #[schema(value_type = Option<DataResourceSchema>)]
+    #[schema(value_type = Option<DataResourceSchema>, inline)]
     pub biodiversity_sensitive_areas: Option<DataResource<Vec<SiteRow>>>,
 
     /// Echo of inputs for auditing and traceability
@@ -118,7 +118,7 @@ pub struct BiodiversitySensitiveAreasProcessOutputs {
     pub errors: Option<Vec<String>>,
 
     /// Data sources and workflow references used for audits and provenance
-    #[schema(value_type = Option<DataResourceSchema>)]
+    #[schema(value_type = Option<DataResourceSchema>, inline)]
     pub documentation_sources: Option<DataResource<Vec<DocumentationSource>>>,
 }
 

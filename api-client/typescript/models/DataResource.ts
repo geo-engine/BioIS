@@ -10,26 +10,25 @@
  * Do not edit the class manually.
  */
 
-import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
-import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { HttpFile } from '../http/http';
-import { InlineOrRefData } from './InlineOrRefData';
 
 /**
- * @type Results
+* Data Resource.
+*/
+/**
+ * @type DataResource
  * Type
  * @export
  */
-export type Results = HabitatDistanceProcessOutputs | HttpFile | NDVIProcessOutputs;
+export type DataResource = any;
 
 /**
-* @type ResultsClass
+* @type DataResourceClass
+    * Data Resource.
 * @export
 */
-export class ResultsClass {
+export class DataResourceClass {
     static readonly discriminator: string | undefined = undefined;
 
     static readonly mapping: {[index: string]: string} | undefined = undefined;
 }
-
-
