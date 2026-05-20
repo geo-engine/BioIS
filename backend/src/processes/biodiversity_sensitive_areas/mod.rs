@@ -12,7 +12,7 @@ use crate::{
 use anyhow::{Context, Result};
 use diesel::{deserialize::QueryableByName, sql_query, sql_types};
 use diesel_async::RunQueryDsl;
-use indoc::indoc;
+use indoc::formatdoc;
 use ogcapi::{
     processes::Processor,
     types::processes::{
@@ -24,6 +24,7 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
+use tracing::instrument;
 use utoipa::ToSchema;
 use wkt::ToWkt;
 
@@ -82,6 +83,7 @@ impl FromStr for SiteSpecification {
 #[derive(Debug, Clone)]
 pub struct BiodiversitySensitiveAreasProcess {
     connection: DbPool,
+    natura2000_schema: &'static str,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, JsonSchema, ToSchema)]
@@ -347,6 +349,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
         {
             let (site_table, errors) = compute_biodiversity_sensitive_areas(
                 self.connection().await?,
+                self.natura2000_schema,
                 inputs.sites,
                 inputs.location_property.as_ref(),
                 inputs.site_type_property.as_ref(),
@@ -369,24 +372,29 @@ impl Processor for BiodiversitySensitiveAreasProcess {
 }
 
 impl BiodiversitySensitiveAreasProcess {
-    pub async fn new(connection: DbPool) -> Result<Self> {
-        let this = Self { connection };
+    pub async fn new(connection: DbPool, natura2000_schema: &'static str) -> Result<Self> {
+        let this = Self {
+            connection,
+            natura2000_schema,
+        };
 
         let mut conn = this.connection().await?;
-        let table: Natura2000Exists = sql_query(indoc::indoc! {"
+        let table: Natura2000Exists = sql_query(formatdoc! {"
             SELECT EXISTS (
                 SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = 'Natura2000'
-                    AND table_name = 'naturasite_polygon'
+                  FROM information_schema.tables
+                 WHERE table_schema = '{natura2000_schema}'
+                   AND table_name = 'naturasite_polygon'
             ) as exists
         "})
         .get_result(&mut *conn)
         .await
-        .context("Failed to check if Natura2000.naturasite_polygon exists")?;
+        .context(format!(
+            "Failed to check if {natura2000_schema}.naturasite_polygon exists"
+        ))?;
 
         if !table.exists {
-            anyhow::bail!("Table Natura2000.naturasite_polygon does not exist");
+            anyhow::bail!("Table {natura2000_schema}.naturasite_polygon does not exist");
         }
 
         // drop the pooled connection before moving `this` out
@@ -635,10 +643,10 @@ fn was_point(feature: &geojson::Feature) -> bool {
 pub struct SiteRow {
     #[diesel(sql_type = sql_types::Text)]
     pub location: String,
-    #[diesel(sql_type = sql_types::Double)]
-    pub area_ha: f64,
+    #[diesel(sql_type = sql_types::Nullable<sql_types::Double>)]
+    pub area_ha: Option<Hectare>,
     // #[diesel(sql_type = Hectare)]
-    #[diesel(sql_type = sql_types::Double, deserialize_as = f64)]
+    #[diesel(sql_type = sql_types::Double)]
     pub biodiversity_sensitive_area_ha: Hectare,
     #[diesel(sql_type = sql_types::Text)]
     pub specification: String,
@@ -680,8 +688,10 @@ impl From<Vec<SiteRow>> for DataResource<Vec<SiteRow>> {
 /// to any provided `workflow_refs` (if they are HTTP URLs) and includes their responses
 /// in the `sources` output for auditing. The spatial computations are placeholders and
 /// should be replaced by Geo Engine workflow calls in future.
+#[instrument(skip(connection), err(Debug))]
 pub async fn compute_biodiversity_sensitive_areas(
     mut connection: PooledConnection<'_>,
+    natura2000_schema: &'static str,
     sites: FeatureCollectionGeoJsonInput,
     location_property: &str,
     site_type_property: &str,
@@ -722,7 +732,7 @@ pub async fn compute_biodiversity_sensitive_areas(
         });
     }
 
-    let site_table: Vec<SiteRow> = sql_query(indoc! {r#"
+    let site_table: Vec<SiteRow> = sql_query(formatdoc! {r#"
         WITH reference AS (
             SELECT
                 v.location,
@@ -736,14 +746,14 @@ pub async fn compute_biodiversity_sensitive_areas(
         )
         SELECT
             r.location,
-            r.area_m2 / 10_000 AS area_ha,
+            NULLIF(r.area_m2 / 10_000, 0) AS area_ha,
             -- TODO: or union first over all intersections?
             SUM(ST_Area(ST_Intersection(s.geom, r.geom))) / 10_000 AS biodiversity_sensitive_area_ha,
             'Type: ' || r.specification || E'\n'
                 || CASE WHEN r.was_point THEN '(derived from point)' ELSE '' END || E'\n'
                 || 'Intersection with ' || r.buffer_size_km || ' km buffer zone to:' || E'\n' 
                 || string_agg(s.sitename || ' (' || s.sitecode || ')', ', ') AS specification
-        FROM "Natura2000".naturasite_polygon s, reference r
+        FROM "{natura2000_schema}".naturasite_polygon s, reference r
         WHERE ST_Intersects(s.geom, r.geom)
         GROUP BY r.location, r.was_point, r.buffer_size_km, r.specification, r.area_m2
         ORDER BY biodiversity_sensitive_area_ha DESC
@@ -751,7 +761,7 @@ pub async fn compute_biodiversity_sensitive_areas(
     .bind::<sql_types::Json, _>(serde_json::to_value(&site_inputs)?)
     .get_results(&mut *connection)
     .await
-    .context("Failed to query Natura2000.naturasite_polygon")?;
+    .context(format!("Failed to query {natura2000_schema}.naturasite_polygon"))?;
 
     Ok((site_table, errors))
 }
@@ -762,6 +772,7 @@ mod tests {
     use crate::{CONFIG, db::setup_db, processes::parameters::GeoJsonInputMediaType};
     use diesel_async::SimpleAsyncConnection;
     use geojson::FeatureCollection;
+    use indoc::indoc;
     use ogcapi::types::processes::Input;
     use pretty_assertions::assert_eq;
     use serde_json::json;
@@ -770,24 +781,31 @@ mod tests {
         setup_db(&CONFIG.database).await.unwrap()
     }
 
-    async fn create_schema_and_insert_test_site(connection: &mut impl SimpleAsyncConnection) {
+    async fn create_schema_and_insert_test_site(
+        connection: &mut impl SimpleAsyncConnection,
+        schema: &str,
+    ) {
         connection
-            .batch_execute(&indoc::formatdoc! {"
-            CREATE SCHEMA IF NOT EXISTS \"Natura2000\";
-            CREATE TABLE IF NOT EXISTS \"Natura2000\".naturasite_polygon (
+            .batch_execute(&formatdoc! {r#"
+            CREATE TABLE "{schema}".naturasite_polygon (
                 sitecode TEXT,
                 sitename TEXT,
                 geom geometry
             );
 
-            INSERT INTO \"Natura2000\".naturasite_polygon (sitecode, sitename, geom)
+            INSERT INTO "{schema}".naturasite_polygon (sitecode, sitename, geom)
             VALUES (
-                'DE5417402',
-                'Feldflur bei Hüttenberg und Schöffengrund',
-                ST_GeomFromText('{wkt}', 3035)
+                'DE5118301',
+                'Dammelsberg und Köhlersgrund',
+                ST_GeomFromText('{wkt1}', 3035)
+            ), (
+                'DE5317307',
+                'Fohnbach und Gleibach',
+                ST_GeomFromText('{wkt2}', 3035)
             );
-            ",
-                wkt = include_str!("../../../test-data/DE5417402.wkt"),
+            "#,
+                wkt1 = include_str!("../../../test-data/DE5118301.wkt"),
+                wkt2 = include_str!("../../../test-data/DE5317307.wkt"),
             })
             .await
             .unwrap();
@@ -860,9 +878,12 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn process_summary_has_expected_inputs_and_outputs() {
         let pool = mock_db_pool().await;
-        create_schema_and_insert_test_site(&mut pool.get().await.unwrap()).await;
+        create_schema_and_insert_test_site(&mut pool.get().await.unwrap(), &CONFIG.database.schema)
+            .await;
 
-        let p = BiodiversitySensitiveAreasProcess::new(pool).await.unwrap();
+        let p = BiodiversitySensitiveAreasProcess::new(pool, &CONFIG.database.schema)
+            .await
+            .unwrap();
         let process = p.process().expect("to produce process description");
 
         // summary id / version
@@ -903,10 +924,14 @@ mod tests {
     }
 
     #[tokio::test(flavor = "multi_thread")]
+    #[allow(
+        clippy::too_many_lines,
+        reason = "This test is verbose due to the detailed assertions on the process outputs."
+    )]
     async fn it_computes_biodiversity_sensitive_areas() {
         let pool = mock_db_pool().await;
         let mut connection = pool.get().await.unwrap();
-        create_schema_and_insert_test_site(&mut connection).await;
+        create_schema_and_insert_test_site(&mut connection, &CONFIG.database.schema).await;
 
         let inputs = BiodiversitySensitiveAreasProcessInputs {
             sites: FeatureCollectionGeoJsonInput {
@@ -969,6 +994,7 @@ mod tests {
 
         let (site_rows, errors) = compute_biodiversity_sensitive_areas(
             connection,
+            CONFIG.database.schema.as_str(),
             inputs.sites,
             inputs.location_property.as_ref(),
             inputs.site_type_property.as_ref(),
@@ -981,25 +1007,29 @@ mod tests {
             vec![
                 SiteRow {
                     location: "Garten des Gedenkens".into(),
-                    area_ha: 0.0,
-                    biodiversity_sensitive_area_ha: Hectare(26_677.791_316_832_205),
+                    area_ha: None,
+                    biodiversity_sensitive_area_ha: Hectare(36.307_653_383_984_075),
                     specification: indoc! {"
                         Type: Other
                         (derived from point)
                         Intersection with 20 km buffer zone to:
-                        Sickler Teich bei Londorf (DE5319302), Tränkbachniederung bei Daubringen (DE5318304), Borstgrasrasen bei Wieseck und Callunaheiden bei Mainzlar (DE5318305), Steinbrüche in Mittelhessen (DE5414450), Hoher Stein bei Nordeck (DE5319301), Wald zwischen Roßberg und Höingen (DE5219304), Hessisches Rothaargebirge (DE4917401), Lahnhänge zwischen Biedenkopf und Marburg (DE5017305), Franzosenwiesen und Rotes Wasser (DE5018301), Christenberg (DE5018302), Hohe Hardt und Geiershöhe/Rothebuche (DE5018308), Burgwald (DE5018401), Wald zwischen Roda und Oberholzhausen (DE5019301), Diebskeller/Landgrafenborn (DE5018303), Christenberger Talgrund (DE5018304), Langer Grund bei Schönstadt (DE5018305), Krämersgrund/Konventswiesen (DE5018306), Nebeler Hintersprung (DE5018307), Obere Lahn und Wetschaft mit Nebengewässern (DE5118302), Dammelsberg und Köhlersgrund (DE5118301), Amöneburger Becken (DE5219401), Kleine Lummersbach bei Cyriaxweimar (DE5218301), Amöneburg (DE5219301), Ohmwiesen bei Rüdigheim (DE5219303), Brückerwald und Hußgeweid (DE5119301), Wohraaue zwischen Kirchhain und Gemünden (Wohra) (DE5119302), Kuhteiche Emsdorf (DE5119303), Herrenwald östlich Stadtallendorf (DE5120303), Waldgebiet östlich von Lohra (DE5217301), Magerrasen bei Wommelshausen (DE5216307), Oberes Verstal (DE5317301), Krofdorfer Forst (DE5317306), Wiesentäler um Hohenahr und die Aartalsperre (DE5316401), Zwester Ohm (DE5218303), Lahntal zwischen Marburg und Gießen (DE5218401), Lahnaltarm von Bellnhausen (DE5218302), Helfholzwiesen und Brühl bei Erda (DE5317302), Grünland und Wälder zwischen Frankenbach und Heuchelheim (DE5317305), Fohnbach und Gleibach (DE5317307), Hangelstein (DE5318301), Feuchtwiesen bei Daubringen (DE5318303)
-                    "}.trim_end().into()
+                        Dammelsberg und Köhlersgrund (DE5118301), Fohnbach und Gleibach (DE5317307)
+                    "}
+                    .trim_end()
+                    .into()
                 },
                 SiteRow {
                     location: "Marbuger Unistadion".into(),
-                    area_ha: 0.623_035_886_691_041_7,
-                    biodiversity_sensitive_area_ha: Hectare(185.590_286_827_518_13),
+                    area_ha: Some(Hectare(0.623_035_886_691_041_7)),
+                    biodiversity_sensitive_area_ha: Hectare(21.794_987_588_368_837),
                     specification: indoc! {"
                         Type: Office
                         
                         Intersection with 5 km buffer zone to:
-                        Obere Lahn und Wetschaft mit Nebengewässern (DE5118302), Dammelsberg und Köhlersgrund (DE5118301), Amöneburger Becken (DE5219401), Kleine Lummersbach bei Cyriaxweimar (DE5218301), Lahnhänge zwischen Biedenkopf und Marburg (DE5017305)
-                    "}.trim_end().into()
+                        Dammelsberg und Köhlersgrund (DE5118301)
+                    "}
+                    .trim_end()
+                    .into()
                 }
             ]
         );

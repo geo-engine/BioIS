@@ -123,7 +123,7 @@ async fn add_habitat_distance_process(
     processors: &mut Vec<Box<dyn Processor>>,
     db_pool: crate::db::DbPool,
 ) {
-    match HabitatDistanceProcess::new(db_pool).await {
+    match HabitatDistanceProcess::new(db_pool, "Natura2000").await {
         Ok(habitat_distance_process) => {
             tracing::info!(
                 "Successfully initialized HabitatDistanceProcess, adding it to the list of available processes."
@@ -143,7 +143,7 @@ async fn add_biodiversity_sensitive_areas_process(
     processors: &mut Vec<Box<dyn Processor>>,
     db_pool: crate::db::DbPool,
 ) {
-    match BiodiversitySensitiveAreasProcess::new(db_pool).await {
+    match BiodiversitySensitiveAreasProcess::new(db_pool, "Natura2000").await {
         Ok(biodiversity_sensitive_areas_process) => {
             tracing::info!(
                 "Successfully initialized BiodiversitySensitiveAreasProcess, adding it to the list of available processes."

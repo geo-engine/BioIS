@@ -201,6 +201,21 @@ impl From<f64> for Hectare {
     }
 }
 
+mod db {
+    use super::*;
+    use diesel::{
+        deserialize::{self, FromSql},
+        pg::{Pg, PgValue},
+        sql_types::Double,
+    };
+
+    impl FromSql<Double, Pg> for Hectare {
+        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
+            f64::from_sql(value).map(Hectare)
+        }
+    }
+}
+
 /// Area in square meters
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
 pub struct SquareMeter(#[schemars(range(min = 0.0))] pub f64);
