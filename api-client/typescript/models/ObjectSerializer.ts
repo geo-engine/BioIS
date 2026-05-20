@@ -1,15 +1,33 @@
 export * from '../models/AdditionalParameter';
 export * from '../models/AdditionalParameters';
 export * from '../models/AuthCodeResponse';
+export * from '../models/BiodiversitySensitiveAreasProcessInputs';
+export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
 export * from '../models/BoundingBox';
 export * from '../models/Conformance';
+export * from '../models/DataResource';
 export * from '../models/DescriptionType';
 export * from '../models/Exception';
 export * from '../models/Execute';
+export * from '../models/FeatureCollectionGeoJsonInput';
 export * from '../models/Format';
+export * from '../models/GeoJSONFeature';
+export * from '../models/GeoJSONFeatureCollection';
+export * from '../models/GeoJSONFeatureGeometry';
+export * from '../models/GeoJSONFeatureId';
+export * from '../models/GeoJSONGeometryCollection';
+export * from '../models/GeoJSONGeometryCollectionGeometriesInner';
+export * from '../models/GeoJSONLineString';
+export * from '../models/GeoJSONMultiLineString';
+export * from '../models/GeoJSONMultiPoint';
+export * from '../models/GeoJSONMultiPolygon';
+export * from '../models/GeoJSONPoint';
+export * from '../models/GeoJSONPolygon';
+export * from '../models/GeoJsonInputMediaType';
 export * from '../models/HabitatDistanceProcessInputs';
 export * from '../models/HabitatDistanceProcessOutputs';
 export * from '../models/HabitatDistanceProcessParams';
+export * from '../models/ImpactMetricsProcessParams';
 export * from '../models/InlineOrRefData';
 export * from '../models/Input';
 export * from '../models/InputDescription';
@@ -18,6 +36,7 @@ export * from '../models/JobControlOptions';
 export * from '../models/JobList';
 export * from '../models/JobType';
 export * from '../models/LandingPage';
+export * from '../models/License';
 export * from '../models/Link';
 export * from '../models/MaxOccurs';
 export * from '../models/Metadata';
@@ -26,10 +45,8 @@ export * from '../models/NDVIProcessOutputs';
 export * from '../models/NDVIProcessParams';
 export * from '../models/Output';
 export * from '../models/OutputDescription';
-export * from '../models/PointGeoJson';
+export * from '../models/Path';
 export * from '../models/PointGeoJsonInput';
-export * from '../models/PointGeoJsonInputMediaType';
-export * from '../models/PointGeoJsonType';
 export * from '../models/Process';
 export * from '../models/ProcessList';
 export * from '../models/ProcessSummary';
@@ -37,6 +54,7 @@ export * from '../models/QualifiedInputValue';
 export * from '../models/Response';
 export * from '../models/Results';
 export * from '../models/Schema';
+export * from '../models/Source';
 export * from '../models/StatusCode';
 export * from '../models/StatusInfo';
 export * from '../models/Subscriber';
@@ -47,15 +65,33 @@ export * from '../models/UserSession';
 import { AdditionalParameter } from '../models/AdditionalParameter';
 import { AdditionalParameters } from '../models/AdditionalParameters';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
+import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
+import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
+import { DataResourceClass } from '../models/DataResource';
 import { DescriptionType } from '../models/DescriptionType';
 import { Exception } from '../models/Exception';
 import { Execute     } from '../models/Execute';
+import { FeatureCollectionGeoJsonInput   } from '../models/FeatureCollectionGeoJsonInput';
 import { Format } from '../models/Format';
+import { GeoJSONFeature, GeoJSONFeatureTypeEnum       } from '../models/GeoJSONFeature';
+import { GeoJSONFeatureCollection, GeoJSONFeatureCollectionTypeEnum     } from '../models/GeoJSONFeatureCollection';
+import { GeoJSONFeatureGeometryClass } from '../models/GeoJSONFeatureGeometry';
+import { GeoJSONFeatureIdClass } from '../models/GeoJSONFeatureId';
+import { GeoJSONGeometryCollection, GeoJSONGeometryCollectionTypeEnum     } from '../models/GeoJSONGeometryCollection';
+import { GeoJSONGeometryCollectionGeometriesInnerClass } from '../models/GeoJSONGeometryCollectionGeometriesInner';
+import { GeoJSONLineString, GeoJSONLineStringTypeEnum     } from '../models/GeoJSONLineString';
+import { GeoJSONMultiLineString, GeoJSONMultiLineStringTypeEnum     } from '../models/GeoJSONMultiLineString';
+import { GeoJSONMultiPoint, GeoJSONMultiPointTypeEnum     } from '../models/GeoJSONMultiPoint';
+import { GeoJSONMultiPolygon, GeoJSONMultiPolygonTypeEnum     } from '../models/GeoJSONMultiPolygon';
+import { GeoJSONPoint, GeoJSONPointTypeEnum     } from '../models/GeoJSONPoint';
+import { GeoJSONPolygon, GeoJSONPolygonTypeEnum     } from '../models/GeoJSONPolygon';
+import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams    } from '../models/HabitatDistanceProcessParams';
+import { ImpactMetricsProcessParams    } from '../models/ImpactMetricsProcessParams';
 import { InlineOrRefDataClass } from '../models/InlineOrRefData';
 import { InputClass } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -64,6 +100,7 @@ import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
 import { LandingPage } from '../models/LandingPage';
+import { License } from '../models/License';
 import { Link } from '../models/Link';
 import { MaxOccursClass } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
@@ -72,10 +109,8 @@ import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { NDVIProcessParams    } from '../models/NDVIProcessParams';
 import { Output   } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
-import { PointGeoJson   } from '../models/PointGeoJson';
+import { PathClass } from '../models/Path';
 import { PointGeoJsonInput   } from '../models/PointGeoJsonInput';
-import { PointGeoJsonInputMediaType } from '../models/PointGeoJsonInputMediaType';
-import { PointGeoJsonType } from '../models/PointGeoJsonType';
 import { Process } from '../models/Process';
 import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
@@ -83,6 +118,7 @@ import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
 import { ResultsClass } from '../models/Results';
 import { SchemaClass } from '../models/Schema';
+import { Source } from '../models/Source';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo           } from '../models/StatusInfo';
 import { Subscriber } from '../models/Subscriber';
@@ -103,10 +139,20 @@ let primitives = [
                  ];
 
 let enumsMap: Set<string> = new Set<string>([
+    "GeoJSONFeatureTypeEnum",
+    "GeoJSONFeatureCollectionTypeEnum",
+    "GeoJSONFeatureGeometryTypeEnum",
+    "GeoJSONGeometryCollectionTypeEnum",
+    "GeoJSONGeometryCollectionGeometriesInnerTypeEnum",
+    "GeoJSONLineStringTypeEnum",
+    "GeoJSONMultiLineStringTypeEnum",
+    "GeoJSONMultiPointTypeEnum",
+    "GeoJSONMultiPolygonTypeEnum",
+    "GeoJSONPointTypeEnum",
+    "GeoJSONPolygonTypeEnum",
+    "GeoJsonInputMediaType",
     "JobControlOptions",
     "JobType",
-    "PointGeoJsonInputMediaType",
-    "PointGeoJsonType",
     "Response",
     "StatusCode",
     "TransmissionMode",
@@ -116,21 +162,38 @@ let typeMap: {[index: string]: any} = {
     "AdditionalParameter": AdditionalParameter,
     "AdditionalParameters": AdditionalParameters,
     "AuthCodeResponse": AuthCodeResponse,
+    "BiodiversitySensitiveAreasProcessInputs": BiodiversitySensitiveAreasProcessInputs,
+    "BiodiversitySensitiveAreasProcessOutputs": BiodiversitySensitiveAreasProcessOutputs,
     "BoundingBox": BoundingBox,
     "Conformance": Conformance,
+    "DataResource": DataResourceClass,
     "DescriptionType": DescriptionType,
     "Exception": Exception,
     "Execute": Execute,
+    "FeatureCollectionGeoJsonInput": FeatureCollectionGeoJsonInput,
     "Format": Format,
+    "GeoJSONFeature": GeoJSONFeature,
+    "GeoJSONFeatureCollection": GeoJSONFeatureCollection,
+    "GeoJSONFeatureGeometry": GeoJSONFeatureGeometryClass,
+    "GeoJSONFeatureId": GeoJSONFeatureIdClass,
+    "GeoJSONGeometryCollection": GeoJSONGeometryCollection,
+    "GeoJSONGeometryCollectionGeometriesInner": GeoJSONGeometryCollectionGeometriesInnerClass,
+    "GeoJSONLineString": GeoJSONLineString,
+    "GeoJSONMultiLineString": GeoJSONMultiLineString,
+    "GeoJSONMultiPoint": GeoJSONMultiPoint,
+    "GeoJSONMultiPolygon": GeoJSONMultiPolygon,
+    "GeoJSONPoint": GeoJSONPoint,
+    "GeoJSONPolygon": GeoJSONPolygon,
     "HabitatDistanceProcessInputs": HabitatDistanceProcessInputs,
     "HabitatDistanceProcessOutputs": HabitatDistanceProcessOutputs,
     "HabitatDistanceProcessParams": HabitatDistanceProcessParams,
+    "ImpactMetricsProcessParams": ImpactMetricsProcessParams,
     "InlineOrRefData": InlineOrRefDataClass,
-    "Input": InputClass,
     "InputDescription": InputDescription,
     "InputValue": InputValueClass,
     "JobList": JobList,
     "LandingPage": LandingPage,
+    "License": License,
     "Link": Link,
     "MaxOccurs": MaxOccursClass,
     "Metadata": Metadata,
@@ -139,13 +202,14 @@ let typeMap: {[index: string]: any} = {
     "NDVIProcessParams": NDVIProcessParams,
     "Output": Output,
     "OutputDescription": OutputDescription,
-    "PointGeoJson": PointGeoJson,
+    "Path": PathClass,
     "PointGeoJsonInput": PointGeoJsonInput,
     "Process": Process,
     "ProcessList": ProcessList,
     "ProcessSummary": ProcessSummary,
     "QualifiedInputValue": QualifiedInputValue,
     "Schema": SchemaClass,
+    "Source": Source,
     "StatusInfo": StatusInfo,
     "Subscriber": Subscriber,
     "UserInfo": UserInfo,

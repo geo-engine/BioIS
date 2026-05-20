@@ -16,7 +16,7 @@ import { HttpFile } from '../http/http';
 export class NDVIProcessOutputs {
     'ndvi'?: number | null;
     'kNdvi'?: number | null;
-    'inputs': NDVIProcessInputs;
+    'inputs'?: NDVIProcessInputs | null;
 
     static readonly discriminator: string | undefined = undefined;
 

@@ -17,10 +17,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import {
   NDVIProcessInputs,
-  PointGeoJsonInputMediaType,
-  PointGeoJsonType,
+  GeoJsonInputMediaType,
   ProcessesApi,
   Response,
+  GeoJSONPointTypeEnum,
 } from '@geoengine/biois';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { UserService } from '../user.service';
@@ -49,18 +49,21 @@ export class CreateNewComponent {
   readonly userService = inject(UserService);
   readonly router = inject(Router);
 
-  readonly formModel = signal({
+  readonly formModel = signal<{
+    inputs: NDVIProcessInputs;
+    outputs: { ndvi: boolean; kNdvi: boolean };
+  }>({
     inputs: {
       coordinate: {
         value: {
-          type: PointGeoJsonType.Point,
+          type: GeoJSONPointTypeEnum.Point,
           coordinates: [8.77069, 50.80904],
         },
-        mediaType: PointGeoJsonInputMediaType.ApplicationGeojson,
+        mediaType: GeoJsonInputMediaType.ApplicationGeojson,
       },
       year: 2020,
       month: 8,
-    } as NDVIProcessInputs,
+    },
     outputs: {
       ndvi: true,
       kNdvi: true,

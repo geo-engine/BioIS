@@ -45,11 +45,14 @@ export class ResultsComponent {
   readonly paginator = viewChild.required(MatPaginator);
   readonly sort = viewChild.required(MatSort);
   readonly table = viewChild.required(MatTable);
-  readonly changeDetector = inject(ChangeDetectorRef);
+  readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly StatusCode = StatusCode;
 
-  readonly dataSource = new JobsDataSource(this.userService.apiConfiguration());
+  readonly dataSource = new JobsDataSource(
+    this.userService.apiConfiguration(),
+    this.changeDetectorRef,
+  );
 
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
   readonly displayedColumns = ['updated', 'jobID', 'processID', 'status', 'message'];

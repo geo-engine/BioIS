@@ -5,15 +5,33 @@ import { PromiseMiddleware, Middleware, PromiseMiddlewareWrapper } from '../midd
 import { AdditionalParameter } from '../models/AdditionalParameter';
 import { AdditionalParameters } from '../models/AdditionalParameters';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
+import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
+import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
+import { DataResource } from '../models/DataResource';
 import { DescriptionType } from '../models/DescriptionType';
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
+import { FeatureCollectionGeoJsonInput } from '../models/FeatureCollectionGeoJsonInput';
 import { Format } from '../models/Format';
+import { GeoJSONFeature } from '../models/GeoJSONFeature';
+import { GeoJSONFeatureCollection } from '../models/GeoJSONFeatureCollection';
+import { GeoJSONFeatureGeometry } from '../models/GeoJSONFeatureGeometry';
+import { GeoJSONFeatureId } from '../models/GeoJSONFeatureId';
+import { GeoJSONGeometryCollection } from '../models/GeoJSONGeometryCollection';
+import { GeoJSONGeometryCollectionGeometriesInner } from '../models/GeoJSONGeometryCollectionGeometriesInner';
+import { GeoJSONLineString } from '../models/GeoJSONLineString';
+import { GeoJSONMultiLineString } from '../models/GeoJSONMultiLineString';
+import { GeoJSONMultiPoint } from '../models/GeoJSONMultiPoint';
+import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
+import { GeoJSONPoint } from '../models/GeoJSONPoint';
+import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
+import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
+import { ImpactMetricsProcessParams } from '../models/ImpactMetricsProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -22,6 +40,7 @@ import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
 import { LandingPage } from '../models/LandingPage';
+import { License } from '../models/License';
 import { Link } from '../models/Link';
 import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
@@ -30,10 +49,8 @@ import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { NDVIProcessParams } from '../models/NDVIProcessParams';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
-import { PointGeoJson } from '../models/PointGeoJson';
+import { Path } from '../models/Path';
 import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
-import { PointGeoJsonInputMediaType } from '../models/PointGeoJsonInputMediaType';
-import { PointGeoJsonType } from '../models/PointGeoJsonType';
 import { Process } from '../models/Process';
 import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
@@ -41,6 +58,7 @@ import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
 import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
+import { Source } from '../models/Source';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
 import { Subscriber } from '../models/Subscriber';
@@ -210,6 +228,24 @@ export class PromiseProcessesApi {
     public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executeHabitatDistance(habitatDistanceProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param impactMetricsProcessParams
+     */
+    public executeImpactMetricsWithHttpInfo(impactMetricsProcessParams: ImpactMetricsProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeImpactMetricsWithHttpInfo(impactMetricsProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param impactMetricsProcessParams
+     */
+    public executeImpactMetrics(impactMetricsProcessParams: ImpactMetricsProcessParams, _options?: PromiseConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeImpactMetrics(impactMetricsProcessParams, observableOptions);
         return result.toPromise();
     }
 

@@ -5,7 +5,10 @@ use crate::{
     db::setup_db,
     handler,
     jobs::JobHandler,
-    processes::{HabitatDistanceProcess, NDVIProcess, ProcessesOpenApiSpec},
+    processes::{
+        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, NDVIProcess,
+        ProcessesOpenApiSpec,
+    },
     state::spawn_with_user,
 };
 use ogcapi::{
@@ -37,6 +40,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
 
     let mut processors: Vec<Box<dyn Processor>> = vec![Box::new(Echo), Box::new(NDVIProcess)];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
+    add_biodiversity_sensitive_areas_process(&mut processors, db_pool.clone()).await;
 
     let drivers = ogcapi_services::Drivers {
         jobs: Box::new(JobHandler::new(db_pool).await?),
@@ -119,7 +123,7 @@ async fn add_habitat_distance_process(
     processors: &mut Vec<Box<dyn Processor>>,
     db_pool: crate::db::DbPool,
 ) {
-    match HabitatDistanceProcess::new(db_pool).await {
+    match HabitatDistanceProcess::new(db_pool, "Natura2000").await {
         Ok(habitat_distance_process) => {
             tracing::info!(
                 "Successfully initialized HabitatDistanceProcess, adding it to the list of available processes."
@@ -129,6 +133,26 @@ async fn add_habitat_distance_process(
         Err(err) => {
             tracing::warn!(
                 "Failed to initialize HabitatDistanceProcess, skipping it: {:#}",
+                err
+            );
+        }
+    }
+}
+
+async fn add_biodiversity_sensitive_areas_process(
+    processors: &mut Vec<Box<dyn Processor>>,
+    db_pool: crate::db::DbPool,
+) {
+    match BiodiversitySensitiveAreasProcess::new(db_pool, "Natura2000").await {
+        Ok(biodiversity_sensitive_areas_process) => {
+            tracing::info!(
+                "Successfully initialized BiodiversitySensitiveAreasProcess, adding it to the list of available processes."
+            );
+            processors.push(Box::new(biodiversity_sensitive_areas_process));
+        }
+        Err(err) => {
+            tracing::warn!(
+                "Failed to initialize BiodiversitySensitiveAreasProcess, skipping it: {:#}",
                 err
             );
         }

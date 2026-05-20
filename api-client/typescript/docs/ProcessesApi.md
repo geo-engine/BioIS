@@ -6,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**_delete**](ProcessesApi.md#_delete) | **DELETE** /jobs/{jobId} | Cancel a job execution, remove finished job
 [**executeHabitatDistance**](ProcessesApi.md#executeHabitatDistance) | **POST** /processes/habitatDistance/execution | 
+[**executeImpactMetrics**](ProcessesApi.md#executeImpactMetrics) | **POST** /processes/biodiversity-sensitive-areas/execution | 
 [**executeNdvi**](ProcessesApi.md#executeNdvi) | **POST** /processes/ndvi/execution | 
 [**execution**](ProcessesApi.md#execution) | **POST** /processes/{processID}/execution | Execute a process
 [**jobs**](ProcessesApi.md#jobs) | **GET** /jobs | Retrieve the list of jobs
@@ -93,6 +94,9 @@ const request: ProcessesApiExecuteHabitatDistanceRequest = {
           coordinates: [
             3.14,
           ],
+          bbox: [
+            3.14,
+          ],
         },
         mediaType: "application/geo+json",
       },
@@ -137,6 +141,68 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **executeImpactMetrics**
+> BiodiversitySensitiveAreasProcessOutputs executeImpactMetrics(impactMetricsProcessParams)
+
+
+### Example
+
+
+```typescript
+import { createConfiguration, ProcessesApi } from '';
+import type { ProcessesApiExecuteImpactMetricsRequest } from '';
+
+const configuration = createConfiguration();
+const apiInstance = new ProcessesApi(configuration);
+
+const request: ProcessesApiExecuteImpactMetricsRequest = {
+  
+  impactMetricsProcessParams: {
+    inputs: {
+      sites: null,
+      locationProperty: null,
+      siteTypeProperty: null,
+    },
+    outputs: {
+      "key": null,
+    },
+    response: "raw",
+  },
+};
+
+const data = await apiInstance.executeImpactMetrics(request);
+console.log('API called successfully. Returned data:', data);
+```
+
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **impactMetricsProcessParams** | **ImpactMetricsProcessParams**|  |
+
+
+### Return type
+
+**BiodiversitySensitiveAreasProcessOutputs**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** |  |  -  |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **executeNdvi**
 > NDVIProcessOutputs executeNdvi(nDVIProcessParams)
 
@@ -159,6 +225,9 @@ const request: ProcessesApiExecuteNdviRequest = {
         value: {
           type: "Point",
           coordinates: [
+            3.14,
+          ],
+          bbox: [
             3.14,
           ],
         },

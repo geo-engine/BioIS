@@ -12,13 +12,19 @@ const appRoutes: Routes = [
   {
     path: 'results/:resultId',
     title: 'Result Details',
-    loadComponent: () => import('./result/result.component').then((m) => m.DashboardComponent),
+    loadComponent: () => import('./result/result.component').then((m) => m.ResultComponent),
   },
   {
     path: 'create',
     title: 'Create new',
     loadComponent: () =>
       import('./create-new/create-new.component').then((m) => m.CreateNewComponent),
+  },
+  {
+    path: 'create/:processId',
+    title: 'Create new',
+    loadComponent: () =>
+      import('./create-new-auto/create-new-auto.component').then((m) => m.CreateNewAutoComponent),
   },
   {
     path: 'signout',

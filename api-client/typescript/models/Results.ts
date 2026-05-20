@@ -13,6 +13,7 @@
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { HttpFile } from '../http/http';
+import { InlineOrRefData } from './InlineOrRefData';
 
 /**
  * @type Results

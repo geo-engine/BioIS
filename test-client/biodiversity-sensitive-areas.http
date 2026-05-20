@@ -1,0 +1,51 @@
+# @name session
+POST http://localhost:3030/api/anonymous
+
+@token = {{session.response.body.$.id}}
+
+###
+
+GET http://localhost:4040/processes/biodiversity-sensitive-areas
+Authorization: Bearer {{token}}
+
+###
+
+POST http://localhost:4040/processes/biodiversity-sensitive-areas/execution
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "inputs": {
+        "sites": {
+            "value": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [8.77366548049784, 50.803270291022386],
+                                [8.773649409958182, 50.802437463615604],
+                                [8.774613642351255, 50.80241207230304],
+                                [8.774597571811597, 50.803255056507936],
+                                [8.77366548049784, 50.803270291022386]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "location": "Marbuger Unistadion",
+                        "siteType": "office"
+                    }
+                    }
+                ]
+                },
+            "mediaType": "application/geo+json"
+        },
+        "siteTypeProperty": "siteType",
+        "locationProperty": "location"
+    },
+    "outputs": {},
+    "response": "document"
+}

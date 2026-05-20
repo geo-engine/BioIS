@@ -1,6 +1,8 @@
 @use '@angular/material' as mat;
 
 $max-width: 1200px;
+$medium-breakpoint: 900px;
+$small-breakpoint: 600px;
 
 :host {
   display: block;
@@ -29,9 +31,16 @@ $max-width: 1200px;
     justify-content: space-between;
     padding: 0 2rem;
 
+    @media (max-width: $small-breakpoint) {
+      font-size: smaller;
+      text-wrap: wrap;
+    }
+
     mat-icon {
       height: 2.5rem;
       width: auto;
+      flex-shrink: 0;
+      padding-right: 1rem;
     }
   }
 }
@@ -61,6 +70,14 @@ $max-width: 1200px;
 
   a {
     text-shadow: none;
+  }
+
+  @media (max-width: $medium-breakpoint) {
+  }
+
+  @media (max-width: $small-breakpoint) {
+    margin-top: 6rem;
+    font-size: smaller;
   }
 }
 
@@ -111,8 +128,12 @@ section.features {
 
   .features-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
     gap: 2rem;
+
+    @media (max-width: $medium-breakpoint) {
+      gap: 1rem;
+    }
   }
 
   .feature-card {
@@ -146,6 +167,7 @@ footer {
   gap: 3rem;
   padding-bottom: 1rem;
   margin: 0 auto;
+  flex-wrap: wrap;
 
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
@@ -156,28 +178,11 @@ footer {
     margin: 0;
     padding: 0;
     gap: 0.5rem;
+    flex-wrap: wrap;
 
     li:not(:first-child)::before {
       content: '•';
       padding-right: 0.5rem;
     }
-  }
-}
-
-@media (max-width: 900px) {
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero {
-    margin-top: 6rem;
-    font-size: smaller;
   }
 }

@@ -3,6 +3,10 @@ _default:
 
 OPENAPI_GENERATOR_PACKAGE := "@openapitools/openapi-generator-cli@2.28.3"
 
+# Clear the terminal before executing a command. Does not fail in a CI.
+_clear:
+    @-clear
+
 ### INSTALL ###
 
 [group('backend')]
@@ -23,8 +27,7 @@ install-llvm-cov:
 [group('frontend')]
 [group('install')]
 [working-directory('frontend')]
-install-frontend-deps:
-    @-clear
+install-frontend-deps: _clear
     rm -rf node_modules/@geoengine/biois \
            .angular/cache
     npm link ../api-client/typescript
@@ -33,8 +36,7 @@ install-frontend-deps:
 [group('frontend')]
 [group('install')]
 [working-directory('api-client/typescript')]
-install-api-client-deps:
-    @-clear
+install-api-client-deps: _clear
     npm install
 
 ### BUILD ###
@@ -43,15 +45,13 @@ install-api-client-deps:
 [group('backend')]
 [group('build')]
 [working-directory('backend')]
-build-backend mode="":
-    @-clear
+build-backend mode="": _clear
     cargo build {{ mode }}
 
 [group('api-client')]
 [group('build')]
 [working-directory('api-client')]
-build-api-client:
-    @-clear
+build-api-client: _clear
     npx {{ OPENAPI_GENERATOR_PACKAGE }} batch config.yaml
     ./post-process.py
 
@@ -59,16 +59,14 @@ build-api-client:
 [group('build')]
 [group('frontend')]
 [working-directory('frontend')]
-build-frontend:
-    @-clear
+build-frontend: _clear
     npm ci
     npm run build
 
 # Build the frontend container. Usage: `just build-frontend-container`.
 [group('build')]
 [group('container')]
-build-frontend-container:
-    @-clear
+build-frontend-container: _clear
     podman build \
         -f frontend/Dockerfile \
         -t biois-frontend:latest \
@@ -77,8 +75,7 @@ build-frontend-container:
 # Build the frontend container. Usage: `just build-frontend-container`.
 [group('build')]
 [group('container')]
-build-backend-container:
-    @-clear
+build-backend-container: _clear
     podman build \
         -f backend/Dockerfile \
         -t biois-backend:latest \
@@ -89,15 +86,13 @@ build-backend-container:
 [group('api-client')]
 [group('lint')]
 [working-directory('api-client')]
-lint-openapi-spec:
-    @-clear
+lint-openapi-spec: _clear
     npx {{ OPENAPI_GENERATOR_PACKAGE }} validate -i ../openapi.json --recommend
 
 [group('api-client')]
 [group('lint')]
 [working-directory('api-client/typescript')]
-lint-api-client:
-    @-clear
+lint-api-client: _clear
     npm install
     npm run build
     rm -r node_modules
@@ -106,59 +101,52 @@ lint-api-client:
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-rustfmt:
+lint-backend-rustfmt: _clear
+    @echo "Running rustfmt…"
     cargo fmt --all -- --check
 
+[arg("relaxed", long="relaxed", value="true", help="Don't fail on warnings, only print them")]
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-clippy:
-    cargo clippy --all-targets --locked -- -D warnings
+lint-backend-clippy relaxed="false": _clear
+    @echo "Running clippy…"
+    cargo clippy --all-targets --locked {{ if relaxed == "true" { "" } else { "-- -D warnings" } }}
 
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-sqlfluff:
+lint-backend-sqlfluff: _clear
+    echo "Running sqlfluff…"
     pipx run sqlfluff==3.5.0 lint
 
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-diesel-cli:
+lint-backend-diesel-cli: _clear
+    @echo "Running Diesel CLI…"
     diesel migration run --locked-schema
     diesel-guard check migrations
 
 [group('backend')]
 [group('lint')]
-lint-backend:
-    @-clear
-    @echo "Running rustfmt…"
-    just lint-backend-rustfmt
-    @echo "Running clippy…"
-    just lint-backend-clippy
-    @echo "Running sqlfluff…"
-    just lint-backend-sqlfluff
-    @echo "Running Diesel CLI…"
-    just lint-backend-diesel-cli
+lint-backend: lint-backend-rustfmt lint-backend-clippy lint-backend-sqlfluff lint-backend-diesel-cli
 
 [group('frontend')]
 [group('lint')]
 [working-directory('frontend')]
-lint-frontend-fmt:
+lint-frontend-fmt: _clear
     npm run prettier -- --check .
 
 [group('frontend')]
 [group('lint')]
 [working-directory('frontend')]
-lint-frontend-code:
+lint-frontend-code: _clear
     npm run lint
 
 [group('frontend')]
 [group('lint')]
-lint-frontend:
-    @-clear
-    just lint-frontend-fmt
-    just lint-frontend-code
+lint-frontend: lint-frontend-fmt lint-frontend-code
 
 ### TEST ###
 
@@ -166,16 +154,14 @@ lint-frontend:
 [group('backend')]
 [group('test')]
 [working-directory('backend')]
-test-backend:
-    @-clear
+test-backend: _clear
     cargo test --locked --all-features
 
 # Run the backend tests and generate coverage. Usage: `just test-backend-with-coverage`.
 [group('backend')]
 [group('test')]
 [working-directory('backend')]
-test-backend-with-coverage outputPath="lcov.info":
-    @-clear
+test-backend-with-coverage outputPath="lcov.info": _clear
     cargo llvm-cov \
         --locked \
         --all-features \
@@ -186,8 +172,7 @@ test-backend-with-coverage outputPath="lcov.info":
 [group('backend')]
 [group('test')]
 [working-directory('backend')]
-test-backend-with-coverage-report:
-    @-clear
+test-backend-with-coverage-report: _clear
     cargo llvm-cov \
         --locked \
         --all-features \
@@ -197,9 +182,8 @@ test-backend-with-coverage-report:
 [group('frontend')]
 [group('test')]
 [working-directory('frontend')]
-test-frontend:
-    @-clear
-    npm run test
+test-frontend filter="": _clear
+    npm run test -- {{ if filter == "" { "" } else { '--filter="' + filter + '"' } }}
 
 ### RUN ###
 
@@ -212,16 +196,14 @@ run: run-backend run-frontend
 [group('backend')]
 [group('run')]
 [working-directory('backend')]
-run-backend mode="":
-    @-clear
+run-backend mode="": _clear
     cargo run {{ mode }}
 
 # Run the backend. Usage: `just run-frontend`.
 [group('frontend')]
 [group('run')]
 [working-directory('frontend')]
-run-frontend:
-    @-clear
+run-frontend: _clear
     npm run ng serve
 
 # Run the backend container in dev mode. Usage: `just run-backend-container`.
@@ -267,16 +249,14 @@ down-pod:
 [group('backend')]
 [group('misc')]
 [working-directory('backend')]
-generate-openapi-spec:
-    @-clear
+generate-openapi-spec: _clear
     cargo run --bin openapi > ../openapi.json
 
 # Run an arbitrary Angular CLI command in the frontend. Usage: `just ng -- build`.
 [group('frontend')]
 [group('misc')]
 [working-directory('frontend')]
-ng +ARGS="":
-    @-clear
+ng +ARGS="": _clear
     npm run ng -- {{ ARGS }}
 
 check-no-changes-in-git-repo:

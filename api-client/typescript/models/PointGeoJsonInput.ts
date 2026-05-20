@@ -10,13 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { PointGeoJson } from '../models/PointGeoJson';
-import { PointGeoJsonInputMediaType } from '../models/PointGeoJsonInputMediaType';
+import { GeoJSONPoint } from '../models/GeoJSONPoint';
+import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HttpFile } from '../http/http';
 
 export class PointGeoJsonInput {
-    'value': PointGeoJson;
-    'mediaType': PointGeoJsonInputMediaType;
+    'value': GeoJSONPoint;
+    'mediaType': GeoJsonInputMediaType;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -26,13 +26,13 @@ export class PointGeoJsonInput {
         {
             "name": "value",
             "baseName": "value",
-            "type": "PointGeoJson",
+            "type": "GeoJSONPoint",
             "format": ""
         },
         {
             "name": "mediaType",
             "baseName": "mediaType",
-            "type": "PointGeoJsonInputMediaType",
+            "type": "GeoJsonInputMediaType",
             "format": ""
         }    ];
 
