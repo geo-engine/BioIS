@@ -10,6 +10,7 @@ use crate::{
     util::{md_content, md_heading},
 };
 use anyhow::{Context, Result};
+use approx::AbsDiffEq;
 use diesel::{deserialize::QueryableByName, sql_query, sql_types};
 use diesel_async::RunQueryDsl;
 use indoc::formatdoc;
@@ -53,7 +54,11 @@ enum SiteSpecification {
 }
 
 impl SiteSpecification {
-    const fn buffer(self) -> Kilometers {
+    /// Return the buffer distance in kilometers for the site specification.
+    ///
+    /// For a buffer around a point, the distance would be the radius of a circle around the point.
+    /// For a polygon, the distance would be added around the whole polygon.
+    const fn buffer_distance(self) -> Kilometers {
         match self {
             SiteSpecification::Office => buffers::OFFICE_IMPACT,
             SiteSpecification::Agriculture => buffers::AGRICULTURE_IMPACT,
@@ -638,17 +643,24 @@ fn was_point(feature: &geojson::Feature) -> bool {
     )
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, JsonSchema, ToSchema, QueryableByName)]
+#[derive(
+    Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema, QueryableByName,
+)]
 #[serde(rename_all = "camelCase")]
+#[approx(epsilon_type = f64)]
 pub struct SiteRow {
     #[diesel(sql_type = sql_types::Text)]
+    #[approx(equal)]
     pub location: String,
+
     #[diesel(sql_type = sql_types::Nullable<sql_types::Double>)]
     pub area_ha: Option<Hectare>,
-    // #[diesel(sql_type = Hectare)]
+
     #[diesel(sql_type = sql_types::Double)]
     pub biodiversity_sensitive_area_ha: Hectare,
+
     #[diesel(sql_type = sql_types::Text)]
+    #[approx(equal)]
     pub specification: String,
 }
 
@@ -726,7 +738,7 @@ pub async fn compute_biodiversity_sensitive_areas(
         site_inputs.push(SiteInput {
             location,
             was_point: was_point(feature),
-            buffer_size_km: site_specification.buffer(),
+            buffer_size_km: site_specification.buffer_distance(),
             specification: site_specification,
             geom: polygon,
         });
@@ -770,6 +782,7 @@ pub async fn compute_biodiversity_sensitive_areas(
 mod tests {
     use super::*;
     use crate::{CONFIG, db::setup_db, processes::parameters::GeoJsonInputMediaType};
+    use approx::assert_abs_diff_eq;
     use diesel_async::SimpleAsyncConnection;
     use geojson::FeatureCollection;
     use indoc::indoc;
@@ -1002,7 +1015,7 @@ mod tests {
         .await
         .unwrap();
 
-        assert_eq!(
+        assert_abs_diff_eq!(
             site_rows,
             vec![
                 SiteRow {
@@ -1031,7 +1044,8 @@ mod tests {
                     .trim_end()
                     .into()
                 }
-            ]
+            ],
+            epsilon = 1e-6
         );
 
         assert_eq!(

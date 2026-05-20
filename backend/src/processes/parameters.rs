@@ -1,4 +1,5 @@
 use crate::processes::util::json_input_value;
+use approx::AbsDiffEq;
 use geojson::{FeatureCollection, PointType};
 use ogcapi::types::processes::InputValue;
 use schemars::JsonSchema;
@@ -192,7 +193,9 @@ impl FeatureCollectionGeoJsonInput {
 }
 
 /// Area in hectares
-#[derive(Deserialize, Serialize, Debug, PartialEq, JsonSchema, ToSchema, Copy, Clone)]
+#[derive(
+    Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema, Copy, Clone,
+)]
 pub struct Hectare(#[schemars(range(min = 0.0))] pub f64);
 
 impl From<f64> for Hectare {
