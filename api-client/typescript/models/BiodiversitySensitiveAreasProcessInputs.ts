@@ -11,6 +11,7 @@
  */
 
 import { FeatureCollectionGeoJsonInput } from '../models/FeatureCollectionGeoJsonInput';
+import { UnitForArea } from '../models/UnitForArea';
 import { HttpFile } from '../http/http';
 
 export class BiodiversitySensitiveAreasProcessInputs {
@@ -21,11 +22,15 @@ export class BiodiversitySensitiveAreasProcessInputs {
     /**
     * Name of the property in the input `GeoJSON` features that contains the location information.
     */
-    'locationProperty': string;
+    'locationNameField': string;
     /**
     * Name of the property in the input `GeoJSON` features that contains the site type information.
     */
-    'siteTypeProperty': string;
+    'siteTypeField': string;
+    /**
+    * Unit for area measurement, with options for hectares (ha) or square meters (m²).
+    */
+    'unitForArea': UnitForArea;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -39,16 +44,22 @@ export class BiodiversitySensitiveAreasProcessInputs {
             "format": ""
         },
         {
-            "name": "locationProperty",
-            "baseName": "locationProperty",
+            "name": "locationNameField",
+            "baseName": "locationNameField",
             "type": "string",
             "format": "relative-json-pointer"
         },
         {
-            "name": "siteTypeProperty",
-            "baseName": "siteTypeProperty",
+            "name": "siteTypeField",
+            "baseName": "siteTypeField",
             "type": "string",
             "format": "relative-json-pointer"
+        },
+        {
+            "name": "unitForArea",
+            "baseName": "unitForArea",
+            "type": "UnitForArea",
+            "format": ""
         }    ];
 
     static getAttributeTypeMap() {
@@ -58,3 +69,5 @@ export class BiodiversitySensitiveAreasProcessInputs {
     public constructor() {
     }
 }
+
+

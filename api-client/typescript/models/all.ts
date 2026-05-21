@@ -59,6 +59,7 @@ export * from '../models/StatusCode'
 export * from '../models/StatusInfo'
 export * from '../models/Subscriber'
 export * from '../models/TransmissionMode'
+export * from '../models/UnitForArea'
 export * from '../models/UserInfo'
 export * from '../models/UserSession'
 export * from '../models/ObjectSerializer';

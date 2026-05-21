@@ -774,21 +774,26 @@
         "type": "object",
         "required": [
           "sites",
-          "locationProperty",
-          "siteTypeProperty"
+          "locationNameField",
+          "siteTypeField",
+          "unitForArea"
         ],
         "properties": {
           "sites": {
             "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput",
             "description": "Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.).\nThe impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.)."
           },
-          "locationProperty": {
+          "locationNameField": {
             "$ref": "#/components/schemas/RelativeJsonPointer",
             "description": "Name of the property in the input `GeoJSON` features that contains the location information."
           },
-          "siteTypeProperty": {
+          "siteTypeField": {
             "$ref": "#/components/schemas/RelativeJsonPointer",
             "description": "Name of the property in the input `GeoJSON` features that contains the site type information."
+          },
+          "unitForArea": {
+            "$ref": "#/components/schemas/UnitForArea",
+            "description": "Unit for area measurement, with options for hectares (ha) or square meters (m²)."
           }
         }
       },
@@ -1495,38 +1500,45 @@
         }
       },
       "ProcessSummary": {
-        "type": "object",
-        "description": "Process summary",
-        "required": [
-          "id",
-          "version"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DescriptionType"
           },
-          "version": {
-            "type": "string"
-          },
-          "jobControlOptions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/JobControlOptions"
-            }
-          },
-          "outputTransmission": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TransmissionMode"
-            }
-          },
-          "links": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Link"
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "version"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "jobControlOptions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/JobControlOptions"
+                }
+              },
+              "outputTransmission": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TransmissionMode"
+                }
+              },
+              "links": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Link"
+                }
+              }
             }
           }
-        }
+        ],
+        "description": "Process summary"
       },
       "QualifiedInputValue": {
         "allOf": [
@@ -1672,6 +1684,13 @@
         "enum": [
           "value",
           "reference"
+        ]
+      },
+      "UnitForArea": {
+        "type": "string",
+        "enum": [
+          "ha",
+          "m²"
         ]
       },
       "UserInfo": {

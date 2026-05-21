@@ -1,0 +1,64 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [8.77366548049784, 50.803270291022386],
+            [8.773649409958182, 50.802437463615604],
+            [8.774613642351255, 50.80241207230304],
+            [8.774597571811597, 50.803255056507936],
+            [8.77366548049784, 50.803270291022386]
+          ]
+        ]
+      },
+      "properties": {
+        "location": "Marbuger Unistadion",
+        "siteType": "office"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8.770273718309227, 50.80746831824467]
+      },
+      "properties": {
+        "location": "Garten des Gedenkens",
+        "siteType": "other"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [8.754139485384, 50.809101655468],
+            [8.754266459025, 50.808497270648],
+            [8.755374371521, 50.809035957506],
+            [8.754139485384, 50.809101655468]
+          ]
+        ]
+      },
+      "properties": {
+        "location": "Auf dem Dammelsberg",
+        "siteType": "office"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8.770273718309227, 50.80746831824467]
+      },
+      "id": "the-error-feature",
+      "properties": {
+        "siteType": "other"
+      }
+    }
+  ]
+}

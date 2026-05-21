@@ -80,6 +80,7 @@ models/StatusCode.ts
 models/StatusInfo.ts
 models/Subscriber.ts
 models/TransmissionMode.ts
+models/UnitForArea.ts
 models/UserInfo.ts
 models/UserSession.ts
 models/all.ts

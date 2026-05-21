@@ -217,10 +217,18 @@ mod db {
             f64::from_sql(value).map(Hectare)
         }
     }
+
+    impl FromSql<Double, Pg> for SquareMeter {
+        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
+            f64::from_sql(value).map(SquareMeter)
+        }
+    }
 }
 
 /// Area in square meters
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+#[derive(
+    Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema, Copy, Clone,
+)]
 pub struct SquareMeter(#[schemars(range(min = 0.0))] pub f64);
 
 impl From<SquareMeter> for Hectare {
@@ -310,6 +318,40 @@ impl From<&str> for RelativeJsonPointer {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, JsonSchema, ToSchema)]
+#[schemars(example = UnitForArea::Hectare)]
+pub enum UnitForArea {
+    #[serde(rename = "ha")]
+    Hectare,
+    #[serde(rename = "m²")]
+    SquareMeter,
+}
+
+impl std::fmt::Display for UnitForArea {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UnitForArea::Hectare => write!(f, "ha"),
+            UnitForArea::SquareMeter => write!(f, "m²"),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
+#[serde(untagged)]
+pub enum Area {
+    Hectare(Hectare),
+    SquareMeter(SquareMeter),
+}
+
+impl Area {
+    pub fn from_square_meters(value: SquareMeter, unit: UnitForArea) -> Self {
+        match unit {
+            UnitForArea::Hectare => Area::Hectare(value.into()),
+            UnitForArea::SquareMeter => Area::SquareMeter(value),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -350,5 +392,12 @@ mod tests {
             serde_json::to_value(&polygon_feature_collection).unwrap(),
             polygon_feature_collection_json
         );
+    }
+
+    #[test]
+    fn it_serializes_area() {
+        let area = Area::Hectare(Hectare(1.5));
+        let serialized = serde_json::to_string(&area).unwrap();
+        assert_eq!(serialized, "1.5");
     }
 }

@@ -26,6 +26,7 @@ import {
   GeoJSONPoint,
   GeoJSONPointTypeEnum,
   Input,
+  Metadata,
   Output,
   PointGeoJsonInput,
   ProcessesApi,
@@ -43,6 +44,8 @@ import { GeoJsonFormFieldComponent } from './geo-json-field';
 import * as z from 'zod';
 import { convertJsonSchemaToZod } from 'zod-from-json-schema';
 import { findByPointer } from '@jsonjoy.com/json-pointer';
+import { marked } from 'marked';
+import { LongTextComponent } from '../util/long-text.component';
 
 @Component({
   selector: 'app-create-new-auto',
@@ -50,6 +53,7 @@ import { findByPointer } from '@jsonjoy.com/json-pointer';
     CommonModule,
     FormField,
     GeoJsonFormFieldComponent,
+    LongTextComponent,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -110,11 +114,23 @@ export class CreateNewAutoComponent {
     },
   });
 
-  readonly inputs = computed(() => {
-    const description = this.description.value();
-    if (!description) return [];
+  readonly processName = computed(() => {
+    const title = this.description.value()?.title;
+    return title ?? this.fieldName(this.processId());
+  });
 
-    return Object.entries(description.inputs ?? {}).map(([key, processInput]) => ({
+  readonly processDescriptionHtml = computed(() => {
+    const description = this.description.value()?.description;
+    if (!description) return '';
+
+    return marked.parse(description, { async: false });
+  });
+
+  readonly inputs = computed(() => {
+    const descriptionInputs = this.description.value()?.inputs;
+    if (!descriptionInputs) return [];
+
+    return Object.entries(descriptionInputs).map(([key, processInput]) => ({
       key,
       title: processInput.title ?? this.fieldName(key),
       description: processInput.description,
@@ -126,47 +142,19 @@ export class CreateNewAutoComponent {
   });
 
   readonly outputs = computed(() => {
-    const description = this.description.value();
-    if (!description) return [];
+    const descriptionOutputs = this.description.value()?.outputs;
+    if (!descriptionOutputs) return [];
 
-    return Object.entries(description.outputs ?? {}).map(([key, processOutput]) => ({
+    return Object.entries(descriptionOutputs).map(([key, processOutput]) => ({
       key,
       title: processOutput.title ?? this.fieldName(key),
       description: processOutput.description,
     }));
   });
 
-  readonly relativeJsonPointerAvailableFields = computed<Record<string, string[]>>(() => {
-    const inputs = this.inputs();
-    const formModel = this.formModel();
-
-    const availableFields: Record<string, string[]> = {};
-
-    for (const { key, type, metadata } of inputs) {
-      if (!(type === FieldType.RelativeJsonPointer)) continue;
-
-      availableFields[key] = [];
-      const fields = availableFields[key];
-
-      let href = metadata?.find((meta) => meta.role === 'json-pointer-base')?.href;
-      if (!href) continue;
-
-      if (href.startsWith('#')) href = href.substring(1); // remove leading hash
-
-      let pointerBase: unknown;
-      try {
-        pointerBase = findByPointer(href, formModel).val;
-      } catch (_error) {
-        continue;
-      }
-
-      if (typeof pointerBase !== 'object' || pointerBase === null) continue;
-
-      fields.push(...Object.keys(pointerBase));
-    }
-
-    return availableFields;
-  });
+  readonly relativeJsonPointerAvailableFields = computed<Record<string, string[]>>(() =>
+    availableFieldsForRelativeJsonPointers(this.formModel(), this.inputs()),
+  );
 
   readonly fieldName = processName;
   readonly FieldType = FieldType;
@@ -196,7 +184,7 @@ export class CreateNewAutoComponent {
             break;
           case FieldType.String:
           default:
-            inputs[key] = '';
+            inputs[key] = defaultString(schema, '');
             break;
         }
       }
@@ -266,6 +254,34 @@ export class CreateNewAutoComponent {
   ): FieldTree<PointGeoJsonInput, string> {
     return formInput as FieldTree<PointGeoJsonInput, string>;
   }
+
+  enumOptions(schema: JSONSchema | undefined): string[] {
+    if (!schema || typeof schema === 'boolean' || !schema.enum || !Array.isArray(schema.enum))
+      return [];
+
+    const options = [];
+    for (const value of schema.enum) {
+      if (typeof value === 'string') options.push(value);
+    }
+    return options;
+  }
+
+  integerRangeList(schema: JSONSchema | undefined): number[] {
+    if (
+      !schema ||
+      typeof schema === 'boolean' ||
+      schema.type !== 'integer' ||
+      typeof schema.minimum !== 'number' ||
+      typeof schema.maximum !== 'number'
+    )
+      return [];
+
+    const range = [];
+    for (let i = schema.minimum; i <= schema.maximum; i++) {
+      range.push(i);
+    }
+    return range;
+  }
 }
 
 function outputForRequest(output: Record<string, boolean>): Record<string, Output> {
@@ -289,11 +305,21 @@ function typeFromSchema(schema: JSONSchema | undefined): FieldType {
 
   if (schema.type === 'string') {
     if (schema.format === 'relative-json-pointer') return FieldType.RelativeJsonPointer;
+    if (schema.enum) return FieldType.StringEnum;
 
     return FieldType.String;
   }
   if (schema.type === 'number') return FieldType.Number;
-  if (schema.type === 'integer') return FieldType.Integer;
+  if (schema.type === 'integer') {
+    if (
+      typeof schema.maximum === 'number' &&
+      typeof schema.minimum === 'number' &&
+      schema.maximum - schema.minimum <= 12
+    ) {
+      return FieldType.IntegerWithSmallRange;
+    }
+    return FieldType.Integer;
+  }
   if (schema.type === 'boolean') return FieldType.Boolean;
 
   if (schema.type === 'object') {
@@ -309,9 +335,11 @@ export enum FieldType {
   Coordinate = 'coordinate',
   GeoJson = 'geoJson',
   Integer = 'integer',
+  IntegerWithSmallRange = 'integerWithSmallRange',
   Number = 'number',
   RelativeJsonPointer = 'relativeJsonPointer',
   String = 'string',
+  StringEnum = 'stringEnum',
 }
 
 function geoJsonPointFeature(coordinates: [number, number]): GeoJSONPoint {
@@ -354,6 +382,21 @@ function defaultNumber(schema: JSONSchema, fallback: number = 0): number {
   return fallback;
 }
 
+function defaultString(schema: JSONSchema, fallback: string = ''): string {
+  if (!schema || typeof schema === 'boolean') return fallback;
+
+  const defaultValue = schema.default;
+  if (typeof defaultValue === 'string') return defaultValue;
+
+  if (!schema.examples || !Array.isArray(schema.examples)) return fallback;
+
+  for (const example of schema.examples ?? []) {
+    if (typeof example === 'string') return example;
+  }
+
+  return fallback;
+}
+
 function defaultCoordinate(schema: JSONSchema, fallback: [number, number] = [0, 0]): GeoJSONPoint {
   if (!schema || typeof schema === 'boolean') return geoJsonPointFeature(fallback);
 
@@ -380,4 +423,36 @@ function defaultCoordinate(schema: JSONSchema, fallback: [number, number] = [0, 
   }
 
   return geoJsonPointFeature(fallback);
+}
+
+function availableFieldsForRelativeJsonPointers(
+  formModel: { inputs: Record<string, unknown> },
+  inputs: { key: string; type: FieldType; metadata?: Metadata[] }[],
+): Record<string, string[]> {
+  const availableFields: Record<string, string[]> = {};
+
+  for (const { key, type, metadata } of inputs) {
+    if (!(type === FieldType.RelativeJsonPointer)) continue;
+
+    availableFields[key] = [];
+    const fields = availableFields[key];
+
+    let href = metadata?.find((meta) => meta.role === 'json-pointer-base')?.href;
+    if (!href) continue;
+
+    if (href.startsWith('#')) href = href.substring(1); // remove leading hash
+
+    let pointerBase: unknown;
+    try {
+      pointerBase = findByPointer(href, formModel).val;
+    } catch (_error) {
+      continue;
+    }
+
+    if (typeof pointerBase !== 'object' || pointerBase === null) continue;
+
+    fields.push(...Object.keys(pointerBase));
+  }
+
+  return availableFields;
 }

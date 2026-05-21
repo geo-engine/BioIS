@@ -1,7 +1,7 @@
 <div>
-  <h1 class="mat-h1">Result {{ processId() }}</h1>
+  <h1 class="mat-h1">Result {{ resultId() }}</h1>
   <div class="grid-container">
-    @for (result of results(); track result) {
+    @for (result of results(); track result.key) {
       <mat-card class="dashboard-card">
         <mat-card-header>
           <mat-card-title>
@@ -22,9 +22,11 @@
               ></app-number-indicator>
             }
             @case (ResultType.Json) {
-              <code>
-                <pre>{{ result.value | json }}</pre>
-              </code>
+              <app-long-text>
+                <code>
+                  <pre>{{ result.value | json }}</pre>
+                </code>
+              </app-long-text>
             }
             @case (ResultType.Array) {
               <mat-list>
@@ -44,7 +46,11 @@
                     <th mat-header-cell *matHeaderCellDef>{{ column.name }}</th>
                     @switch (column.type) {
                       @case (ColumnType.String) {
-                        <td mat-cell *matCellDef="let element">{{ element[column.key] }}</td>
+                        <td
+                          mat-cell
+                          *matCellDef="let element"
+                          [innerHTML]="element[column.key].replaceAll('\n', '<br>')"
+                        ></td>
                       }
                       @case (ColumnType.Url) {
                         <td mat-cell *matCellDef="let element">

@@ -154,8 +154,8 @@ lint-frontend: lint-frontend-fmt lint-frontend-code
 [group('backend')]
 [group('test')]
 [working-directory('backend')]
-test-backend: _clear
-    cargo test --locked --all-features
+test-backend filter="": _clear
+    cargo test --locked --all-features -- {{ filter }} --nocapture
 
 # Run the backend tests and generate coverage. Usage: `just test-backend-with-coverage`.
 [group('backend')]

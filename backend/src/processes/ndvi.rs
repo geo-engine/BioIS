@@ -158,6 +158,13 @@ impl Processor for NDVIProcess {
             summary: ProcessSummary {
                 id: self.id().into(),
                 version: self.version().into(),
+                description: DescriptionType {
+                    title: Some("Vegetation Index Calculation".to_string()),
+                    description: Some(
+                        "This process calculates the Normalized Difference Vegetation Index (NDVI) and the kernel NDVI (kNDVI) for a given geographic coordinate and time (year and month). The NDVI is a widely used index for assessing vegetation health, while the kNDVI is a more recent variant that accounts for soil background effects. The process uses satellite imagery data to perform the calculations and returns the NDVI and kNDVI values as outputs.".to_string(),
+                    ),
+                    ..Default::default()
+                },
                 job_control_options: vec![
                     JobControlOptions::SyncExecute,
                     JobControlOptions::AsyncExecute,

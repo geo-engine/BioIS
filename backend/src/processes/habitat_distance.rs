@@ -27,7 +27,7 @@ use std::collections::HashMap;
 use tracing::instrument;
 use utoipa::ToSchema;
 
-/// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
+/// Calculates the distance to the nearest habitat of interest based on the provided coordinate input.
 #[derive(Debug, Clone)]
 pub struct HabitatDistanceProcess {
     connection: DbPool,
@@ -168,6 +168,14 @@ impl Processor for HabitatDistanceProcess {
             summary: ProcessSummary {
                 id: self.id().into(),
                 version: self.version().into(),
+                description: DescriptionType {
+                    title: Some("Habitat Distance".to_string()),
+                    description: Some(
+                        "This process calculates the distance to the nearest habitat of interest based on the provided coordinate input."
+                            .to_string(),
+                    ),
+                    ..Default::default()
+                },
                 job_control_options: vec![
                     JobControlOptions::SyncExecute,
                     JobControlOptions::AsyncExecute,
@@ -373,7 +381,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn compute_ndvi_integration_with_mock_backend() {
+    async fn it_computes_the_nearest_habitat() {
         let pool = mock_db_pool().await;
 
         // create schema / table and insert a test site

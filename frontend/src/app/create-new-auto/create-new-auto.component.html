@@ -1,8 +1,12 @@
 <form (submit)="onSubmit()">
+  <h1>{{ processName() }}</h1>
+  <app-long-text>
+    <p [innerHTML]="processDescriptionHtml()"></p>
+  </app-long-text>
   <fieldset>
     <legend>Inputs</legend>
 
-    @for (input of inputs(); track input) {
+    @for (input of inputs(); track input.key) {
       <p>
         <span>{{ input.title }}</span>
         <mat-icon [matTooltip]="input.description">info</mat-icon>
@@ -17,6 +21,26 @@
             [type]="input.type"
             [formField]="asPrimitiveInput(form.inputs[input.key])"
           ></app-simple-form-field>
+        }
+        @case (FieldType.StringEnum) {
+          <mat-form-field>
+            <mat-label>{{ input.title }}</mat-label>
+            <mat-select [formField]="asPrimitiveInput(form.inputs[input.key])">
+              @for (option of enumOptions(input.schema); track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @case (FieldType.IntegerWithSmallRange) {
+          <mat-form-field>
+            <mat-label>{{ input.title }}</mat-label>
+            <mat-select [formField]="asPrimitiveInput(form.inputs[input.key])">
+              @for (option of integerRangeList(input.schema); track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         }
         @case (FieldType.RelativeJsonPointer) {
           <mat-form-field>
@@ -67,7 +91,7 @@
   <fieldset>
     <legend>Outputs</legend>
 
-    @for (output of outputs(); track output) {
+    @for (output of outputs(); track output.key) {
       <mat-checkbox
         [checked]="form.outputs[output.key]"
         (change)="toggleOutput(output.key, $event.checked)"

@@ -59,13 +59,14 @@ export * from '../models/StatusCode';
 export * from '../models/StatusInfo';
 export * from '../models/Subscriber';
 export * from '../models/TransmissionMode';
+export * from '../models/UnitForArea';
 export * from '../models/UserInfo';
 export * from '../models/UserSession';
 
 import { AdditionalParameter } from '../models/AdditionalParameter';
 import { AdditionalParameters } from '../models/AdditionalParameters';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
-import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
+import { BiodiversitySensitiveAreasProcessInputs     } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -123,6 +124,7 @@ import { StatusCode } from '../models/StatusCode';
 import { StatusInfo           } from '../models/StatusInfo';
 import { Subscriber } from '../models/Subscriber';
 import { TransmissionMode } from '../models/TransmissionMode';
+import { UnitForArea } from '../models/UnitForArea';
 import { UserInfo } from '../models/UserInfo';
 import { UserSession } from '../models/UserSession';
 
@@ -156,6 +158,7 @@ let enumsMap: Set<string> = new Set<string>([
     "Response",
     "StatusCode",
     "TransmissionMode",
+    "UnitForArea",
 ]);
 
 let typeMap: {[index: string]: any} = {

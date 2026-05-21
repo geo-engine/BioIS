@@ -51,8 +51,7 @@ export const routes: Routes = [
   {
     path: 'app/signin',
     title: 'BioIS – Sign In',
-    loadComponent: () =>
-      import('./signin.component/signin.component').then((m) => m.SigninComponent),
+    loadComponent: () => import('./signin/signin.component').then((m) => m.SigninComponent),
   },
   {
     path: 'app',

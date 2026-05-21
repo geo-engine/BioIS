@@ -160,8 +160,9 @@ const request: ProcessesApiExecuteImpactMetricsRequest = {
   impactMetricsProcessParams: {
     inputs: {
       sites: null,
-      locationProperty: null,
-      siteTypeProperty: null,
+      locationNameField: null,
+      siteTypeField: null,
+      unitForArea: null,
     },
     outputs: {
       "key": null,

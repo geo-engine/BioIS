@@ -63,6 +63,7 @@ import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
 import { Subscriber } from '../models/Subscriber';
 import { TransmissionMode } from '../models/TransmissionMode';
+import { UnitForArea } from '../models/UnitForArea';
 import { UserInfo } from '../models/UserInfo';
 import { UserSession } from '../models/UserSession';
 

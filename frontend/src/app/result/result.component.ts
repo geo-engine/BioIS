@@ -29,6 +29,7 @@ import { ColorBreakpoint, NumberIndicatorComponent } from './number-indicator.co
 import { processName } from '../util/processes';
 import { MatTableModule } from '@angular/material/table';
 import { MatListModule } from '@angular/material/list';
+import { LongTextComponent } from '../util/long-text.component';
 
 @Component({
   selector: 'app-result',
@@ -37,6 +38,7 @@ import { MatListModule } from '@angular/material/list';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    LongTextComponent,
     MatButtonModule,
     MatCardModule,
     MatGridListModule,
@@ -52,18 +54,18 @@ export class ResultComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
 
-  readonly processId: Signal<string | undefined>;
+  readonly resultId: Signal<string | undefined>;
 
   readonly result: ResourceRef<Record<string, InlineOrRefData>> = resource({
     params: () => ({
-      processId: this.processId(),
+      resultId: this.resultId(),
     }),
     defaultValue: {},
     loader: async ({ params }) => {
       const api = new ProcessesApi(this.userService.apiConfiguration());
-      if (!params.processId) return {};
+      if (!params.resultId) return {};
 
-      const result = await api.results(params.processId);
+      const result = await api.results(params.resultId);
 
       if (result instanceof Blob) {
         throw new Error('Expected document output but received HttpFile');
@@ -108,7 +110,7 @@ export class ResultComponent {
   ];
 
   constructor() {
-    this.processId = toSignal(
+    this.resultId = toSignal(
       this.activatedRoute.params.pipe(
         map((params) => ('resultId' in params ? (params['resultId'] as string) : undefined)),
       ),
@@ -157,7 +159,7 @@ export class ResultComponent {
   }
 
   async download(): Promise<void> {
-    const processId = this.processId();
+    const processId = this.resultId();
     if (!processId) return;
 
     const api = new ProcessesApi(this.userService.apiConfiguration());
@@ -237,7 +239,7 @@ enum ResultType {
 /**
  * Fixes the given data value to ensure it is properly typed as either a Link or a QualifiedInputValue.
  */
-function fixDataValue(data: InlineOrRefData): InlineOrRefData {
+export function fixDataValue(data: InlineOrRefData): InlineOrRefData {
   if (data instanceof QualifiedInputValue) return data;
   if (data instanceof LinkValue) return data;
 
@@ -283,7 +285,7 @@ function fixDataValue(data: InlineOrRefData): InlineOrRefData {
   return data;
 }
 
-function columnTypeOfField(
+export function columnTypeOfField(
   type?: 'string' | 'number' | 'integer' | 'boolean',
   firstValue?: unknown,
 ): ColumnType {

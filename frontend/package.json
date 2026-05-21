@@ -38,6 +38,7 @@
     "@geoengine/biois": "file:../api-client/typescript",
     "@jsonjoy.com/json-pointer": "^18.21.0",
     "ajv": "^8.20.0",
+    "marked": "^18.0.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "ya-json-schema-types": "^2.0.2",

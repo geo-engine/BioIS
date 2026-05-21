@@ -2,8 +2,9 @@ use crate::{
     db::{DbPool, PooledConnection},
     processes::{
         parameters::{
-            DataResource, DataResourceSchema, DocumentationSource, FeatureCollectionGeoJsonInput,
-            Fields, Hectare, Kilometers, RelativeJsonPointer, TableSchemaField, TableSchemaType,
+            Area, DataResource, DataResourceSchema, DocumentationSource,
+            FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
+            TableSchemaField, TableSchemaType, UnitForArea,
         },
         util::json_input_value,
     },
@@ -43,7 +44,6 @@ mod buffers {
     pub const OTHER_IMPACT: Kilometers = Kilometers(20.0);
 }
 
-#[doc = include_str!("input_site_type_property.md")]
 #[derive(Debug, Clone, Copy, Serialize)]
 enum SiteSpecification {
     Office,
@@ -84,7 +84,7 @@ impl FromStr for SiteSpecification {
     }
 }
 
-/// Biodiversity impact metrics related to biodiversity and ecosystems change (ESRS E4 B5) - scaffold implementation
+#[doc = include_str!("description.md")]
 #[derive(Debug, Clone)]
 pub struct BiodiversitySensitiveAreasProcess {
     connection: DbPool,
@@ -99,16 +99,20 @@ pub struct BiodiversitySensitiveAreasProcessInputs {
     pub sites: FeatureCollectionGeoJsonInput,
 
     /// Name of the property in the input `GeoJSON` features that contains the location information.
-    pub location_property: RelativeJsonPointer,
+    pub location_name_field: RelativeJsonPointer,
 
     /// Name of the property in the input `GeoJSON` features that contains the site type information.
-    pub site_type_property: RelativeJsonPointer,
+    pub site_type_field: RelativeJsonPointer,
+
+    /// Unit for area measurement, with options for hectares (ha) or square meters (m²).
+    pub unit_for_area: UnitForArea,
 }
 
 mod input_keys {
     pub const SITES: &str = "sites";
-    pub const LOCATION_PROPERTY: &str = "locationProperty";
-    pub const SITE_TYPE_PROPERTY: &str = "siteTypeProperty";
+    pub const LOCATION_NAME_FIELD: &str = "locationNameField";
+    pub const SITE_TYPE_FIELD: &str = "siteTypeField";
+    pub const UNIT_FOR_AREA: &str = "unitForArea";
 }
 
 #[derive(Serialize, Debug, JsonSchema, ToSchema)]
@@ -116,7 +120,7 @@ mod input_keys {
 pub struct BiodiversitySensitiveAreasProcessOutputs {
     /// Sites in or near biodiversity-sensitive areas
     #[schema(value_type = Option<DataResourceSchema>, inline)]
-    pub biodiversity_sensitive_areas: Option<DataResource<Vec<SiteRow>>>,
+    pub biodiversity_sensitive_areas: Option<DataResource<Vec<SiteRowOutput>>>,
 
     /// Echo of inputs for auditing and traceability
     pub inputs: Option<BiodiversitySensitiveAreasProcessInputs>,
@@ -160,6 +164,19 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             summary: ProcessSummary {
                 id: self.id().into(),
                 version: self.version().into(),
+                description: DescriptionType {
+                    title: Some(md_heading(include_str!("description.md")).to_string()),
+                    description: md_content(include_str!("description.md"))
+                        .to_string()
+                        .into(),
+                    keywords: vec![
+                        "ESG".to_string(),
+                        "biodiversity".to_string(),
+                        "ESRS E4-5".to_string(),
+                        "VSME B5".to_string(),
+                    ],
+                    ..Default::default()
+                },
                 job_control_options: vec![
                     JobControlOptions::SyncExecute,
                     JobControlOptions::AsyncExecute,
@@ -172,8 +189,8 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     input_keys::SITES.to_string(),
                     InputDescription {
                         description_type: DescriptionType {
-                            title: Some(md_heading(include_str!("input_sites.md")).to_string()),
-                            description: md_content(include_str!("input_sites.md"))
+                            title: "Sites".to_string().into(),
+                            description: "GeoJSON FeatureCollection of sites to be analyzed."
                                 .to_string()
                                 .into(),
                             ..Default::default()
@@ -185,13 +202,11 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    input_keys::LOCATION_PROPERTY.to_string(),
+                    input_keys::LOCATION_NAME_FIELD.to_string(),
                     InputDescription {
                         description_type: DescriptionType {
-                            title: Some(
-                                md_heading(include_str!("input_location_property.md")).to_string(),
-                            ),
-                            description: md_content(include_str!("input_location_property.md"))
+                            title: "Location Name Field".to_string().into(),
+                            description: "Reference to the property in the input GeoJSON features that contains the location information."
                                 .to_string()
                                 .into(),
                             metadata: vec![Metadata {
@@ -210,13 +225,11 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    input_keys::SITE_TYPE_PROPERTY.to_string(),
+                    input_keys::SITE_TYPE_FIELD.to_string(),
                     InputDescription {
                         description_type: DescriptionType {
-                            title: Some(
-                                md_heading(include_str!("input_site_type_property.md")).to_string(),
-                            ),
-                            description: md_content(include_str!("input_site_type_property.md"))
+                            title: "Site Type Field".to_string().into(),
+                            description: "Reference to the property in the input GeoJSON features that contains the site type information."
                                 .to_string()
                                 .into(),
                             metadata: vec![Metadata {
@@ -230,6 +243,22 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                         },
                         schema: generator
                             .root_schema_for::<RelativeJsonPointer>()
+                            .to_value(),
+                        ..Default::default()
+                    },
+                ),
+                (
+                    input_keys::UNIT_FOR_AREA.to_string(),
+                    InputDescription {
+                        description_type: DescriptionType {
+                            title: "Unit for Area".to_string().into(),
+                            description: "Unit for area measurement, with options for hectares (ha) or square meters (m²)."
+                                .to_string()
+                                .into(),
+                            ..Default::default()
+                        },
+                        schema: generator
+                            .root_schema_for::<UnitForArea>()
                             .to_value(),
                         ..Default::default()
                     },
@@ -240,15 +269,10 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     output_keys::BIODIVERSITY_SENSITIVE_AREAS.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
-                            title: Some(
-                                md_heading(include_str!("output_biodiversity_sensitive_areas.md"))
-                                    .to_string(),
-                            ),
-                            description: md_content(include_str!(
-                                "output_biodiversity_sensitive_areas.md"
-                            ))
-                            .to_string()
-                            .into(),
+                            title: "Biodiversity-sensitive Areas".to_string().into(),
+                            description: "Table representation of the identified biodiversity-sensitive areas."
+                                .to_string()
+                                .into(),
                             ..Default::default()
                         },
                         schema: generator
@@ -257,17 +281,17 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    output_keys::INPUTS.to_string(),
+                    output_keys::DOCUMENTATION_SOURCES.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
-                            title: Some(md_heading(include_str!("output_inputs.md")).to_string()),
-                            description: md_content(include_str!("output_inputs.md"))
-                                .to_string()
-                                .into(),
+                            title: "Documentation Sources".to_string().into(),
+                            description: "List of data sources and workflow references used for audits."
+                            .to_string()
+                            .into(),
                             ..Default::default()
                         },
                         schema: generator
-                            .root_schema_for::<BiodiversitySensitiveAreasProcessInputs>()
+                            .root_schema_for::<DataResource<Vec<DocumentationSource>>>()
                             .to_value(),
                     },
                 ),
@@ -275,8 +299,8 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     output_keys::ERRORS.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
-                            title: Some(md_heading(include_str!("output_errors.md")).to_string()),
-                            description: md_content(include_str!("output_errors.md"))
+                            title: "Processing Errors".to_string().into(),
+                            description: "List of errors encountered during processing, if any."
                                 .to_string()
                                 .into(),
                             ..Default::default()
@@ -285,22 +309,17 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    output_keys::DOCUMENTATION_SOURCES.to_string(),
+                    output_keys::INPUTS.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
-                            title: Some(
-                                md_heading(include_str!("output_documentation_sources.md"))
-                                    .to_string(),
-                            ),
-                            description: md_content(include_str!(
-                                "output_documentation_sources.md"
-                            ))
-                            .to_string()
-                            .into(),
+                            title: "Input Parameters".to_string().into(),
+                            description: "Echo of inputs for auditing."
+                                .to_string()
+                                .into(),
                             ..Default::default()
                         },
                         schema: generator
-                            .root_schema_for::<DataResource<Vec<DocumentationSource>>>()
+                            .root_schema_for::<BiodiversitySensitiveAreasProcessInputs>()
                             .to_value(),
                     },
                 ),
@@ -356,15 +375,16 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                 self.connection().await?,
                 self.natura2000_schema,
                 inputs.sites,
-                inputs.location_property.as_ref(),
-                inputs.site_type_property.as_ref(),
+                inputs.location_name_field.as_ref(),
+                inputs.site_type_field.as_ref(),
+                inputs.unit_for_area,
             )
             .await?;
 
             outputs.biodiversity_sensitive_areas = execute
                 .outputs
                 .contains_key(output_keys::BIODIVERSITY_SENSITIVE_AREAS)
-                .then_some(site_table.into());
+                .then_some(site_row_into_output(site_table, inputs.unit_for_area));
 
             outputs.errors = execute
                 .outputs
@@ -643,56 +663,104 @@ fn was_point(feature: &geojson::Feature) -> bool {
     )
 }
 
-#[derive(
-    Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema, QueryableByName,
-)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, QueryableByName)]
 #[serde(rename_all = "camelCase")]
-#[approx(epsilon_type = f64)]
 pub struct SiteRow {
     #[diesel(sql_type = sql_types::Text)]
-    #[approx(equal)]
     pub location: String,
 
     #[diesel(sql_type = sql_types::Nullable<sql_types::Double>)]
-    pub area_ha: Option<Hectare>,
+    pub area_m2: Option<SquareMeter>,
+
+    #[diesel(sql_type = sql_types::Bool)]
+    pub site_in_biodiversity_sensitive_area: bool,
+
+    #[diesel(sql_type = sql_types::Bool)]
+    pub site_near_biodiversity_sensitive_area: bool,
 
     #[diesel(sql_type = sql_types::Double)]
-    pub biodiversity_sensitive_area_ha: Hectare,
+    pub biodiversity_sensitive_area_m2: SquareMeter,
 
     #[diesel(sql_type = sql_types::Text)]
+    pub specification: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[approx(epsilon_type = f64)]
+pub struct SiteRowOutput {
+    #[approx(equal)]
+    pub location: String,
+
+    pub area: Option<Area>,
+
+    #[approx(equal)]
+    pub site_in_biodiversity_sensitive_area: bool,
+
+    #[approx(equal)]
+    pub site_near_biodiversity_sensitive_area: bool,
+
+    pub biodiversity_sensitive_area: Area,
+
     #[approx(equal)]
     pub specification: String,
 }
 
-impl From<Vec<SiteRow>> for DataResource<Vec<SiteRow>> {
-    fn from(value: Vec<SiteRow>) -> Self {
-        Self {
-            data: value,
-            schema: Fields {
-                fields: vec![
-                    TableSchemaField {
-                        name: "location".into(),
-                        r#type: Some(TableSchemaType::String),
-                        title: Some("Location".into()),
-                    },
-                    TableSchemaField {
-                        name: "areaHa".into(),
-                        r#type: Some(TableSchemaType::Number),
-                        title: Some("Area (ha)".into()),
-                    },
-                    TableSchemaField {
-                        name: "biodiversitySensitiveAreaHa".into(),
-                        r#type: Some(TableSchemaType::Number),
-                        title: Some("Biodiversity Sensitive Area (ha)".into()),
-                    },
-                    TableSchemaField {
-                        name: "specification".into(),
-                        r#type: Some(TableSchemaType::String),
-                        title: Some("Specification".into()),
-                    },
-                ],
-            },
-        }
+fn site_row_into_output(
+    site_rows: Vec<SiteRow>,
+    unit_for_area: UnitForArea,
+) -> DataResource<Vec<SiteRowOutput>> {
+    DataResource {
+        data: site_rows
+            .into_iter()
+            .map(|row| SiteRowOutput {
+                location: row.location,
+                area: row
+                    .area_m2
+                    .map(|a| Area::from_square_meters(a, unit_for_area)),
+                site_in_biodiversity_sensitive_area: row.site_in_biodiversity_sensitive_area,
+                site_near_biodiversity_sensitive_area: row.site_near_biodiversity_sensitive_area,
+                biodiversity_sensitive_area: Area::from_square_meters(
+                    row.biodiversity_sensitive_area_m2,
+                    unit_for_area,
+                ),
+                specification: row.specification,
+            })
+            .collect(),
+        schema: Fields {
+            fields: vec![
+                TableSchemaField {
+                    name: "location".into(),
+                    r#type: Some(TableSchemaType::String),
+                    title: Some("Location".into()),
+                },
+                TableSchemaField {
+                    name: "area".into(),
+                    r#type: Some(TableSchemaType::Number),
+                    title: Some(format!("Area ({unit_for_area})")),
+                },
+                TableSchemaField {
+                    name: "siteInBiodiversitySensitiveArea".into(),
+                    r#type: Some(TableSchemaType::Boolean),
+                    title: Some("Site in Biodiversity-sensitive Area".into()),
+                },
+                TableSchemaField {
+                    name: "siteNearBiodiversitySensitiveArea".into(),
+                    r#type: Some(TableSchemaType::Boolean),
+                    title: Some("Site near Biodiversity-sensitive Area".into()),
+                },
+                TableSchemaField {
+                    name: "biodiversitySensitiveArea".into(),
+                    r#type: Some(TableSchemaType::Number),
+                    title: Some(format!("Biodiversity Sensitive Area ({unit_for_area})")),
+                },
+                TableSchemaField {
+                    name: "specification".into(),
+                    r#type: Some(TableSchemaType::String),
+                    title: Some("Specification".into()),
+                },
+            ],
+        },
     }
 }
 
@@ -707,6 +775,7 @@ pub async fn compute_biodiversity_sensitive_areas(
     sites: FeatureCollectionGeoJsonInput,
     location_property: &str,
     site_type_property: &str,
+    unit_for_area: UnitForArea,
 ) -> anyhow::Result<(Vec<SiteRow>, Vec<String>)> {
     let mut site_inputs: Vec<SiteInput> = Vec::with_capacity(sites.value().features.len());
     let mut errors = Vec::new();
@@ -751,24 +820,43 @@ pub async fn compute_biodiversity_sensitive_areas(
                 v.was_point,
                 v.buffer_size_km,
                 v.specification,
-                ST_Buffer(ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035), v.buffer_size_km * 1_000) AS geom,
+                ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035) AS geom,
+                ST_Buffer(ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035), v.buffer_size_km * 1_000) AS buffered_geom,
                 ST_Area(ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035)) AS area_m2
             FROM jsonb_to_recordset($1::jsonb)
                 AS v(location text, was_point bool, buffer_size_km double precision, specification text, geom text)
         )
         SELECT
             r.location,
-            NULLIF(r.area_m2 / 10_000, 0) AS area_ha,
-            -- TODO: or union first over all intersections?
-            SUM(ST_Area(ST_Intersection(s.geom, r.geom))) / 10_000 AS biodiversity_sensitive_area_ha,
+            NULLIF(r.area_m2, 0) AS area_m2,
+            COALESCE(ST_AREA(ST_INTERSECTION(s_in.geom, r.geom)), 0) > 0 AS site_in_biodiversity_sensitive_area,
+            ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) > 0 AS site_near_biodiversity_sensitive_area,
+            ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) AS biodiversity_sensitive_area_m2,
             'Type: ' || r.specification || E'\n'
-                || CASE WHEN r.was_point THEN '(derived from point)' ELSE '' END || E'\n'
-                || 'Intersection with ' || r.buffer_size_km || ' km buffer zone to:' || E'\n' 
-                || string_agg(s.sitename || ' (' || s.sitecode || ')', ', ') AS specification
-        FROM "{natura2000_schema}".naturasite_polygon s, reference r
-        WHERE ST_Intersects(s.geom, r.geom)
-        GROUP BY r.location, r.was_point, r.buffer_size_km, r.specification, r.area_m2
-        ORDER BY biodiversity_sensitive_area_ha DESC
+            || CASE WHEN r.was_point THEN '(derived from point)' ELSE '' END || E'\n'
+            || COALESCE('Intersects with:' || E'\n' || s_in.site_list || E'\n', '')
+            || 'Near (within ' || r.buffer_size_km || ' km buffer zone) to:' || E'\n' 
+            || s_out.site_list AS specification
+        FROM reference r
+        LEFT JOIN (
+            SELECT
+                r.location,
+                ST_COLLECT(s.geom) as geom,
+                STRING_AGG(s.sitename || ' (' || s.sitecode || ')', E'\n') as site_list
+            FROM "{natura2000_schema}".naturasite_polygon s, reference r
+            WHERE ST_Intersects(s.geom, r.geom)
+            GROUP BY r.location
+        ) as s_in USING (location)
+        JOIN (
+            SELECT
+                r.location,
+                ST_COLLECT(s.geom) as geom,
+                STRING_AGG(s.sitename || ' (' || s.sitecode || ')', E'\n') as site_list
+            FROM "{natura2000_schema}".naturasite_polygon s, reference r
+            WHERE ST_Intersects(s.geom, r.buffered_geom)
+            GROUP BY r.location
+        ) as s_out USING (location)
+        ORDER BY biodiversity_sensitive_area_m2 DESC;
     "#})
     .bind::<sql_types::Json, _>(serde_json::to_value(&site_inputs)?)
     .get_results(&mut *connection)
@@ -781,8 +869,12 @@ pub async fn compute_biodiversity_sensitive_areas(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CONFIG, db::setup_db, processes::parameters::GeoJsonInputMediaType};
-    use approx::assert_abs_diff_eq;
+    use crate::{
+        CONFIG,
+        db::setup_db,
+        processes::parameters::{GeoJsonInputMediaType, Hectare},
+    };
+    use approx::abs_diff_ne;
     use diesel_async::SimpleAsyncConnection;
     use geojson::FeatureCollection;
     use indoc::indoc;
@@ -876,8 +968,9 @@ mod tests {
                 },
                 "mediaType": "application/geo+json"
             },
-            "locationProperty": "location",
-            "siteTypeProperty": "siteType"
+            "locationNameField": "location",
+            "siteTypeField": "siteType",
+            "unitForArea": "m²"
         });
 
         let inputs: HashMap<String, Input> = serde_json::from_value(json).unwrap();
@@ -916,7 +1009,12 @@ mod tests {
         assert!(has_sync, "expected SyncExecute in job_control_options");
         assert!(has_async, "expected AsyncExecute in job_control_options");
 
-        for key in ["sites", "locationProperty", "siteTypeProperty"] {
+        for key in [
+            input_keys::SITES,
+            input_keys::LOCATION_NAME_FIELD,
+            input_keys::SITE_TYPE_FIELD,
+            input_keys::UNIT_FOR_AREA,
+        ] {
             assert!(
                 process.inputs.contains_key(key),
                 "expected input key `{key}` in process inputs"
@@ -924,10 +1022,10 @@ mod tests {
         }
 
         for key in [
-            "biodiversitySensitiveAreas",
-            "inputs",
-            "errors",
-            "documentationSources",
+            output_keys::BIODIVERSITY_SENSITIVE_AREAS,
+            output_keys::INPUTS,
+            output_keys::ERRORS,
+            output_keys::DOCUMENTATION_SOURCES,
         ] {
             assert!(
                 process.outputs.contains_key(key),
@@ -984,6 +1082,24 @@ mod tests {
                     {
                       "type": "Feature",
                       "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                          [
+                            [8.754_139_485_384, 50.809_101_655_468],
+                            [8.754_266_459_025, 50.808_497_270_648],
+                            [8.755_374_371_521, 50.809_035_957_506],
+                            [8.754_139_485_384, 50.809_101_655_468]
+                          ]
+                        ]
+                      },
+                      "properties": {
+                        "location": "Auf dem Dammelsberg",
+                        "siteType": "office"
+                      }
+                    },
+                    {
+                      "type": "Feature",
+                      "geometry": {
                         "type": "Point",
                         "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
                       },
@@ -1001,52 +1117,78 @@ mod tests {
                 .into(),
                 media_type: GeoJsonInputMediaType::GeoJson,
             },
-            location_property: "location".into(),
-            site_type_property: "siteType".into(),
+            location_name_field: "location".into(),
+            site_type_field: "siteType".into(),
+            unit_for_area: UnitForArea::Hectare,
         };
 
         let (site_rows, errors) = compute_biodiversity_sensitive_areas(
             connection,
             CONFIG.database.schema.as_str(),
             inputs.sites,
-            inputs.location_property.as_ref(),
-            inputs.site_type_property.as_ref(),
+            inputs.location_name_field.as_ref(),
+            inputs.site_type_field.as_ref(),
+            inputs.unit_for_area,
         )
         .await
         .unwrap();
 
-        assert_abs_diff_eq!(
-            site_rows,
-            vec![
-                SiteRow {
-                    location: "Garten des Gedenkens".into(),
-                    area_ha: None,
-                    biodiversity_sensitive_area_ha: Hectare(36.307_653_383_984_075),
-                    specification: indoc! {"
+        let site_row_outputs = site_row_into_output(site_rows, inputs.unit_for_area);
+
+        let expected = vec![
+            SiteRowOutput {
+                location: "Garten des Gedenkens".into(),
+                area: None,
+                site_in_biodiversity_sensitive_area: false,
+                site_near_biodiversity_sensitive_area: true,
+                biodiversity_sensitive_area: Area::Hectare(Hectare(36.307_653_383_984_075)),
+                specification: indoc! {"
                         Type: Other
                         (derived from point)
-                        Intersection with 20 km buffer zone to:
-                        Dammelsberg und Köhlersgrund (DE5118301), Fohnbach und Gleibach (DE5317307)
+                        Near (within 20 km buffer zone) to:
+                        Dammelsberg und Köhlersgrund (DE5118301)
+                        Fohnbach und Gleibach (DE5317307)
                     "}
-                    .trim_end()
-                    .into()
-                },
-                SiteRow {
-                    location: "Marbuger Unistadion".into(),
-                    area_ha: Some(Hectare(0.623_035_886_691_041_7)),
-                    biodiversity_sensitive_area_ha: Hectare(21.794_987_588_368_837),
-                    specification: indoc! {"
+                .trim_end()
+                .into(),
+            },
+            SiteRowOutput {
+                location: "Auf dem Dammelsberg".into(),
+                area: Some(Area::Hectare(Hectare(0.289_339_552_615_731_47))),
+                site_in_biodiversity_sensitive_area: true,
+                site_near_biodiversity_sensitive_area: true,
+                biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
+                specification: indoc! {"
                         Type: Office
                         
-                        Intersection with 5 km buffer zone to:
+                        Intersects with:
+                        Dammelsberg und Köhlersgrund (DE5118301)
+                        Near (within 5 km buffer zone) to:
                         Dammelsberg und Köhlersgrund (DE5118301)
                     "}
-                    .trim_end()
-                    .into()
-                }
-            ],
-            epsilon = 1e-6
-        );
+                .trim_end()
+                .into(),
+            },
+            SiteRowOutput {
+                location: "Marbuger Unistadion".into(),
+                area: Some(Area::Hectare(Hectare(0.623_035_886_691_041_7))),
+                site_in_biodiversity_sensitive_area: false,
+                site_near_biodiversity_sensitive_area: true,
+                biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
+                specification: indoc! {"
+                        Type: Office
+                        
+                        Near (within 5 km buffer zone) to:
+                        Dammelsberg und Köhlersgrund (DE5118301)
+                    "}
+                .trim_end()
+                .into(),
+            },
+        ];
+
+        if abs_diff_ne!(site_row_outputs.data, expected, epsilon = 1e-6,) {
+            assert_eq!(site_row_outputs.data, expected); // pretty assertions
+        }
 
         assert_eq!(
             errors,
