@@ -1,15 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { Process, ProcessesApi } from '@geoengine/biois';
-
 import { CreateNewAutoComponent } from './create-new-auto.component';
 import { inputBinding } from '@angular/core';
+import { mockResizeObserverClass } from '../util/resize-signal.spec';
 
 describe('CreateNewAutoComponent', () => {
   let component: CreateNewAutoComponent;
   let fixture: ComponentFixture<CreateNewAutoComponent>;
 
   beforeEach(async () => {
+    globalThis.ResizeObserver = mockResizeObserverClass([]);
+
     // mock ProcessesApi.process early so resource loaders in the component don't perform real network fetches
     vi.spyOn(ProcessesApi.prototype, 'process').mockResolvedValue(ndviProcess());
 
