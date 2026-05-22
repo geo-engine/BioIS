@@ -12,23 +12,9 @@
 
 import { HttpFile } from '../http/http';
 
-/**
-* A source file.
-*/
-export class Source {
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
-    /**
-    * A fully qualified URL, or a POSIX file path.
-    */
-    'path'?: string;
-    /**
-    * An email address.
-    */
-    'email'?: string;
-    'version'?: string;
+export class TableSchemaForeignKeyOneOfReference {
+    'resource'?: string;
+    'fields': Set<string>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -36,32 +22,20 @@ export class Source {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "title",
-            "baseName": "title",
+            "name": "resource",
+            "baseName": "resource",
             "type": "string",
             "format": ""
         },
         {
-            "name": "path",
-            "baseName": "path",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "email",
-            "baseName": "email",
-            "type": "string",
-            "format": "email"
-        },
-        {
-            "name": "version",
-            "baseName": "version",
-            "type": "string",
+            "name": "fields",
+            "baseName": "fields",
+            "type": "Set<string>",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return Source.attributeTypeMap;
+        return TableSchemaForeignKeyOneOfReference.attributeTypeMap;
     }
 
     public constructor() {

@@ -76,14 +76,14 @@ impl_extern_schema!(
 impl_extern_schema!(
     DataResource<R>,
     "Data Resource",
-    "https://specs.frictionlessdata.io/schemas/data-resource.json",
+    "https://datapackage.org/profiles/2.0/dataresource.json",
     R
 );
 
 impl_extern_schema!(
     DataResourceSchema,
     "Data Resource",
-    "https://specs.frictionlessdata.io/schemas/data-resource.json",
+    "https://datapackage.org/profiles/2.0/dataresource.json",
 );
 
 /// Cf. <https://github.com/juhaku/utoipa/issues/1346>
@@ -91,9 +91,10 @@ impl_extern_schema!(
 pub struct DataResourceSchema;
 
 /// Data resources for outputting tabular data with JSON.
-/// Based on <https://specs.frictionlessdata.io/schemas/data-resource.json>.
+/// Based on <https://datapackage.org/profiles/2.0/dataresource.json>.
 #[derive(Serialize, Debug)]
 pub struct DataResource<R> {
+    pub name: String,
     pub data: R,
     pub schema: Fields,
 }
@@ -276,6 +277,7 @@ pub struct DocumentationSource {
 impl From<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>> {
     fn from(value: Vec<DocumentationSource>) -> Self {
         Self {
+            name: "Documentation Sources".to_string(),
             data: value,
             schema: Fields {
                 fields: vec![
@@ -399,5 +401,43 @@ mod tests {
         let area = Area::Hectare(Hectare(1.5));
         let serialized = serde_json::to_string(&area).unwrap();
         assert_eq!(serialized, "1.5");
+    }
+
+    #[test]
+    fn it_converts_documentation_sources_into_data_resource() {
+        let sources = vec![DocumentationSource {
+            data: "Geo Engine workflow XYZ".to_string(),
+            documentation_source: "https://example.com/workflow/xyz".to_string(),
+        }];
+
+        let data_resource: DataResource<Vec<DocumentationSource>> = sources.into();
+
+        assert_eq!(data_resource.data.len(), 1);
+        assert_eq!(data_resource.data[0].data, "Geo Engine workflow XYZ");
+        assert_eq!(
+            data_resource.data[0].documentation_source,
+            "https://example.com/workflow/xyz"
+        );
+
+        assert_eq!(data_resource.schema.fields.len(), 2);
+        assert_eq!(data_resource.schema.fields[0].name, "data");
+        assert!(matches!(
+            data_resource.schema.fields[0].r#type,
+            Some(TableSchemaType::String)
+        ));
+        assert_eq!(
+            data_resource.schema.fields[0].title,
+            Some("Data".to_string())
+        );
+
+        assert_eq!(data_resource.schema.fields[1].name, "documentation_source");
+        assert!(matches!(
+            data_resource.schema.fields[1].r#type,
+            Some(TableSchemaType::String)
+        ));
+        assert_eq!(
+            data_resource.schema.fields[1].title,
+            Some("Documentation Source".to_string())
+        );
     }
 }

@@ -806,7 +806,7 @@
                 "type": "null"
               },
               {
-                "$ref": "https://specs.frictionlessdata.io/schemas/data-resource.json"
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
               }
             ],
             "description": "Sites in or near biodiversity-sensitive areas"
@@ -838,7 +838,7 @@
                 "type": "null"
               },
               {
-                "$ref": "https://specs.frictionlessdata.io/schemas/data-resource.json"
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
               }
             ],
             "description": "Data sources and workflow references used for audits and provenance"

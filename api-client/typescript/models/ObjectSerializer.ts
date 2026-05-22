@@ -1,12 +1,37 @@
 export * from '../models/AdditionalParameter';
 export * from '../models/AdditionalParameters';
+export * from '../models/AnyField';
+export * from '../models/ArrayField';
 export * from '../models/AuthCodeResponse';
 export * from '../models/BiodiversitySensitiveAreasProcessInputs';
 export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
+export * from '../models/BooleanField';
 export * from '../models/BoundingBox';
 export * from '../models/Conformance';
+export * from '../models/Constraints';
+export * from '../models/Constraints1';
+export * from '../models/Constraints10';
+export * from '../models/Constraints10Enum';
+export * from '../models/Constraints11';
+export * from '../models/Constraints12';
+export * from '../models/Constraints12Enum';
+export * from '../models/Constraints13';
+export * from '../models/Constraints14';
+export * from '../models/Constraints1Enum';
+export * from '../models/Constraints1Minimum';
+export * from '../models/Constraints2';
+export * from '../models/Constraints3';
+export * from '../models/Constraints4';
+export * from '../models/Constraints5';
+export * from '../models/Constraints6';
+export * from '../models/Constraints7';
+export * from '../models/Constraints8';
+export * from '../models/Constraints9';
 export * from '../models/DataResource';
+export * from '../models/DateField';
+export * from '../models/DateTimeField';
 export * from '../models/DescriptionType';
+export * from '../models/DurationField';
 export * from '../models/Exception';
 export * from '../models/Execute';
 export * from '../models/FeatureCollectionGeoJsonInput';
@@ -15,6 +40,7 @@ export * from '../models/GeoJSONFeature';
 export * from '../models/GeoJSONFeatureCollection';
 export * from '../models/GeoJSONFeatureGeometry';
 export * from '../models/GeoJSONFeatureId';
+export * from '../models/GeoJSONField';
 export * from '../models/GeoJSONGeometryCollection';
 export * from '../models/GeoJSONGeometryCollectionGeometriesInner';
 export * from '../models/GeoJSONLineString';
@@ -24,6 +50,7 @@ export * from '../models/GeoJSONMultiPolygon';
 export * from '../models/GeoJSONPoint';
 export * from '../models/GeoJSONPolygon';
 export * from '../models/GeoJsonInputMediaType';
+export * from '../models/GeoPointField';
 export * from '../models/HabitatDistanceProcessInputs';
 export * from '../models/HabitatDistanceProcessOutputs';
 export * from '../models/HabitatDistanceProcessParams';
@@ -32,6 +59,7 @@ export * from '../models/InlineOrRefData';
 export * from '../models/Input';
 export * from '../models/InputDescription';
 export * from '../models/InputValue';
+export * from '../models/IntegerField';
 export * from '../models/JobControlOptions';
 export * from '../models/JobList';
 export * from '../models/JobType';
@@ -43,6 +71,8 @@ export * from '../models/Metadata';
 export * from '../models/NDVIProcessInputs';
 export * from '../models/NDVIProcessOutputs';
 export * from '../models/NDVIProcessParams';
+export * from '../models/NumberField';
+export * from '../models/ObjectField';
 export * from '../models/Output';
 export * from '../models/OutputDescription';
 export * from '../models/Path';
@@ -57,21 +87,61 @@ export * from '../models/Schema';
 export * from '../models/Source';
 export * from '../models/StatusCode';
 export * from '../models/StatusInfo';
+export * from '../models/StringField';
+export * from '../models/StringFieldCategories';
+export * from '../models/StringFieldMissingValues';
+export * from '../models/StringFieldMissingValuesAnyOfInner';
 export * from '../models/Subscriber';
+export * from '../models/TableDialect';
+export * from '../models/TableSchemaField';
+export * from '../models/TableSchemaForeignKey';
+export * from '../models/TableSchemaForeignKeyOneOf';
+export * from '../models/TableSchemaForeignKeyOneOf1';
+export * from '../models/TableSchemaForeignKeyOneOf1Reference';
+export * from '../models/TableSchemaForeignKeyOneOfReference';
+export * from '../models/TableSchemaPrimaryKey';
+export * from '../models/TimeField';
 export * from '../models/TransmissionMode';
 export * from '../models/UnitForArea';
 export * from '../models/UserInfo';
 export * from '../models/UserSession';
+export * from '../models/YearField';
+export * from '../models/YearMonthField';
 
 import { AdditionalParameter } from '../models/AdditionalParameter';
 import { AdditionalParameters } from '../models/AdditionalParameters';
+import { AnyField     , AnyFieldTypeEnum     } from '../models/AnyField';
+import { ArrayField     , ArrayFieldTypeEnum  , ArrayFieldFormatEnum     } from '../models/ArrayField';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs     } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BooleanField     , BooleanFieldTypeEnum  , BooleanFieldFormatEnum       } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
+import { Constraints } from '../models/Constraints';
+import { Constraints1 } from '../models/Constraints1';
+import { Constraints10 } from '../models/Constraints10';
+import { Constraints10EnumClass } from '../models/Constraints10Enum';
+import { Constraints11 } from '../models/Constraints11';
+import { Constraints12 } from '../models/Constraints12';
+import { Constraints12EnumClass } from '../models/Constraints12Enum';
+import { Constraints13 } from '../models/Constraints13';
+import { Constraints14 } from '../models/Constraints14';
+import { Constraints1EnumClass } from '../models/Constraints1Enum';
+import { Constraints1MinimumClass } from '../models/Constraints1Minimum';
+import { Constraints2 } from '../models/Constraints2';
+import { Constraints3 } from '../models/Constraints3';
+import { Constraints4 } from '../models/Constraints4';
+import { Constraints5 } from '../models/Constraints5';
+import { Constraints6 } from '../models/Constraints6';
+import { Constraints7 } from '../models/Constraints7';
+import { Constraints8 } from '../models/Constraints8';
+import { Constraints9 } from '../models/Constraints9';
 import { DataResourceClass } from '../models/DataResource';
+import { DateField     , DateFieldTypeEnum      } from '../models/DateField';
+import { DateTimeField     , DateTimeFieldTypeEnum      } from '../models/DateTimeField';
 import { DescriptionType } from '../models/DescriptionType';
+import { DurationField     , DurationFieldTypeEnum  , DurationFieldFormatEnum     } from '../models/DurationField';
 import { Exception } from '../models/Exception';
 import { Execute     } from '../models/Execute';
 import { FeatureCollectionGeoJsonInput   } from '../models/FeatureCollectionGeoJsonInput';
@@ -80,6 +150,7 @@ import { GeoJSONFeature, GeoJSONFeatureTypeEnum       } from '../models/GeoJSONF
 import { GeoJSONFeatureCollection, GeoJSONFeatureCollectionTypeEnum     } from '../models/GeoJSONFeatureCollection';
 import { GeoJSONFeatureGeometryClass } from '../models/GeoJSONFeatureGeometry';
 import { GeoJSONFeatureIdClass } from '../models/GeoJSONFeatureId';
+import { GeoJSONField     , GeoJSONFieldTypeEnum  , GeoJSONFieldFormatEnum     } from '../models/GeoJSONField';
 import { GeoJSONGeometryCollection, GeoJSONGeometryCollectionTypeEnum     } from '../models/GeoJSONGeometryCollection';
 import { GeoJSONGeometryCollectionGeometriesInnerClass } from '../models/GeoJSONGeometryCollectionGeometriesInner';
 import { GeoJSONLineString, GeoJSONLineStringTypeEnum     } from '../models/GeoJSONLineString';
@@ -89,6 +160,7 @@ import { GeoJSONMultiPolygon, GeoJSONMultiPolygonTypeEnum     } from '../models/
 import { GeoJSONPoint, GeoJSONPointTypeEnum     } from '../models/GeoJSONPoint';
 import { GeoJSONPolygon, GeoJSONPolygonTypeEnum     } from '../models/GeoJSONPolygon';
 import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { GeoPointField     , GeoPointFieldTypeEnum  , GeoPointFieldFormatEnum     } from '../models/GeoPointField';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams    } from '../models/HabitatDistanceProcessParams';
@@ -97,6 +169,7 @@ import { InlineOrRefDataClass } from '../models/InlineOrRefData';
 import { InputClass } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
 import { InputValueClass } from '../models/InputValue';
+import { IntegerField       , IntegerFieldTypeEnum  , IntegerFieldFormatEnum       } from '../models/IntegerField';
 import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
@@ -108,6 +181,8 @@ import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { NDVIProcessParams    } from '../models/NDVIProcessParams';
+import { NumberField     , NumberFieldTypeEnum  , NumberFieldFormatEnum        } from '../models/NumberField';
+import { ObjectField     , ObjectFieldTypeEnum  , ObjectFieldFormatEnum     } from '../models/ObjectField';
 import { Output   } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
 import { PathClass } from '../models/Path';
@@ -122,11 +197,26 @@ import { SchemaClass } from '../models/Schema';
 import { Source } from '../models/Source';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo           } from '../models/StatusInfo';
+import { StringField       , StringFieldTypeEnum  , StringFieldFormatEnum     } from '../models/StringField';
+import { StringFieldCategories } from '../models/StringFieldCategories';
+import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
+import { StringFieldMissingValuesAnyOfInner } from '../models/StringFieldMissingValuesAnyOfInner';
 import { Subscriber } from '../models/Subscriber';
+import { TableDialect              , TableDialectItemTypeEnum       } from '../models/TableDialect';
+import { TableSchemaFieldClass } from '../models/TableSchemaField';
+import { TableSchemaForeignKeyClass } from '../models/TableSchemaForeignKey';
+import { TableSchemaForeignKeyOneOf } from '../models/TableSchemaForeignKeyOneOf';
+import { TableSchemaForeignKeyOneOf1 } from '../models/TableSchemaForeignKeyOneOf1';
+import { TableSchemaForeignKeyOneOf1Reference } from '../models/TableSchemaForeignKeyOneOf1Reference';
+import { TableSchemaForeignKeyOneOfReference } from '../models/TableSchemaForeignKeyOneOfReference';
+import { TableSchemaPrimaryKeyClass } from '../models/TableSchemaPrimaryKey';
+import { TimeField     , TimeFieldTypeEnum      } from '../models/TimeField';
 import { TransmissionMode } from '../models/TransmissionMode';
 import { UnitForArea } from '../models/UnitForArea';
 import { UserInfo } from '../models/UserInfo';
 import { UserSession } from '../models/UserSession';
+import { YearField     , YearFieldTypeEnum  , YearFieldFormatEnum     } from '../models/YearField';
+import { YearMonthField     , YearMonthFieldTypeEnum  , YearMonthFieldFormatEnum     } from '../models/YearMonthField';
 
 /* tslint:disable:no-unused-variable */
 let primitives = [
@@ -141,9 +231,20 @@ let primitives = [
                  ];
 
 let enumsMap: Set<string> = new Set<string>([
+    "AnyFieldTypeEnum",
+    "ArrayFieldTypeEnum",
+    "ArrayFieldFormatEnum",
+    "BooleanFieldTypeEnum",
+    "BooleanFieldFormatEnum",
+    "DateFieldTypeEnum",
+    "DateTimeFieldTypeEnum",
+    "DurationFieldTypeEnum",
+    "DurationFieldFormatEnum",
     "GeoJSONFeatureTypeEnum",
     "GeoJSONFeatureCollectionTypeEnum",
     "GeoJSONFeatureGeometryTypeEnum",
+    "GeoJSONFieldTypeEnum",
+    "GeoJSONFieldFormatEnum",
     "GeoJSONGeometryCollectionTypeEnum",
     "GeoJSONGeometryCollectionGeometriesInnerTypeEnum",
     "GeoJSONLineStringTypeEnum",
@@ -153,24 +254,67 @@ let enumsMap: Set<string> = new Set<string>([
     "GeoJSONPointTypeEnum",
     "GeoJSONPolygonTypeEnum",
     "GeoJsonInputMediaType",
+    "GeoPointFieldTypeEnum",
+    "GeoPointFieldFormatEnum",
+    "IntegerFieldTypeEnum",
+    "IntegerFieldFormatEnum",
     "JobControlOptions",
     "JobType",
+    "NumberFieldTypeEnum",
+    "NumberFieldFormatEnum",
+    "ObjectFieldTypeEnum",
+    "ObjectFieldFormatEnum",
     "Response",
     "StatusCode",
+    "StringFieldTypeEnum",
+    "StringFieldFormatEnum",
+    "TableDialectItemTypeEnum",
+    "TableSchemaFieldTypeEnum",
+    "TableSchemaFieldFormatEnum",
+    "TimeFieldTypeEnum",
     "TransmissionMode",
     "UnitForArea",
+    "YearFieldTypeEnum",
+    "YearFieldFormatEnum",
+    "YearMonthFieldTypeEnum",
+    "YearMonthFieldFormatEnum",
 ]);
 
 let typeMap: {[index: string]: any} = {
     "AdditionalParameter": AdditionalParameter,
     "AdditionalParameters": AdditionalParameters,
+    "AnyField": AnyField,
+    "ArrayField": ArrayField,
     "AuthCodeResponse": AuthCodeResponse,
     "BiodiversitySensitiveAreasProcessInputs": BiodiversitySensitiveAreasProcessInputs,
     "BiodiversitySensitiveAreasProcessOutputs": BiodiversitySensitiveAreasProcessOutputs,
+    "BooleanField": BooleanField,
     "BoundingBox": BoundingBox,
     "Conformance": Conformance,
+    "Constraints": Constraints,
+    "Constraints1": Constraints1,
+    "Constraints10": Constraints10,
+    "Constraints10Enum": Constraints10EnumClass,
+    "Constraints11": Constraints11,
+    "Constraints12": Constraints12,
+    "Constraints12Enum": Constraints12EnumClass,
+    "Constraints13": Constraints13,
+    "Constraints14": Constraints14,
+    "Constraints1Enum": Constraints1EnumClass,
+    "Constraints1Minimum": Constraints1MinimumClass,
+    "Constraints2": Constraints2,
+    "Constraints3": Constraints3,
+    "Constraints4": Constraints4,
+    "Constraints5": Constraints5,
+    "Constraints6": Constraints6,
+    "Constraints7": Constraints7,
+    "Constraints8": Constraints8,
+    "Constraints9": Constraints9,
     "DataResource": DataResourceClass,
+    "DateField": DateField,
+    "DateTimeField": DateTimeField,
     "DescriptionType": DescriptionType,
+    "DurationField": DurationField,
     "Exception": Exception,
     "Execute": Execute,
     "FeatureCollectionGeoJsonInput": FeatureCollectionGeoJsonInput,
@@ -179,6 +323,7 @@ let typeMap: {[index: string]: any} = {
     "GeoJSONFeatureCollection": GeoJSONFeatureCollection,
     "GeoJSONFeatureGeometry": GeoJSONFeatureGeometryClass,
     "GeoJSONFeatureId": GeoJSONFeatureIdClass,
+    "GeoJSONField": GeoJSONField,
     "GeoJSONGeometryCollection": GeoJSONGeometryCollection,
     "GeoJSONGeometryCollectionGeometriesInner": GeoJSONGeometryCollectionGeometriesInnerClass,
     "GeoJSONLineString": GeoJSONLineString,
@@ -187,6 +332,7 @@ let typeMap: {[index: string]: any} = {
     "GeoJSONMultiPolygon": GeoJSONMultiPolygon,
     "GeoJSONPoint": GeoJSONPoint,
     "GeoJSONPolygon": GeoJSONPolygon,
+    "GeoPointField": GeoPointField,
     "HabitatDistanceProcessInputs": HabitatDistanceProcessInputs,
     "HabitatDistanceProcessOutputs": HabitatDistanceProcessOutputs,
     "HabitatDistanceProcessParams": HabitatDistanceProcessParams,
@@ -194,6 +340,7 @@ let typeMap: {[index: string]: any} = {
     "InlineOrRefData": InlineOrRefDataClass,
     "InputDescription": InputDescription,
     "InputValue": InputValueClass,
+    "IntegerField": IntegerField,
     "JobList": JobList,
     "LandingPage": LandingPage,
     "License": License,
@@ -203,6 +350,8 @@ let typeMap: {[index: string]: any} = {
     "NDVIProcessInputs": NDVIProcessInputs,
     "NDVIProcessOutputs": NDVIProcessOutputs,
     "NDVIProcessParams": NDVIProcessParams,
+    "NumberField": NumberField,
+    "ObjectField": ObjectField,
     "Output": Output,
     "OutputDescription": OutputDescription,
     "Path": PathClass,
@@ -214,9 +363,24 @@ let typeMap: {[index: string]: any} = {
     "Schema": SchemaClass,
     "Source": Source,
     "StatusInfo": StatusInfo,
+    "StringField": StringField,
+    "StringFieldCategories": StringFieldCategories,
+    "StringFieldMissingValues": StringFieldMissingValues,
+    "StringFieldMissingValuesAnyOfInner": StringFieldMissingValuesAnyOfInner,
     "Subscriber": Subscriber,
+    "TableDialect": TableDialect,
+    "TableSchemaField": TableSchemaFieldClass,
+    "TableSchemaForeignKey": TableSchemaForeignKeyClass,
+    "TableSchemaForeignKeyOneOf": TableSchemaForeignKeyOneOf,
+    "TableSchemaForeignKeyOneOf1": TableSchemaForeignKeyOneOf1,
+    "TableSchemaForeignKeyOneOf1Reference": TableSchemaForeignKeyOneOf1Reference,
+    "TableSchemaForeignKeyOneOfReference": TableSchemaForeignKeyOneOfReference,
+    "TableSchemaPrimaryKey": TableSchemaPrimaryKeyClass,
+    "TimeField": TimeField,
     "UserInfo": UserInfo,
     "UserSession": UserSession,
+    "YearField": YearField,
+    "YearMonthField": YearMonthField,
 }
 
 type MimeTypeDescriptor = {

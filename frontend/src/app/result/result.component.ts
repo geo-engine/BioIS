@@ -158,17 +158,37 @@ export class ResultComponent {
     }
   }
 
-  async download(): Promise<void> {
-    const processId = this.resultId();
-    if (!processId) return;
+  async download(field?: string): Promise<void> {
+    const resultId = this.resultId();
+    const result = this.result.value();
 
-    const api = new ProcessesApi(this.userService.apiConfiguration());
-    const result = await api.results(processId);
+    if (!resultId && !result) return;
 
     const link = document.createElement('a');
-    link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(result));
-    link.download = `result-${processId}.json`;
-    link.click();
+
+    if (!field) {
+      link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(result));
+      link.download = `result-${resultId}.json`;
+      return link.click();
+    }
+
+    if (!(field in result)) return;
+    const value = fixDataValue(result[field]) as unknown;
+
+    let blob: Blob;
+
+    if (value instanceof QualifiedInputValue) {
+      blob = new Blob([JSON.stringify(value.value)], { type: value.mediaType });
+    } else if (value instanceof LinkValue) {
+      const response = await fetch(value.href);
+      blob = await response.blob();
+    } else {
+      blob = new Blob([JSON.stringify(value)], { type: 'application/json' });
+    }
+
+    link.download = `result-${resultId}-${field}.json`;
+    link.href = URL.createObjectURL(blob);
+    return link.click();
   }
 
   asJsonTableRows(value: unknown): Array<Record<string, unknown>> {

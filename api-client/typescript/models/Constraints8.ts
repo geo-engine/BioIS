@@ -13,22 +13,14 @@
 import { HttpFile } from '../http/http';
 
 /**
-* A source file.
+* The following constraints are supported for `boolean` fields.
 */
-export class Source {
+export class Constraints8 {
     /**
-    * A human-readable title.
+    * Indicates whether a property must have a value for each instance.
     */
-    'title'?: string;
-    /**
-    * A fully qualified URL, or a POSIX file path.
-    */
-    'path'?: string;
-    /**
-    * An email address.
-    */
-    'email'?: string;
-    'version'?: string;
+    'required'?: boolean;
+    '_enum'?: Set<boolean>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -36,32 +28,20 @@ export class Source {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
+            "name": "required",
+            "baseName": "required",
+            "type": "boolean",
             "format": ""
         },
         {
-            "name": "path",
-            "baseName": "path",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "email",
-            "baseName": "email",
-            "type": "string",
-            "format": "email"
-        },
-        {
-            "name": "version",
-            "baseName": "version",
-            "type": "string",
+            "name": "_enum",
+            "baseName": "enum",
+            "type": "Set<boolean>",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return Source.attributeTypeMap;
+        return Constraints8.attributeTypeMap;
     }
 
     public constructor() {

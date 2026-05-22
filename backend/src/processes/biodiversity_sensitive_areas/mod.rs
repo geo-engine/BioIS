@@ -711,6 +711,7 @@ fn site_row_into_output(
     unit_for_area: UnitForArea,
 ) -> DataResource<Vec<SiteRowOutput>> {
     DataResource {
+        name: "Biodiversity-sensitive Areas".to_string(),
         data: site_rows
             .into_iter()
             .map(|row| SiteRowOutput {

@@ -10,25 +10,15 @@
  * Do not edit the class manually.
  */
 
+import { TableSchemaForeignKeyOneOf1Reference } from '../models/TableSchemaForeignKeyOneOf1Reference';
 import { HttpFile } from '../http/http';
 
-/**
-* A source file.
-*/
-export class Source {
+export class TableSchemaForeignKeyOneOf1 {
     /**
-    * A human-readable title.
+    * Fields that make up the primary key.
     */
-    'title'?: string;
-    /**
-    * A fully qualified URL, or a POSIX file path.
-    */
-    'path'?: string;
-    /**
-    * An email address.
-    */
-    'email'?: string;
-    'version'?: string;
+    'fields'?: string;
+    'reference'?: TableSchemaForeignKeyOneOf1Reference;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -36,32 +26,20 @@ export class Source {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "title",
-            "baseName": "title",
+            "name": "fields",
+            "baseName": "fields",
             "type": "string",
             "format": ""
         },
         {
-            "name": "path",
-            "baseName": "path",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "email",
-            "baseName": "email",
-            "type": "string",
-            "format": "email"
-        },
-        {
-            "name": "version",
-            "baseName": "version",
-            "type": "string",
+            "name": "reference",
+            "baseName": "reference",
+            "type": "TableSchemaForeignKeyOneOf1Reference",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return Source.attributeTypeMap;
+        return TableSchemaForeignKeyOneOf1.attributeTypeMap;
     }
 
     public constructor() {
