@@ -9,6 +9,7 @@ import { ArrayField } from '../models/ArrayField';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -58,7 +59,6 @@ import { GeoPointField } from '../models/GeoPointField';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
-import { ImpactMetricsProcessParams } from '../models/ImpactMetricsProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -260,6 +260,24 @@ export class PromiseProcessesApi {
     }
 
     /**
+     * @param biodiversitySensitiveAreasProcessParams
+     */
+    public executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param biodiversitySensitiveAreasProcessParams
+     */
+    public executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: PromiseConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
      * @param habitatDistanceProcessParams
      */
     public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
@@ -274,24 +292,6 @@ export class PromiseProcessesApi {
     public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executeHabitatDistance(habitatDistanceProcessParams, observableOptions);
-        return result.toPromise();
-    }
-
-    /**
-     * @param impactMetricsProcessParams
-     */
-    public executeImpactMetricsWithHttpInfo(impactMetricsProcessParams: ImpactMetricsProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeImpactMetricsWithHttpInfo(impactMetricsProcessParams, observableOptions);
-        return result.toPromise();
-    }
-
-    /**
-     * @param impactMetricsProcessParams
-     */
-    public executeImpactMetrics(impactMetricsProcessParams: ImpactMetricsProcessParams, _options?: PromiseConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeImpactMetrics(impactMetricsProcessParams, observableOptions);
         return result.toPromise();
     }
 

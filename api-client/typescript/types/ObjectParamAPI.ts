@@ -9,6 +9,7 @@ import { ArrayField } from '../models/ArrayField';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -58,7 +59,6 @@ import { GeoPointField } from '../models/GeoPointField';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
-import { ImpactMetricsProcessParams } from '../models/ImpactMetricsProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -227,6 +227,15 @@ export interface ProcessesApiDeleteRequest {
     jobId: string
 }
 
+export interface ProcessesApiExecuteBiodiversitySensitiveAreasRequest {
+    /**
+     * 
+     * @type BiodiversitySensitiveAreasProcessParams
+     * @memberof ProcessesApiexecuteBiodiversitySensitiveAreas
+     */
+    biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams
+}
+
 export interface ProcessesApiExecuteHabitatDistanceRequest {
     /**
      * 
@@ -234,15 +243,6 @@ export interface ProcessesApiExecuteHabitatDistanceRequest {
      * @memberof ProcessesApiexecuteHabitatDistance
      */
     habitatDistanceProcessParams: HabitatDistanceProcessParams
-}
-
-export interface ProcessesApiExecuteImpactMetricsRequest {
-    /**
-     * 
-     * @type ImpactMetricsProcessParams
-     * @memberof ProcessesApiexecuteImpactMetrics
-     */
-    impactMetricsProcessParams: ImpactMetricsProcessParams
 }
 
 export interface ProcessesApiExecuteNdviRequest {
@@ -350,6 +350,20 @@ export class ObjectProcessesApi {
     /**
      * @param param the request object
      */
+    public executeBiodiversitySensitiveAreasWithHttpInfo(param: ProcessesApiExecuteBiodiversitySensitiveAreasRequest, options?: ConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
+        return this.api.executeBiodiversitySensitiveAreasWithHttpInfo(param.biodiversitySensitiveAreasProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeBiodiversitySensitiveAreas(param: ProcessesApiExecuteBiodiversitySensitiveAreasRequest, options?: ConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
+        return this.api.executeBiodiversitySensitiveAreas(param.biodiversitySensitiveAreasProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
     public executeHabitatDistanceWithHttpInfo(param: ProcessesApiExecuteHabitatDistanceRequest, options?: ConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
         return this.api.executeHabitatDistanceWithHttpInfo(param.habitatDistanceProcessParams,  options).toPromise();
     }
@@ -359,20 +373,6 @@ export class ObjectProcessesApi {
      */
     public executeHabitatDistance(param: ProcessesApiExecuteHabitatDistanceRequest, options?: ConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
         return this.api.executeHabitatDistance(param.habitatDistanceProcessParams,  options).toPromise();
-    }
-
-    /**
-     * @param param the request object
-     */
-    public executeImpactMetricsWithHttpInfo(param: ProcessesApiExecuteImpactMetricsRequest, options?: ConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
-        return this.api.executeImpactMetricsWithHttpInfo(param.impactMetricsProcessParams,  options).toPromise();
-    }
-
-    /**
-     * @param param the request object
-     */
-    public executeImpactMetrics(param: ProcessesApiExecuteImpactMetricsRequest, options?: ConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
-        return this.api.executeImpactMetrics(param.impactMetricsProcessParams,  options).toPromise();
     }
 
     /**

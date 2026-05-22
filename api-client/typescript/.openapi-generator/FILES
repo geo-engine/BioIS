@@ -25,6 +25,7 @@ models/ArrayField.ts
 models/AuthCodeResponse.ts
 models/BiodiversitySensitiveAreasProcessInputs.ts
 models/BiodiversitySensitiveAreasProcessOutputs.ts
+models/BiodiversitySensitiveAreasProcessParams.ts
 models/BooleanField.ts
 models/BoundingBox.ts
 models/Conformance.ts
@@ -74,7 +75,6 @@ models/GeoPointField.ts
 models/HabitatDistanceProcessInputs.ts
 models/HabitatDistanceProcessOutputs.ts
 models/HabitatDistanceProcessParams.ts
-models/ImpactMetricsProcessParams.ts
 models/InlineOrRefData.ts
 models/Input.ts
 models/InputDescription.ts

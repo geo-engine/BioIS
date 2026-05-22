@@ -5,6 +5,7 @@ export * from '../models/ArrayField';
 export * from '../models/AuthCodeResponse';
 export * from '../models/BiodiversitySensitiveAreasProcessInputs';
 export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
+export * from '../models/BiodiversitySensitiveAreasProcessParams';
 export * from '../models/BooleanField';
 export * from '../models/BoundingBox';
 export * from '../models/Conformance';
@@ -54,7 +55,6 @@ export * from '../models/GeoPointField';
 export * from '../models/HabitatDistanceProcessInputs';
 export * from '../models/HabitatDistanceProcessOutputs';
 export * from '../models/HabitatDistanceProcessParams';
-export * from '../models/ImpactMetricsProcessParams';
 export * from '../models/InlineOrRefData';
 export * from '../models/Input';
 export * from '../models/InputDescription';
@@ -115,6 +115,7 @@ import { ArrayField     , ArrayFieldTypeEnum  , ArrayFieldFormatEnum     } from 
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs     } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BiodiversitySensitiveAreasProcessParams    } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField     , BooleanFieldTypeEnum  , BooleanFieldFormatEnum       } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -164,7 +165,6 @@ import { GeoPointField     , GeoPointFieldTypeEnum  , GeoPointFieldFormatEnum   
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams    } from '../models/HabitatDistanceProcessParams';
-import { ImpactMetricsProcessParams    } from '../models/ImpactMetricsProcessParams';
 import { InlineOrRefDataClass } from '../models/InlineOrRefData';
 import { InputClass } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -288,6 +288,7 @@ let typeMap: {[index: string]: any} = {
     "AuthCodeResponse": AuthCodeResponse,
     "BiodiversitySensitiveAreasProcessInputs": BiodiversitySensitiveAreasProcessInputs,
     "BiodiversitySensitiveAreasProcessOutputs": BiodiversitySensitiveAreasProcessOutputs,
+    "BiodiversitySensitiveAreasProcessParams": BiodiversitySensitiveAreasProcessParams,
     "BooleanField": BooleanField,
     "BoundingBox": BoundingBox,
     "Conformance": Conformance,
@@ -336,7 +337,6 @@ let typeMap: {[index: string]: any} = {
     "HabitatDistanceProcessInputs": HabitatDistanceProcessInputs,
     "HabitatDistanceProcessOutputs": HabitatDistanceProcessOutputs,
     "HabitatDistanceProcessParams": HabitatDistanceProcessParams,
-    "ImpactMetricsProcessParams": ImpactMetricsProcessParams,
     "InlineOrRefData": InlineOrRefDataClass,
     "InputDescription": InputDescription,
     "InputValue": InputValueClass,

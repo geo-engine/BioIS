@@ -10,6 +10,7 @@ import { ArrayField } from '../models/ArrayField';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -59,7 +60,6 @@ import { GeoPointField } from '../models/GeoPointField';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
-import { ImpactMetricsProcessParams } from '../models/ImpactMetricsProcessParams';
 import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
@@ -322,6 +322,36 @@ export class ObservableProcessesApi {
     }
 
     /**
+     * @param biodiversitySensitiveAreasProcessParams
+     */
+    public executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.executeBiodiversitySensitiveAreasWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * @param biodiversitySensitiveAreasProcessParams
+     */
+    public executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: ConfigurationOptions): Observable<BiodiversitySensitiveAreasProcessOutputs> {
+        return this.executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams, _options).pipe(map((apiResponse: HttpInfo<BiodiversitySensitiveAreasProcessOutputs>) => apiResponse.data));
+    }
+
+    /**
      * @param habitatDistanceProcessParams
      */
     public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<HabitatDistanceProcessOutputs>> {
@@ -349,36 +379,6 @@ export class ObservableProcessesApi {
      */
     public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: ConfigurationOptions): Observable<HabitatDistanceProcessOutputs> {
         return this.executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams, _options).pipe(map((apiResponse: HttpInfo<HabitatDistanceProcessOutputs>) => apiResponse.data));
-    }
-
-    /**
-     * @param impactMetricsProcessParams
-     */
-    public executeImpactMetricsWithHttpInfo(impactMetricsProcessParams: ImpactMetricsProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
-        const _config = mergeConfiguration(this.configuration, _options);
-
-        const requestContextPromise = this.requestFactory.executeImpactMetrics(impactMetricsProcessParams, _config);
-        // build promise chain
-        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-        for (const middleware of _config.middleware) {
-            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
-        }
-
-        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
-            pipe(mergeMap((response: ResponseContext) => {
-                let middlewarePostObservable = of(response);
-                for (const middleware of _config.middleware.reverse()) {
-                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
-                }
-                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.executeImpactMetricsWithHttpInfo(rsp)));
-            }));
-    }
-
-    /**
-     * @param impactMetricsProcessParams
-     */
-    public executeImpactMetrics(impactMetricsProcessParams: ImpactMetricsProcessParams, _options?: ConfigurationOptions): Observable<BiodiversitySensitiveAreasProcessOutputs> {
-        return this.executeImpactMetricsWithHttpInfo(impactMetricsProcessParams, _options).pipe(map((apiResponse: HttpInfo<BiodiversitySensitiveAreasProcessOutputs>) => apiResponse.data));
     }
 
     /**

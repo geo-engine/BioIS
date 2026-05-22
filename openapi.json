@@ -667,12 +667,12 @@
         "tags": [
           "Processes"
         ],
-        "operationId": "execute_impact_metrics",
+        "operationId": "execute_biodiversity_sensitive_areas",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ImpactMetricsProcessParams"
+                "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessParams"
               }
             }
           },
@@ -842,6 +842,30 @@
               }
             ],
             "description": "Data sources and workflow references used for audits and provenance"
+          }
+        }
+      },
+      "BiodiversitySensitiveAreasProcessParams": {
+        "type": "object",
+        "description": "Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
           }
         }
       },
@@ -1044,30 +1068,6 @@
         "properties": {
           "inputs": {
             "$ref": "#/components/schemas/HabitatDistanceProcessInputs"
-          },
-          "outputs": {
-            "type": "object",
-            "additionalProperties": {
-              "default": null
-            },
-            "propertyNames": {
-              "type": "string"
-            }
-          },
-          "response": {
-            "$ref": "#/components/schemas/Response"
-          }
-        }
-      },
-      "ImpactMetricsProcessParams": {
-        "type": "object",
-        "description": "Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)",
-        "required": [
-          "inputs"
-        ],
-        "properties": {
-          "inputs": {
-            "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessInputs"
           },
           "outputs": {
             "type": "object",
