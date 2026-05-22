@@ -545,7 +545,7 @@ struct SiteInput {
     specification: SiteSpecification,
     /// Whether the original input was derived from a point (`true`) or already a polygon (`false`)
     was_point: bool,
-    buffer_size_km: Kilometers,
+    buffer_distance_km: Kilometers,
 }
 
 fn feature_id_str(feature: &geojson::Feature) -> String {
@@ -808,7 +808,7 @@ pub async fn compute_biodiversity_sensitive_areas(
         site_inputs.push(SiteInput {
             location,
             was_point: was_point(feature),
-            buffer_size_km: site_specification.buffer_distance(),
+            buffer_distance_km: site_specification.buffer_distance(),
             specification: site_specification,
             geom: polygon,
         });
@@ -819,13 +819,13 @@ pub async fn compute_biodiversity_sensitive_areas(
             SELECT
                 v.location,
                 v.was_point,
-                v.buffer_size_km,
+                v.buffer_distance_km,
                 v.specification,
                 ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035) AS geom,
-                ST_Buffer(ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035), v.buffer_size_km * 1_000) AS buffered_geom,
+                ST_Buffer(ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035), v.buffer_distance_km * 1_000) AS buffered_geom,
                 ST_Area(ST_Transform(('SRID=4326;' || v.geom)::geometry, 3035)) AS area_m2
             FROM jsonb_to_recordset($1::jsonb)
-                AS v(location text, was_point bool, buffer_size_km double precision, specification text, geom text)
+                AS v(location text, was_point bool, buffer_distance_km double precision, specification text, geom text)
         )
         SELECT
             r.location,
@@ -836,7 +836,7 @@ pub async fn compute_biodiversity_sensitive_areas(
             'Type: ' || r.specification || E'\n'
             || CASE WHEN r.was_point THEN '(derived from point)' ELSE '' END || E'\n'
             || COALESCE('Intersects with:' || E'\n' || s_in.site_list || E'\n', '')
-            || 'Near (within ' || r.buffer_size_km || ' km buffer zone) to:' || E'\n' 
+            || 'Near (within ' || r.buffer_distance_km || ' km buffer zone) to:' || E'\n' 
             || s_out.site_list AS specification
         FROM reference r
         LEFT JOIN (

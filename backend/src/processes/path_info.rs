@@ -63,7 +63,7 @@ fn execute_habitat_distance(Json(_input): Json<HabitatDistanceProcessParams>) {}
 /// Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(Deserialize, ToSchema, Debug)]
-pub struct ImpactMetricsProcessParams {
+pub struct BiodiversitySensitiveAreasProcessParams {
     pub inputs: BiodiversitySensitiveAreasProcessInputs,
     #[serde(default)]
     #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
@@ -79,12 +79,19 @@ pub struct ImpactMetricsProcessParams {
     tag = "Processes",
     responses((status = OK, body = BiodiversitySensitiveAreasProcessOutputs))
 )]
-fn execute_impact_metrics(Json(_input): Json<ImpactMetricsProcessParams>) {}
+fn execute_biodiversity_sensitive_areas(
+    Json(_input): Json<BiodiversitySensitiveAreasProcessParams>,
+) {
+}
 
 /// OpenAPI extension to include process endpoints in the generated documentation
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(OpenApi)]
-#[openapi(paths(execute_ndvi, execute_habitat_distance, execute_impact_metrics))]
+#[openapi(paths(
+    execute_ndvi,
+    execute_habitat_distance,
+    execute_biodiversity_sensitive_areas
+))]
 pub struct ProcessesOpenApiSpec;
 
 #[cfg(test)]

@@ -110,7 +110,7 @@ pub struct Fields {
     pub fields: Vec<TableSchemaField>,
 }
 
-/// Field specification for Table Schema, based on <https://specs.frictionlessdata.io/table-schema/>.
+/// Field specification for Table Schema, based on <https://datapackage.org/standard/table-schema/>.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TableSchemaField {
     pub name: String,
