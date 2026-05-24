@@ -1,5 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultComponent, fixDataValue, columnTypeOfField } from './result.component';
+import {
+  ResultComponent,
+  fixDataValue,
+  columnTypeOfField,
+  tableColumnInfoFromValue,
+} from './result.component';
 import { RouterModule } from '@angular/router';
 import { InlineOrRefData, Link as LinkValue, QualifiedInputValue } from '@geoengine/biois';
 import { vi } from 'vitest';
@@ -71,6 +76,37 @@ describe('ResultComponent', () => {
     expect(columnTypeOfField('boolean', true)).toBe('boolean');
     expect(columnTypeOfField('string', 'hello')).toBe('string');
     expect(columnTypeOfField('string', 'http://example.com')).toBe('url');
+  });
+
+  it('builds table columns from schema fields', () => {
+    const columns = tableColumnInfoFromValue(
+      {
+        fields: [
+          { name: 'title', type: 'string', title: 'Title' },
+          { name: 'reference', type: 'string', title: 'Reference' },
+          { name: 'score', type: 'number', title: 'Score' },
+          { name: 'active', type: 'boolean', title: 'Active' },
+          { name: 'tags', type: 'list' },
+        ],
+      },
+      [
+        {
+          title: 'Habitat A',
+          reference: 'https://example.com/resource/42',
+          score: 12.345,
+          active: true,
+          tags: ['forest', 'protected'],
+        },
+      ],
+    );
+
+    expect(columns).toEqual([
+      { name: 'Title', key: 'title', type: 'string' },
+      { name: 'Reference', key: 'reference', type: 'url' },
+      { name: 'Score', key: 'score', type: 'number' },
+      { name: 'Active', key: 'active', type: 'boolean' },
+      { name: 'tags', key: 'tags', type: 'list' },
+    ]);
   });
 
   it('renders NDVI values with number indicator', async () => {

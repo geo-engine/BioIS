@@ -83,15 +83,17 @@ export class ResultComponent {
     const result = this.result.value();
     if (!result) return [];
 
-    return Object.entries(result).map(([key, rawValue]) => {
-      const value = fixDataValue(rawValue) as unknown;
-      return {
-        key,
-        title: this.fieldName(key),
-        value: value instanceof QualifiedInputValue ? (value.value as unknown) : value,
-        type: this.typeOfValue(value),
-      };
-    });
+    return Object.entries(result)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)) // TODO: get order from process description when available
+      .map(([key, rawValue]) => {
+        const value = fixDataValue(rawValue) as unknown;
+        return {
+          key,
+          title: this.fieldName(key),
+          value: value instanceof QualifiedInputValue ? (value.value as unknown) : value,
+          type: this.typeOfValue(value),
+        };
+      });
   });
 
   readonly colspan = toSignal(
@@ -198,30 +200,23 @@ export class ResultComponent {
     return value.data as Array<Record<string, unknown>>;
   }
 
+  asList(value: unknown): Array<unknown> {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'object' && value !== null) return Object.values(value);
+    return [];
+  }
+
   columns(value: unknown): Column[] {
     if (!value || !(typeof value === 'object') || !('data' in value) || !('schema' in value))
       return [];
 
     const schema = value.schema;
-    if (!schema || !(typeof schema === 'object') || !('fields' in schema)) return [];
+    if (!schema || !(typeof schema === 'object')) return [];
 
-    const fields = schema['fields'] as [
-      {
-        name: string;
-        type?: 'string' | 'number' | 'integer' | 'boolean';
-        title?: string;
-      },
-    ];
-
-    return fields.map((field) => {
-      const sampleValue = this.asJsonTableRows(value)[0]?.[field.name];
-      const columnType = columnTypeOfField(field.type, sampleValue);
-      return {
-        name: field.title ?? field.name,
-        key: field.name,
-        type: columnType,
-      };
-    });
+    return tableColumnInfoFromValue(
+      value.schema as Record<string, unknown>,
+      this.asJsonTableRows(value),
+    );
   }
 
   columnKeys(value: unknown): string[] {
@@ -241,6 +236,7 @@ enum ColumnType {
   Number = 'number',
   Boolean = 'boolean',
   Url = 'url',
+  List = 'list',
 }
 
 enum ResultType {
@@ -306,7 +302,7 @@ export function fixDataValue(data: InlineOrRefData): InlineOrRefData {
 }
 
 export function columnTypeOfField(
-  type?: 'string' | 'number' | 'integer' | 'boolean',
+  type?: 'string' | 'number' | 'integer' | 'boolean' | 'list',
   firstValue?: unknown,
 ): ColumnType {
   if (!type) return ColumnType.String;
@@ -323,6 +319,9 @@ export function columnTypeOfField(
     case 'boolean':
       columnType = ColumnType.Boolean;
       break;
+    case 'list':
+      columnType = ColumnType.List;
+      break;
   }
 
   if (columnType !== ColumnType.String || !firstValue) return columnType;
@@ -332,4 +331,29 @@ export function columnTypeOfField(
   }
 
   return columnType;
+}
+
+export function tableColumnInfoFromValue(
+  schema: Record<string, unknown>,
+  data: Array<Record<string, unknown>>,
+): Array<Column> {
+  if (!('fields' in schema)) return [];
+
+  const fields = schema['fields'] as [
+    {
+      name: string;
+      type?: 'string' | 'number' | 'integer' | 'boolean' | 'list';
+      title?: string;
+    },
+  ];
+
+  return fields.map((field) => {
+    const sampleValue = data[0]?.[field.name];
+    const columnType = columnTypeOfField(field.type, sampleValue);
+    return {
+      name: field.title ?? field.name,
+      key: field.name,
+      type: columnType,
+    };
+  });
 }

@@ -4,6 +4,9 @@ use geoengine_api_client::models::{
 };
 use std::ops::Deref;
 use tracing::error;
+use tracing_subscriber::{
+    EnvFilter, filter::Directive, layer::SubscriberExt, util::SubscriberInitExt,
+};
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
 pub fn to_api_workflow(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
@@ -115,6 +118,17 @@ pub fn md_content(s: &str) -> &str {
         .map_or(heading_end_index, |idx| heading_end_index + idx);
 
     s[first_content_index..].trim()
+}
+
+pub fn setup_tracing(log_level: Directive) {
+    tracing_subscriber::registry()
+        .with(
+            EnvFilter::builder()
+                .with_default_directive(log_level)
+                .from_env_lossy(),
+        )
+        .with(tracing_subscriber::fmt::layer().pretty())
+        .init();
 }
 
 #[cfg(test)]
@@ -306,5 +320,15 @@ mod tests {
             md_content(md_heading_with_whitespace),
             "Content with leading and trailing whitespace"
         );
+    }
+
+    #[test]
+    fn it_sets_up_tracing() {
+        let result = std::panic::catch_unwind(|| {
+            setup_tracing("info".parse().unwrap());
+            tracing::info!("tracing initialized");
+        });
+
+        assert!(result.is_ok());
     }
 }

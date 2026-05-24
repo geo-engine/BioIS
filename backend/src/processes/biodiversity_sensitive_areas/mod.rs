@@ -4,7 +4,7 @@ use crate::{
         parameters::{
             Area, DataResource, DataResourceSchema, DocumentationSource,
             FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
-            TableSchemaField, TableSchemaType, UnitForArea,
+            TableSchemaField, TableSchemaItemType, TableSchemaType, UnitForArea,
         },
         util::json_input_value,
     },
@@ -681,8 +681,17 @@ pub struct SiteRow {
     #[diesel(sql_type = sql_types::Double)]
     pub biodiversity_sensitive_area_m2: SquareMeter,
 
+    #[diesel(sql_type = sql_types::Nullable<sql_types::Array<sql_types::Text>>)]
+    pub intersecting_biodiversity_sensitive_areas: Option<Vec<String>>,
+
+    #[diesel(sql_type = sql_types::Array<sql_types::Text>)]
+    pub nearby_biodiversity_sensitive_areas: Vec<String>,
+
     #[diesel(sql_type = sql_types::Text)]
-    pub specification: String,
+    pub site_type: String,
+
+    #[diesel(sql_type = sql_types::Double)]
+    pub buffer_distance_km: Kilometers,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
@@ -704,6 +713,12 @@ pub struct SiteRowOutput {
 
     #[approx(equal)]
     pub specification: String,
+
+    #[approx(equal)]
+    pub intersecting_biodiversity_sensitive_areas: Vec<String>,
+
+    #[approx(equal)]
+    pub nearby_biodiversity_sensitive_areas: Vec<String>,
 }
 
 fn site_row_into_output(
@@ -725,7 +740,16 @@ fn site_row_into_output(
                     row.biodiversity_sensitive_area_m2,
                     unit_for_area,
                 ),
-                specification: row.specification,
+                specification: format!(
+                    "Type \"{site_type}\"{was_point} with buffer distance of {buffer_distance_km}",
+                    site_type = row.site_type,
+                    buffer_distance_km = row.buffer_distance_km,
+                    was_point = row.area_m2.map(|_| " (was point)").unwrap_or_default(),
+                ),
+                intersecting_biodiversity_sensitive_areas: row
+                    .intersecting_biodiversity_sensitive_areas
+                    .unwrap_or_default(),
+                nearby_biodiversity_sensitive_areas: row.nearby_biodiversity_sensitive_areas,
             })
             .collect(),
         schema: Fields {
@@ -734,31 +758,49 @@ fn site_row_into_output(
                     name: "location".into(),
                     r#type: Some(TableSchemaType::String),
                     title: Some("Location".into()),
+                    ..Default::default()
                 },
                 TableSchemaField {
                     name: "area".into(),
                     r#type: Some(TableSchemaType::Number),
                     title: Some(format!("Area ({unit_for_area})")),
+                    ..Default::default()
                 },
                 TableSchemaField {
                     name: "siteInBiodiversitySensitiveArea".into(),
                     r#type: Some(TableSchemaType::Boolean),
                     title: Some("Site in Biodiversity-sensitive Area".into()),
+                    ..Default::default()
                 },
                 TableSchemaField {
                     name: "siteNearBiodiversitySensitiveArea".into(),
                     r#type: Some(TableSchemaType::Boolean),
                     title: Some("Site near Biodiversity-sensitive Area".into()),
+                    ..Default::default()
                 },
                 TableSchemaField {
                     name: "biodiversitySensitiveArea".into(),
                     r#type: Some(TableSchemaType::Number),
                     title: Some(format!("Biodiversity Sensitive Area ({unit_for_area})")),
+                    ..Default::default()
                 },
                 TableSchemaField {
                     name: "specification".into(),
                     r#type: Some(TableSchemaType::String),
                     title: Some("Specification".into()),
+                    ..Default::default()
+                },
+                TableSchemaField {
+                    name: "intersectingBiodiversitySensitiveAreas".into(),
+                    r#type: Some(TableSchemaType::List),
+                    title: Some("Intersecting Biodiversity-sensitive Areas".into()),
+                    item_type: Some(TableSchemaItemType::String),
+                },
+                TableSchemaField {
+                    name: "nearbyBiodiversitySensitiveAreas".into(),
+                    r#type: Some(TableSchemaType::List),
+                    title: Some("Nearby Biodiversity-sensitive Areas".into()),
+                    item_type: Some(TableSchemaItemType::String),
                 },
             ],
         },
@@ -829,21 +871,20 @@ pub async fn compute_biodiversity_sensitive_areas(
         )
         SELECT
             r.location,
+            r.buffer_distance_km as buffer_distance_km,
+            r.specification AS site_type,
             NULLIF(r.area_m2, 0) AS area_m2,
             COALESCE(ST_AREA(ST_INTERSECTION(s_in.geom, r.geom)), 0) > 0 AS site_in_biodiversity_sensitive_area,
             ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) > 0 AS site_near_biodiversity_sensitive_area,
             ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) AS biodiversity_sensitive_area_m2,
-            'Type: ' || r.specification || E'\n'
-            || CASE WHEN r.was_point THEN '(derived from point)' ELSE '' END || E'\n'
-            || COALESCE('Intersects with:' || E'\n' || s_in.site_list || E'\n', '')
-            || 'Near (within ' || r.buffer_distance_km || ' km buffer zone) to:' || E'\n' 
-            || s_out.site_list AS specification
+            s_in.site_list AS intersecting_biodiversity_sensitive_areas,
+            s_out.site_list AS nearby_biodiversity_sensitive_areas
         FROM reference r
         LEFT JOIN (
             SELECT
                 r.location,
                 ST_COLLECT(s.geom) as geom,
-                STRING_AGG(s.sitename || ' (' || s.sitecode || ')', E'\n') as site_list
+                ARRAY_AGG(s.sitename || ' (' || s.sitecode || ')') as site_list
             FROM "{natura2000_schema}".naturasite_polygon s, reference r
             WHERE ST_Intersects(s.geom, r.geom)
             GROUP BY r.location
@@ -852,7 +893,7 @@ pub async fn compute_biodiversity_sensitive_areas(
             SELECT
                 r.location,
                 ST_COLLECT(s.geom) as geom,
-                STRING_AGG(s.sitename || ' (' || s.sitecode || ')', E'\n') as site_list
+                ARRAY_AGG(s.sitename || ' (' || s.sitecode || ')') as site_list
             FROM "{natura2000_schema}".naturasite_polygon s, reference r
             WHERE ST_Intersects(s.geom, r.buffered_geom)
             GROUP BY r.location
@@ -878,7 +919,6 @@ mod tests {
     use approx::abs_diff_ne;
     use diesel_async::SimpleAsyncConnection;
     use geojson::FeatureCollection;
-    use indoc::indoc;
     use ogcapi::types::processes::Input;
     use pretty_assertions::assert_eq;
     use serde_json::json;
@@ -1045,6 +1085,13 @@ mod tests {
         let mut connection = pool.get().await.unwrap();
         create_schema_and_insert_test_site(&mut connection, &CONFIG.database.schema).await;
 
+        // crate::util::setup_tracing(
+        //     crate::config::Logging {
+        //         level: crate::config::LogLevel::Debug,
+        //     }
+        //     .into(),
+        // );
+
         let inputs = BiodiversitySensitiveAreasProcessInputs {
             sites: FeatureCollectionGeoJsonInput {
                 value: json!({
@@ -1065,7 +1112,7 @@ mod tests {
                         ]
                       },
                       "properties": {
-                        "location": "Marbuger Unistadion",
+                        "location": "Marburger Unistadion",
                         "siteType": "office"
                       }
                     },
@@ -1143,15 +1190,12 @@ mod tests {
                 site_in_biodiversity_sensitive_area: false,
                 site_near_biodiversity_sensitive_area: true,
                 biodiversity_sensitive_area: Area::Hectare(Hectare(36.307_653_383_984_075)),
-                specification: indoc! {"
-                        Type: Other
-                        (derived from point)
-                        Near (within 20 km buffer zone) to:
-                        Dammelsberg und Köhlersgrund (DE5118301)
-                        Fohnbach und Gleibach (DE5317307)
-                    "}
-                .trim_end()
-                .into(),
+                specification: "Type \"Other\" with buffer distance of 20 km".into(),
+                intersecting_biodiversity_sensitive_areas: vec![],
+                nearby_biodiversity_sensitive_areas: vec![
+                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                    "Fohnbach und Gleibach (DE5317307)".into(),
+                ],
             },
             SiteRowOutput {
                 location: "Auf dem Dammelsberg".into(),
@@ -1159,31 +1203,25 @@ mod tests {
                 site_in_biodiversity_sensitive_area: true,
                 site_near_biodiversity_sensitive_area: true,
                 biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
-                specification: indoc! {"
-                        Type: Office
-                        
-                        Intersects with:
-                        Dammelsberg und Köhlersgrund (DE5118301)
-                        Near (within 5 km buffer zone) to:
-                        Dammelsberg und Köhlersgrund (DE5118301)
-                    "}
-                .trim_end()
-                .into(),
+                specification: "Type \"Office\" (was point) with buffer distance of 5 km".into(),
+                intersecting_biodiversity_sensitive_areas: vec![
+                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                ],
+                nearby_biodiversity_sensitive_areas: vec![
+                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                ],
             },
             SiteRowOutput {
-                location: "Marbuger Unistadion".into(),
+                location: "Marburger Unistadion".into(),
                 area: Some(Area::Hectare(Hectare(0.623_035_886_691_041_7))),
                 site_in_biodiversity_sensitive_area: false,
                 site_near_biodiversity_sensitive_area: true,
                 biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
-                specification: indoc! {"
-                        Type: Office
-                        
-                        Near (within 5 km buffer zone) to:
-                        Dammelsberg und Köhlersgrund (DE5118301)
-                    "}
-                .trim_end()
-                .into(),
+                specification: "Type \"Office\" (was point) with buffer distance of 5 km".into(),
+                intersecting_biodiversity_sensitive_areas: vec![],
+                nearby_biodiversity_sensitive_areas: vec![
+                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                ],
             },
         ];
 

@@ -62,4 +62,8 @@ mat-card-content {
       font-size: var(--mat-sys-body-medium-size);
     }
   }
+
+  table td {
+    vertical-align: top;
+  }
 }

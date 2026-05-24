@@ -80,6 +80,21 @@
                           {{ element[column.key] ? 'True' : 'False' }}
                         </td>
                       }
+                      @case (ColumnType.List) {
+                        <td mat-cell *matCellDef="let element">
+                          <app-long-text>
+                            <ul>
+                              @for (item of asList(element[column.key]); track item) {
+                                <li>
+                                  <small>{{ item }}</small>
+                                </li>
+                              } @empty {
+                                <em>empty</em>
+                              }
+                            </ul>
+                          </app-long-text>
+                        </td>
+                      }
                       <!-- Prevent unhandled cases -->
                       @default never;
                     }

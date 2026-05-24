@@ -130,15 +130,17 @@ export class CreateNewAutoComponent {
     const descriptionInputs = this.description.value()?.inputs;
     if (!descriptionInputs) return [];
 
-    return Object.entries(descriptionInputs).map(([key, processInput]) => ({
-      key,
-      title: processInput.title ?? this.fieldName(key),
-      description: processInput.description,
-      type: typeFromSchema(processInput.schema as JSONSchema),
-      metadata: processInput.metadata,
-      schema: processInput.schema as Record<string, unknown>,
-      zodSchema: jsonSchemaToZod(processInput.schema as Record<string, unknown>),
-    }));
+    return Object.entries(descriptionInputs)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)) // TODO: get order from process description when available
+      .map(([key, processInput]) => ({
+        key,
+        title: processInput.title ?? this.fieldName(key),
+        description: processInput.description,
+        type: typeFromSchema(processInput.schema as JSONSchema),
+        metadata: processInput.metadata,
+        schema: processInput.schema as Record<string, unknown>,
+        zodSchema: jsonSchemaToZod(processInput.schema as Record<string, unknown>),
+      }));
   });
 
   readonly outputs = computed(() => {

@@ -111,18 +111,32 @@ pub struct Fields {
 }
 
 /// Field specification for Table Schema, based on <https://datapackage.org/standard/table-schema/>.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct TableSchemaField {
     pub name: String,
     #[serde(default)]
     pub r#type: Option<TableSchemaType>,
     pub title: Option<String>,
+    #[serde(default)]
+    pub item_type: Option<TableSchemaItemType>,
     // TODO: more descriptors
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum TableSchemaType {
+    #[default]
+    String,
+    Number,
+    Integer,
+    Boolean,
+    List,
+    // TODO: more types
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum TableSchemaItemType {
     #[default]
     String,
     Number,
@@ -224,6 +238,12 @@ mod db {
             f64::from_sql(value).map(SquareMeter)
         }
     }
+
+    impl FromSql<Double, Pg> for Kilometers {
+        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
+            f64::from_sql(value).map(Kilometers)
+        }
+    }
 }
 
 /// Area in square meters
@@ -260,9 +280,17 @@ pub struct Year(#[schemars(range(min = 2000, max = 2100))] pub u16);
 pub struct Month(#[schemars(range(min = 1, max = 12))] pub u8);
 
 /// Distance in kilometers
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
+#[derive(
+    Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema, Copy, Clone,
+)]
 #[serde(transparent)]
 pub struct Kilometers(#[schemars(range(min = 0.0))] pub f64);
+
+impl std::fmt::Display for Kilometers {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} km", self.0)
+    }
+}
 
 /// Documentation source for audit and provenance, e.g. a Geo Engine workflow or a scientific paper.
 /// This is included in the outputs of the process for traceability and auditing purposes.
@@ -285,11 +313,13 @@ impl From<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>> {
                         name: "data".to_string(),
                         r#type: Some(TableSchemaType::String),
                         title: Some("Data".to_string()),
+                        ..Default::default()
                     },
                     TableSchemaField {
                         name: "documentation_source".to_string(),
                         r#type: Some(TableSchemaType::String),
                         title: Some("Documentation Source".to_string()),
+                        ..Default::default()
                     },
                 ],
             },
