@@ -324,26 +324,26 @@
   </defs>
   <text
      xml:space="preserve"
-     style="font-size:85.3333px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+     style="font-size:85.3333px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke-width:0.493906;stroke:none;stroke-opacity:1"
      x="1160.6989"
      y="94.931015"
      id="text8637"
      inkscape:label="Subtitle"><tspan
        sodipodi:role="line"
        id="tspan8635"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906;stroke:none;stroke-opacity:1"
        x="1160.6989"
        y="94.931015"
        dx="0"
        dy="30">A GEO</tspan><tspan
        sodipodi:role="line"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906;stroke:none;stroke-opacity:1"
        x="1160.6989"
        y="204.57365"
        id="tspan7974"
        dy="15">ENGINE</tspan><tspan
        sodipodi:role="line"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906;stroke:none;stroke-opacity:1"
        x="1160.6989"
        y="314.21628"
        rotate="0 0 0 0 0 0 0 0"
@@ -357,11 +357,11 @@
      letter-spacing="-1.5"
      id="text79"
      inkscape:label="Title"
-     style="letter-spacing:-1.5px;fill:#ffffff;fill-opacity:1;stroke-width:0.999999"
+     style="letter-spacing:-1.5px;fill:#ffffff;fill-opacity:1;stroke-width:0.999999;stroke:none;stroke-opacity:1"
      transform="scale(0.99663477,1.0033766)"><tspan
        fill="#3e9b4a"
        id="tspan75"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.999999">BioIS</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.999999;stroke:none;stroke-opacity:1">BioIS</tspan></text>
   <g
      transform="scale(2.9117833)"
      id="g73"
@@ -499,20 +499,6 @@
        d="m 80.005147,44.436342 c -12.081898,0 -21.980911,9.870749 -21.980911,21.918111 0,4.667221 1.49085,9.005377 4.014114,12.571734 l 15.284026,26.421423 c 2.140821,2.79644 3.563842,2.26516 5.344192,-0.14758 l 16.85714,-28.688464 c 0.34038,-0.616057 0.607272,-1.272307 0.840242,-1.941743 a 21.631748,21.631748 0 0 0 1.61959,-8.21537 c 0,-12.047362 -9.897116,-21.918111 -21.978393,-21.918111 z m 0,10.270149 c 6.505349,0 11.678734,5.160827 11.678734,11.647962 0,6.487135 -5.173385,11.645448 -11.678734,11.645448 -6.505978,0 -11.681241,-5.158934 -11.681241,-11.645448 0,-6.487135 5.175263,-11.647962 11.680612,-11.647962 z"
        style="fill:#ffffff;fill-opacity:1" />
   </g>
-  <rect
-     style="fill:#ff40ff;fill-opacity:1;stroke-width:1.00157"
-     id="rect12161"
-     width="79.773064"
-     height="88.627121"
-     x="1005.4832"
-     y="375.6647" />
-  <rect
-     style="fill:#ff40ff;fill-opacity:1;stroke-width:1.00157"
-     id="rect12161-3"
-     width="79.773064"
-     height="88.627121"
-     x="1083.1172"
-     y="375.6647" />
   <path
      style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
      d="M 1085.7563,24.707001 V 324.707"
