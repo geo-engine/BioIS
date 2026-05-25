@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 .full-width-table {
   width: 100%;
 }
@@ -46,4 +48,15 @@ mat-icon {
   mat-paginator {
     flex: 1;
   }
+}
+
+.process {
+  @include mat.chips-overrides(
+    (
+      hover-state-layer-color: transparent,
+      focus-state-layer-color: transparent,
+      outline-color: var(--mat-sys-secondary),
+      label-text-color: var(--mat-sys-secondary),
+    )
+  );
 }

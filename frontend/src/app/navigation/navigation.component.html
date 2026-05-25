@@ -1,4 +1,4 @@
-<mat-toolbar class="background"></mat-toolbar>
+<!-- <mat-toolbar class="background"></mat-toolbar> -->
 
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav
@@ -11,10 +11,12 @@
     <div class="menu-container">
       <mat-toolbar><mat-icon class="logo" svgIcon="biois:logo-white"></mat-icon></mat-toolbar>
       <mat-nav-list>
+        <div mat-subheader>Results</div>
         <a mat-list-item [routerLink]="['/app/results']">
           <mat-icon matListItemIcon>assessment</mat-icon>
           <span matListItemTitle>Results</span>
         </a>
+        <div mat-subheader>Processes</div>
         @for (process of processes.value()?.processes; track process) {
           <a
             mat-list-item
@@ -46,10 +48,10 @@
           </button>
         }
         @if (!drawer.opened) {
-          <mat-icon class="logo" svgIcon="geoengine:logo"></mat-icon>
+          <mat-icon class="logo" svgIcon="biois:logo"></mat-icon>
         }
         <span class="spacer"></span>
-        <span>BioIS</span>
+        <span class="title" [matTooltip]="title()">{{ title() }}</span>
       </mat-toolbar-row>
     </mat-toolbar>
     <!-- Add Content Here -->

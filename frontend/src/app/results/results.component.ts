@@ -20,6 +20,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { MatAnchor, MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { TitleService } from '../navigation/title.service';
 
 @Component({
   selector: 'app-results',
@@ -28,7 +30,9 @@ import { MatAnchor, MatButtonModule } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
+    MatAnchor,
     MatButtonModule,
+    MatChipsModule,
     MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,
@@ -37,7 +41,6 @@ import { MatAnchor, MatButtonModule } from '@angular/material/button';
     MatTooltipModule,
     RouterLink,
     ScrollingModule,
-    MatAnchor,
   ],
 })
 export class ResultsComponent {
@@ -46,6 +49,7 @@ export class ResultsComponent {
   readonly sort = viewChild.required(MatSort);
   readonly table = viewChild.required(MatTable);
   readonly changeDetectorRef = inject(ChangeDetectorRef);
+  readonly titleService = inject(TitleService);
 
   readonly StatusCode = StatusCode;
 
@@ -68,6 +72,8 @@ export class ResultsComponent {
       this.dataSource.paginator = this.paginator();
       table.dataSource = this.dataSource;
     });
+
+    this.titleService.title = 'Results';
   }
 
   readonly trackByFn: TrackByFunction<StatusInfo> = (_index, item) => item.jobID;

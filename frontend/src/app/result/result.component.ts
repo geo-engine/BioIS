@@ -30,6 +30,7 @@ import { processName } from '../util/processes';
 import { MatTableModule } from '@angular/material/table';
 import { MatListModule } from '@angular/material/list';
 import { LongTextComponent } from '../util/long-text.component';
+import { TitleService } from '../navigation/title.service';
 
 @Component({
   selector: 'app-result',
@@ -53,6 +54,7 @@ export class ResultComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
+  private readonly titleService = inject(TitleService);
 
   readonly resultId: Signal<string | undefined>;
 
@@ -117,6 +119,8 @@ export class ResultComponent {
         map((params) => ('resultId' in params ? (params['resultId'] as string) : undefined)),
       ),
     );
+
+    this.titleService.title = `Result ${this.resultId()}`;
   }
 
   asNumber(value: unknown): number {

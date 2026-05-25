@@ -12,6 +12,7 @@ import { ProcessesApi } from '@geoengine/biois';
 import { UserService } from '../user.service';
 import { processName } from '../util/processes';
 import { MatTooltip } from '@angular/material/tooltip';
+import { TitleService } from './title.service';
 
 @Component({
   selector: 'app-navigation',
@@ -32,6 +33,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 export class NavigationComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly userService = inject(UserService);
+  private readonly titleService = inject(TitleService);
 
   readonly isHandset = rxResource({
     stream: () =>
@@ -52,4 +54,5 @@ export class NavigationComponent {
   });
 
   readonly processName = processName;
+  readonly title = this.titleService.title;
 }

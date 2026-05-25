@@ -1,17 +1,23 @@
 <mat-toolbar class="top-bar" role="banner">
   <mat-toolbar-row>
-    <mat-icon svgIcon="biois:logo-white"></mat-icon>
-    <!-- <span class="spacer"></span> -->
-    <span class="title">Biodiversity Indicator Service</span>
+    <mat-icon svgIcon="biois:logo"></mat-icon>
+    <div class="top-bar-actions">
+      <div class="auth-button-group" role="group" aria-label="Authentication actions">
+        <a matButton="outlined" [routerLink]="['/app']" aria-label="Log in">Log in</a>
+        <a class="signup-highlight" matButton="filled" href="#registration" aria-label="Sign up">
+          Sign up
+        </a>
+      </div>
+    </div>
   </mat-toolbar-row>
 </mat-toolbar>
 
 <header class="hero" role="region" aria-labelledby="landing-title">
-  <img class="background" ngSrc="assets/hero-village.jpg" alt="" fill />
+  <img class="background" ngSrc="assets/hero-land.jpg" alt="" fill />
   <h1>{{ title }} — Biodiversity Indicator Service</h1>
   <p>
     Easy-to-use biodiversity indicators and analytics for corporate ESG reporting, with metrics and
-    workflows tailored to ESRS E4 requirements.
+    workflows tailored to ESRS E4 or VSME B5 requirements.
   </p>
   <p>
     <a matButton="elevated" aria-label="Launch {{ title }} app" [routerLink]="['/app']">
@@ -27,8 +33,10 @@
     <p>
       {{ title }} helps companies and sustainability teams discover, process, and analyze
       biodiversity datasets to produce robust, auditable indicators needed for ESG disclosures. Our
-      platform streamlines the generation of biodiversity metrics that support ESRS E4 reporting and
-      corporate sustainability workflows. We provide:
+      platform streamlines the generation of biodiversity metrics that support
+      <mat-chip>ESRS E4</mat-chip> and
+      <mat-chip>VSME B5</mat-chip>
+      reporting and corporate sustainability workflows. We provide:
     </p>
     <ul>
       <li>
@@ -94,14 +102,19 @@
   </div>
 </section>
 
-<section class="registration" aria-label="User registration">
+<section class="registration" aria-label="User registration" id="registration">
   <div class="content">
     <h2>Registration & Contact</h2>
     <p>
       This platform is in an early stage and available for pilots and early adopters focused on ESG
       and biodiversity reporting. If you would like to test it, just get in contact with us to get
-      an account. If you would just like to now more, pleasure also feel free to reach out at
-      <a href="mailto:info@geoengine.de">info@geoengine.de</a>.
+      an account. If you would just like to now more, pleasure also feel free to reach out at:
+    </p>
+    <p>
+      <a matButton="outlined" href="mailto:info@geoengine.de">
+        <mat-icon aria-hidden="true">email</mat-icon>
+        info@geoengine.de
+      </a>
     </p>
     <p>
       We welcome collaboration to align indicators, validation approaches, and reporting outputs
@@ -115,10 +128,10 @@
   <div class="content box">
     <h2>Launch the app</h2>
     <p>
-      Open the BioIS application to explore biodiversity indicators, run ESRS E4–aligned analyses,
-      and configure reporting parameters for your ESG disclosures. The app lets sustainability teams
-      generate reporting-ready results, inspect provenance and inputs, and export indicator data for
-      governance and external reporting.
+      Open the BioIS application to explore biodiversity indicators, run ESRS E4–aligned and VSME
+      B5–aligned analyses, and configure reporting parameters for your ESG disclosures. The app lets
+      sustainability teams generate reporting-ready results, inspect provenance and inputs, and
+      export indicator data for governance and external reporting.
     </p>
     <a matButton="tonal" aria-label="Launch {{ title }} app" [routerLink]="['/app']">
       <mat-icon aria-hidden="true">rocket_launch</mat-icon>

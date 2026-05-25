@@ -14,6 +14,8 @@ $small-breakpoint: 600px;
     (
       standard-height: 6rem,
       mobile-height: 4rem,
+      container-background-color: var(--mat-sys-surface),
+      container-text-color: var(--mat-sys-on-surface),
     )
   );
 }
@@ -42,12 +44,23 @@ $small-breakpoint: 600px;
       flex-shrink: 0;
       padding-right: 1rem;
     }
+
+    .auth-button-group {
+      border-radius: 999px;
+      background: var(--mat-sys-surface-container);
+
+      a {
+        margin: 0.25rem;
+      }
+    }
   }
 }
 
 .hero {
   padding: 2rem 2rem;
   position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
 
   color: var(--mat-sys-surface-bright);
   text-shadow: 0 2px 4px var(--mat-sys-on-surface);
@@ -61,23 +74,56 @@ $small-breakpoint: 600px;
   flex-direction: column;
   justify-content: end;
 
-  img.background {
-    border-radius: 1rem;
-    @media (max-width: $max-width) {
-      border-radius: 0rem !important;
-    }
+  > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    inset-block: 0;
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0%) 35%, rgb(0 0 0 / 65%) 100%);
+  }
+
+  &::after {
+    inset-block: 0;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0%) 45%,
+      rgb(0 0 0 / 22%) 78%,
+      rgb(0 0 0 / 30%) 100%
+    );
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    mask-image: linear-gradient(to bottom, transparent 38%, black 76%, black 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 38%, black 76%, black 100%);
+  }
+
+  @media (max-width: $max-width) {
+    border-radius: 0;
   }
 
   a {
     text-shadow: none;
   }
 
-  @media (max-width: $medium-breakpoint) {
-  }
-
   @media (max-width: $small-breakpoint) {
     margin-top: 6rem;
     font-size: smaller;
+  }
+}
+
+.general {
+  li {
+    margin-bottom: 1rem;
   }
 }
 
@@ -156,6 +202,8 @@ section .content.box {
   background: var(--mat-sys-surface);
   border-radius: var(--mat-sys-corner-medium);
   padding: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
 footer {

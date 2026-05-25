@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   width="1007.6223"
-   height="349.69363"
-   viewBox="0 0 1007.6223 349.69363"
+   width="1489.5735"
+   height="349.414"
+   viewBox="0 0 1489.5735 349.414"
    version="1.1"
    id="svg3676"
    sodipodi:docname="BioIS_White.svg"
@@ -25,8 +25,8 @@
      inkscape:deskcolor="#505050"
      showgrid="false"
      inkscape:zoom="0.94779115"
-     inkscape:cx="434.69492"
-     inkscape:cy="98.650425"
+     inkscape:cx="656.26272"
+     inkscape:cy="176.7267"
      inkscape:window-width="2367"
      inkscape:window-height="1358"
      inkscape:window-x="2"
@@ -305,19 +305,49 @@
          stop-color="#d8e290"
          id="stop917-3" />
     </linearGradient>
+    <linearGradient
+       id="d-9"
+       x1="15.713469"
+       y1="353.62546"
+       x2="214.2567"
+       y2="122.15797"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#3daa37"
+         id="stop7251" />
+      <stop
+         offset="1"
+         stop-color="#d8e290"
+         id="stop7253" />
+    </linearGradient>
   </defs>
   <text
      xml:space="preserve"
-     style="font-size:53.3333px;line-height:1.25;letter-spacing:1px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
-     x="425.91248"
-     y="335.29364"
+     style="font-size:85.3333px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+     x="1160.6989"
+     y="94.931015"
      id="text8637"
      inkscape:label="Subtitle"><tspan
        sodipodi:role="line"
        id="tspan8635"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:53.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
-       x="425.91248"
-       y="335.29364">A Geo Engine Service</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+       x="1160.6989"
+       y="94.931015"
+       dx="0"
+       dy="30">A GEO</tspan><tspan
+       sodipodi:role="line"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+       x="1160.6989"
+       y="204.57365"
+       id="tspan7974"
+       dy="15">ENGINE</tspan><tspan
+       sodipodi:role="line"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:85.3333px;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ffffff;fill-opacity:1;stroke-width:0.493906"
+       x="1160.6989"
+       y="314.21628"
+       rotate="0 0 0 0 0 0 0 0"
+       id="tspan7976">SERVICE</tspan></text>
   <text
      x="408.52109"
      y="263.60214"
@@ -327,7 +357,7 @@
      letter-spacing="-1.5"
      id="text79"
      inkscape:label="Title"
-     style="fill:#ffffff;fill-opacity:1;stroke-width:0.999999"
+     style="letter-spacing:-1.5px;fill:#ffffff;fill-opacity:1;stroke-width:0.999999"
      transform="scale(0.99663477,1.0033766)"><tspan
        fill="#3e9b4a"
        id="tspan75"
@@ -442,22 +472,22 @@
        transform="matrix(0.41237788,0,0,0.41230035,-33.428735,-32.135187)"
        inkscape:label="crosshair">
       <polygon
-         points="222.89775,77.941208 222.89775,101.59746 246.55401,101.59746 246.55401,125.25357 270.21026,125.25357 270.21026,101.59746 270.21026,77.941208 246.55401,77.941208 "
+         points="246.55401,125.25357 270.21026,125.25357 270.21026,101.59746 270.21026,77.941208 246.55401,77.941208 222.89775,77.941208 222.89775,101.59746 246.55401,101.59746 "
          fill="#ffffff"
          id="polygon990"
          style="stroke-width:0.316685" />
       <polygon
-         points="81.063355,125.25372 104.71961,125.25372 104.71961,101.59746 128.37572,101.59746 128.37572,77.941208 104.71961,77.941208 81.063355,77.941208 81.063355,101.59746 "
+         points="128.37572,101.59746 128.37572,77.941208 104.71961,77.941208 81.063355,77.941208 81.063355,101.59746 81.063355,125.25372 104.71961,125.25372 104.71961,101.59746 "
          fill="#ffffff"
          id="polygon992"
          style="stroke-width:0.316685" />
       <polygon
-         points="222.89775,267.12368 222.89775,243.46743 246.55401,243.46743 246.55401,219.81132 270.21026,219.81132 270.21026,243.46743 270.21026,267.12368 246.55401,267.12368 "
+         points="246.55401,219.81132 270.21026,219.81132 270.21026,243.46743 270.21026,267.12368 246.55401,267.12368 222.89775,267.12368 222.89775,243.46743 246.55401,243.46743 "
          fill="#ffffff"
          id="polygon994"
          style="stroke-width:0.316685" />
       <polygon
-         points="81.063355,219.81118 104.71961,219.81118 104.71961,243.46743 128.37572,243.46743 128.37572,267.12368 104.71961,267.12368 81.063355,267.12368 81.063355,243.46743 "
+         points="128.37572,243.46743 128.37572,267.12368 104.71961,267.12368 81.063355,267.12368 81.063355,243.46743 81.063355,219.81118 104.71961,219.81118 104.71961,243.46743 "
          fill="#ffffff"
          id="polygon996"
          style="stroke-width:0.316685" />
@@ -469,4 +499,22 @@
        d="m 80.005147,44.436342 c -12.081898,0 -21.980911,9.870749 -21.980911,21.918111 0,4.667221 1.49085,9.005377 4.014114,12.571734 l 15.284026,26.421423 c 2.140821,2.79644 3.563842,2.26516 5.344192,-0.14758 l 16.85714,-28.688464 c 0.34038,-0.616057 0.607272,-1.272307 0.840242,-1.941743 a 21.631748,21.631748 0 0 0 1.61959,-8.21537 c 0,-12.047362 -9.897116,-21.918111 -21.978393,-21.918111 z m 0,10.270149 c 6.505349,0 11.678734,5.160827 11.678734,11.647962 0,6.487135 -5.173385,11.645448 -11.678734,11.645448 -6.505978,0 -11.681241,-5.158934 -11.681241,-11.645448 0,-6.487135 5.175263,-11.647962 11.680612,-11.647962 z"
        style="fill:#ffffff;fill-opacity:1" />
   </g>
+  <rect
+     style="fill:#ff40ff;fill-opacity:1;stroke-width:1.00157"
+     id="rect12161"
+     width="79.773064"
+     height="88.627121"
+     x="1005.4832"
+     y="375.6647" />
+  <rect
+     style="fill:#ff40ff;fill-opacity:1;stroke-width:1.00157"
+     id="rect12161-3"
+     width="79.773064"
+     height="88.627121"
+     x="1083.1172"
+     y="375.6647" />
+  <path
+     style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+     d="M 1085.7563,24.707001 V 324.707"
+     id="path12226" />
 </svg>
