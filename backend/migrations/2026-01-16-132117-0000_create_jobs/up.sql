@@ -24,7 +24,7 @@ CREATE TYPE "StatusCode" AS ENUM (
     'dismissed'
 );
 
-CREATE TABLE jobs (
+CREATE TABLE IF NOT EXISTS jobs (
     -- StatusInfo
     job_id TEXT PRIMARY KEY,
     process_id TEXT,
