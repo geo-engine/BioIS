@@ -46,7 +46,7 @@ import { convertJsonSchemaToZod } from 'zod-from-json-schema';
 import { findByPointer } from '@jsonjoy.com/json-pointer';
 import { marked } from 'marked';
 import { LongTextComponent } from '../util/long-text.component';
-import { TitleService } from '../navigation/title.service';
+import { PageTitleComponent } from '../navigation/page-title.component';
 
 @Component({
   selector: 'app-create-new-auto',
@@ -62,6 +62,7 @@ import { TitleService } from '../navigation/title.service';
     MatInputModule,
     MatSelectModule,
     MatTooltipModule,
+    PageTitleComponent,
     SimpleFormFieldComponent,
   ],
   templateUrl: './create-new-auto.component.html',
@@ -71,7 +72,6 @@ import { TitleService } from '../navigation/title.service';
 export class CreateNewAutoComponent {
   readonly userService = inject(UserService);
   readonly router = inject(Router);
-  readonly titleService = inject(TitleService);
 
   readonly processId = input.required<string>();
 
@@ -200,10 +200,6 @@ export class CreateNewAutoComponent {
       const outputDescriptions = this.outputs();
       const outputs = Object.fromEntries(outputDescriptions.map(({ key }) => [key, true]));
       this.formModel.update((current) => ({ ...current, outputs }));
-    });
-
-    effect(() => {
-      this.titleService.title = this.processName();
     });
   }
 

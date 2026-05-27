@@ -21,7 +21,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { MatAnchor, MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
-import { TitleService } from '../navigation/title.service';
+import { PageTitleComponent } from '../navigation/page-title.component';
 
 @Component({
   selector: 'app-results',
@@ -39,6 +39,7 @@ import { TitleService } from '../navigation/title.service';
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
+    PageTitleComponent,
     RouterLink,
     ScrollingModule,
   ],
@@ -49,7 +50,6 @@ export class ResultsComponent {
   readonly sort = viewChild.required(MatSort);
   readonly table = viewChild.required(MatTable);
   readonly changeDetectorRef = inject(ChangeDetectorRef);
-  readonly titleService = inject(TitleService);
 
   readonly StatusCode = StatusCode;
 
@@ -72,8 +72,6 @@ export class ResultsComponent {
       this.dataSource.paginator = this.paginator();
       table.dataSource = this.dataSource;
     });
-
-    this.titleService.title = 'Results';
   }
 
   readonly trackByFn: TrackByFunction<StatusInfo> = (_index, item) => item.jobID;
