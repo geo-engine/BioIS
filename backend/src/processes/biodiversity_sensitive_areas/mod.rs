@@ -803,6 +803,7 @@ fn site_row_into_output(
                     item_type: Some(TableSchemaItemType::String),
                 },
             ],
+            primary_key: vec!["location".to_string()].into(),
         },
     }
 }

@@ -116,7 +116,7 @@ describe('DataResourceTableComponent', () => {
     const newlineRendered = root.querySelector('tbody td br');
     expect(newlineRendered).not.toBeNull();
 
-    const listItems = root.querySelectorAll('tbody td app-long-text li');
+    const listItems = root.querySelectorAll('tbody td div li');
     expect(listItems.length).toBe(2);
     expect(root.textContent).toContain('forest');
     expect(root.textContent).toContain('protected');

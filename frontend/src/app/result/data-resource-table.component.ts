@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
-import { LongTextComponent } from '../util/long-text.component';
 import { MatChipsModule } from '@angular/material/chips';
+import { RowOverflowDirective } from './row-overflow.directive';
 
 @Component({
   selector: 'app-data-resource-table',
@@ -13,32 +13,32 @@ import { MatChipsModule } from '@angular/material/chips';
           <th mat-header-cell *matHeaderCellDef>{{ column.name }}</th>
           @switch (column.type) {
             @case (ColumnType.String) {
-              <td
-                mat-cell
-                *matCellDef="let element"
-                [innerHTML]="asHtmlString(element[column.key])"
-              ></td>
+              <td mat-cell *matCellDef="let element">
+                <div class="cell-content" [innerHTML]="asHtmlString(element[column.key])"></div>
+              </td>
             }
             @case (ColumnType.Url) {
               <td mat-cell *matCellDef="let element">
-                <a [href]="element[column.key]" target="_blank">{{ element[column.key] }}</a>
+                <a class="cell-content" [href]="element[column.key]" target="_blank">{{
+                  element[column.key]
+                }}</a>
               </td>
             }
             @case (ColumnType.Number) {
               <td mat-cell *matCellDef="let element">
-                {{ element[column.key] | number: '1.0-2' }}
+                <span class="cell-content">{{ element[column.key] | number: '1.0-2' }}</span>
               </td>
             }
             @case (ColumnType.Boolean) {
               <td mat-cell *matCellDef="let element">
-                <mat-chip>
+                <mat-chip class="cell-content">
                   {{ element[column.key] ? 'TRUE' : 'FALSE' }}
                 </mat-chip>
               </td>
             }
             @case (ColumnType.List) {
               <td mat-cell *matCellDef="let element">
-                <app-long-text>
+                <div class="cell-content">
                   <ul>
                     @for (item of asList(element[column.key]); track item) {
                       <li>
@@ -48,7 +48,7 @@ import { MatChipsModule } from '@angular/material/chips';
                       <span class="empty">empty</span>
                     }
                   </ul>
-                </app-long-text>
+                </div>
               </td>
             }
             <!-- Prevent unhandled cases -->
@@ -58,7 +58,17 @@ import { MatChipsModule } from '@angular/material/chips';
       }
 
       <tr mat-header-row *matHeaderRowDef="columnKeys(); sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnKeys()"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: columnKeys()"
+        #rowOverflow="rowOverflow"
+        appRowOverflow=".cell-content"
+        [appRowOverflowExpanded]="isExpanded(row)"
+        class="expandable-row"
+        [class.can-expand]="rowOverflow.canExpand()"
+        [class.is-expanded]="isExpanded(row)"
+        (click)="rowOverflow.canExpand() && toggleRow(row)"
+      ></tr>
     </table>
   `,
   styles: `
@@ -79,6 +89,41 @@ import { MatChipsModule } from '@angular/material/chips';
           label-text-color: var(--mat-sys-text),
         )
       );
+
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      vertical-align: top; /* Keeps text nicely aligned at the top during expansion */
+
+      .cell-content {
+        max-height: calc(2 * 1.4em); /* Limits text to roughly 2 lines */
+        line-height: 1.4;
+        overflow: hidden;
+
+        word-break: normal;
+        text-overflow: ellipsis;
+
+        transition: max-height 0.25s ease-out;
+      }
+    }
+
+    tr {
+      height: auto !important; /* Allow rows to adapt dynamically to child heights */
+
+      &.can-expand {
+        cursor: pointer;
+
+        &:hover {
+          background-color: var(--mat-sys-surface-variant);
+        }
+      }
+
+      &.is-expanded {
+        background-color: var(--mat-sys-surface-variant);
+
+        .cell-content {
+          max-height: none;
+        }
+      }
     }
 
     .empty {
@@ -87,15 +132,17 @@ import { MatChipsModule } from '@angular/material/chips';
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, LongTextComponent, MatChipsModule, MatTableModule],
+  imports: [CommonModule, MatChipsModule, MatTableModule, RowOverflowDirective],
 })
 export class DataResourceTableComponent {
   readonly columns = input.required<Column[]>();
-  readonly rows = input.required<Array<Record<string, unknown>>>();
+  readonly rows = input.required<Array<Row>>();
 
   readonly columnKeys = computed(() => this.columns().map((column) => column.key));
 
   readonly ColumnType = ColumnType;
+
+  readonly expandedElement = signal<Row | null>(null);
 
   asHtmlString(value: unknown): string {
     if (typeof value === 'string') {
@@ -109,7 +156,17 @@ export class DataResourceTableComponent {
     if (typeof value === 'object' && value !== null) return Object.values(value);
     return [];
   }
+
+  isExpanded(element: Row): boolean {
+    return this.expandedElement() === element;
+  }
+
+  toggleRow(element: Row): void {
+    this.expandedElement.set(this.isExpanded(element) ? null : element);
+  }
 }
+
+export type Row = Record<string, unknown>;
 
 export interface Column {
   name: string;

@@ -106,8 +106,10 @@ impl<R: Serialize> DataResource<R> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Fields {
     pub fields: Vec<TableSchemaField>,
+    pub primary_key: Option<Vec<String>>,
 }
 
 /// Field specification for Table Schema, based on <https://datapackage.org/standard/table-schema/>.
@@ -322,6 +324,7 @@ impl From<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>> {
                         ..Default::default()
                     },
                 ],
+                primary_key: vec!["name".to_string()].into(),
             },
         }
     }
