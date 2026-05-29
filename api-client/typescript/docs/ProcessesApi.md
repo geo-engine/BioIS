@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**_delete**](ProcessesApi.md#_delete) | **DELETE** /jobs/{jobId} | Cancel a job execution, remove finished job
+[**executeBiodiversitySensitiveAreas**](ProcessesApi.md#executeBiodiversitySensitiveAreas) | **POST** /processes/biodiversity-sensitive-areas/execution | 
 [**executeHabitatDistance**](ProcessesApi.md#executeHabitatDistance) | **POST** /processes/habitatDistance/execution | 
 [**executeNdvi**](ProcessesApi.md#executeNdvi) | **POST** /processes/ndvi/execution | 
 [**execution**](ProcessesApi.md#execution) | **POST** /processes/{processID}/execution | Execute a process
@@ -69,6 +70,69 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **executeBiodiversitySensitiveAreas**
+> BiodiversitySensitiveAreasProcessOutputs executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams)
+
+
+### Example
+
+
+```typescript
+import { createConfiguration, ProcessesApi } from '';
+import type { ProcessesApiExecuteBiodiversitySensitiveAreasRequest } from '';
+
+const configuration = createConfiguration();
+const apiInstance = new ProcessesApi(configuration);
+
+const request: ProcessesApiExecuteBiodiversitySensitiveAreasRequest = {
+  
+  biodiversitySensitiveAreasProcessParams: {
+    inputs: {
+      sites: null,
+      locationNameField: null,
+      siteTypeField: null,
+      unitForArea: null,
+    },
+    outputs: {
+      "key": null,
+    },
+    response: "raw",
+  },
+};
+
+const data = await apiInstance.executeBiodiversitySensitiveAreas(request);
+console.log('API called successfully. Returned data:', data);
+```
+
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **biodiversitySensitiveAreasProcessParams** | **BiodiversitySensitiveAreasProcessParams**|  |
+
+
+### Return type
+
+**BiodiversitySensitiveAreasProcessOutputs**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** |  |  -  |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **executeHabitatDistance**
 > HabitatDistanceProcessOutputs executeHabitatDistance(habitatDistanceProcessParams)
 
@@ -91,6 +155,9 @@ const request: ProcessesApiExecuteHabitatDistanceRequest = {
         value: {
           type: "Point",
           coordinates: [
+            3.14,
+          ],
+          bbox: [
             3.14,
           ],
         },
@@ -159,6 +226,9 @@ const request: ProcessesApiExecuteNdviRequest = {
         value: {
           type: "Point",
           coordinates: [
+            3.14,
+          ],
+          bbox: [
             3.14,
           ],
         },

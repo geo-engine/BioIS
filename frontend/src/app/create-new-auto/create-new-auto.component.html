@@ -1,0 +1,111 @@
+<app-page-title [title]="processName()" />
+<form (submit)="onSubmit()">
+  <app-long-text>
+    <p [innerHTML]="processDescriptionHtml()"></p>
+  </app-long-text>
+  <fieldset>
+    <legend>Inputs</legend>
+
+    @for (input of inputs(); track input.key) {
+      <p>
+        <span>{{ input.title }}</span>
+        <mat-icon [matTooltip]="input.description">info</mat-icon>
+      </p>
+      @switch (input.type) {
+        @case (FieldType.Boolean)
+        @case (FieldType.Integer)
+        @case (FieldType.Number)
+        @case (FieldType.String) {
+          <app-simple-form-field
+            [title]="fieldName(input.key)"
+            [type]="input.type"
+            [formField]="asPrimitiveInput(form.inputs[input.key])"
+          ></app-simple-form-field>
+        }
+        @case (FieldType.StringEnum) {
+          <mat-form-field>
+            <mat-label>{{ input.title }}</mat-label>
+            <mat-select [formField]="asPrimitiveInput(form.inputs[input.key])">
+              @for (option of enumOptions(input.schema); track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @case (FieldType.IntegerWithSmallRange) {
+          <mat-form-field>
+            <mat-label>{{ input.title }}</mat-label>
+            <mat-select [formField]="asPrimitiveInput(form.inputs[input.key])">
+              @for (option of integerRangeList(input.schema); track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @case (FieldType.RelativeJsonPointer) {
+          <mat-form-field>
+            <mat-label>{{ input.title }}</mat-label>
+            <mat-select [formField]="asPrimitiveInput(form.inputs[input.key])">
+              @for (field of relativeJsonPointerAvailableFields()[input.key]; track field) {
+                <mat-option [value]="field">{{ field }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @case (FieldType.Coordinate) {
+          @let coordinateInput = asGeoJsonPointFeature(form.inputs[input.key]).value;
+          <div>
+            @for (coordinateValue of ['Longitude', 'Latitude']; track $index; let index = $index) {
+              <mat-form-field>
+                <mat-label>{{ coordinateValue }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  step="any"
+                  [formField]="coordinateInput.coordinates[index]"
+                />
+                @for (error of coordinateInput.coordinates[index]().errors(); track error) {
+                  <mat-error>{{ error.message }}</mat-error>
+                }
+              </mat-form-field>
+            }
+
+            @for (error of coordinateInput.coordinates().errors(); track error) {
+              <mat-error>{{ error.message }}</mat-error>
+            }
+          </div>
+        }
+        @case (FieldType.GeoJson) {
+          <app-geo-json-field
+            [title]="fieldName(input.key)"
+            [geoJsonSchema]="input.schema"
+            [formField]="asGeoJsonInput(form.inputs[input.key])"
+          ></app-geo-json-field>
+        }
+        <!-- Prevent unhandled cases -->
+        @default never;
+      }
+    }
+  </fieldset>
+
+  <fieldset>
+    <legend>Outputs</legend>
+
+    @for (output of outputs(); track output.key) {
+      <mat-checkbox
+        [checked]="form.outputs[output.key]"
+        (change)="toggleOutput(output.key, $event.checked)"
+        >{{ output.title }}</mat-checkbox
+      >
+      @if (output.description) {
+        <mat-icon [matTooltip]="output.description">info</mat-icon>
+      }
+    }
+
+    @for (error of form.outputs().errors(); track error) {
+      <mat-error>{{ error.message }}</mat-error>
+    }
+  </fieldset>
+
+  <button mat-raised-button type="submit" [disabled]="!form().valid()">Submit</button>
+</form>

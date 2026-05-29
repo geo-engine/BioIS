@@ -1,28 +1,12 @@
+<app-page-title [title]="`Result ${resultId()}`" />
 <div>
-  <h1 class="mat-h1">Result {{ processId() }}</h1>
   <div class="grid-container">
-    <mat-card class="dashboard-card">
-      <mat-card-header>
-        <mat-card-title> Inputs </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        @if (result.value().inputs; as inputs) {
-          <div>
-            <p>
-              <strong>Coordinate:</strong> {{ inputs.coordinate.value.coordinates[0] }},
-              {{ inputs.coordinate.value.coordinates[1] }}
-            </p>
-            <p><strong>Year:</strong> {{ inputs.year }}</p>
-            <p><strong>Month:</strong> {{ inputs.month }}</p>
-          </div>
-        }
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="dashboard-card">
-      <mat-card-header>
-        <mat-card-title>
-          Results
+    @for (result of results(); track result.key) {
+      <mat-card class="dashboard-card">
+        <mat-card-header>
+          <mat-card-title>
+            {{ result.title }}
+          </mat-card-title>
           <button
             matIconButton
             class="more-button"
@@ -32,30 +16,54 @@
             <mat-icon>more_vert</mat-icon>
           </button>
           <mat-menu #menu="matMenu" xPosition="before">
-            <button mat-menu-item (click)="download()">Download</button>
+            <button mat-menu-item (click)="download(result.key)">Download</button>
           </mat-menu>
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        @if (result.value().ndvi; as ndvi) {
-          <p>NDVI:</p>
-          <app-number-indicator
-            [value]="ndvi"
-            [min]="-1"
-            [max]="1"
-            [colors]="ndviColorMap"
-          ></app-number-indicator>
-        }
-        @if (result.value().kNdvi; as kNdvi) {
-          <p>kNDVI:</p>
-          <app-number-indicator
-            [value]="kNdvi"
-            [min]="-1"
-            [max]="1"
-            [colors]="ndviColorMap"
-          ></app-number-indicator>
-        }
-      </mat-card-content>
-    </mat-card>
+        </mat-card-header>
+        <mat-card-content>
+          @switch (result.type) {
+            @case (ResultType.Number) {
+              <p>{{ asNumber(result.value) | number: '1.0-2' }}</p>
+            }
+            @case (ResultType.Ndvi) {
+              <app-number-indicator
+                [value]="asNumber(result.value)"
+                [min]="-1"
+                [max]="1"
+                [colors]="ndviColorMap"
+              ></app-number-indicator>
+            }
+            @case (ResultType.Json) {
+              <app-long-text>
+                <code>
+                  <pre>{{ result.value | json }}</pre>
+                </code>
+              </app-long-text>
+            }
+            @case (ResultType.Array) {
+              <mat-list>
+                @for (item of asArray(result.value); track item) {
+                  <mat-list-item>
+                    <span>{{ item }}</span>
+                  </mat-list-item>
+                } @empty {
+                  <em>empty</em>
+                }
+              </mat-list>
+            }
+            @case (ResultType.JsonTable) {
+              <app-data-resource-table
+                [columns]="columns(result.value)"
+                [rows]="asJsonTableRows(result.value)"
+              ></app-data-resource-table>
+            }
+            @case (ResultType.String)
+            @case (ResultType.Boolean)
+            @default {
+              <p>{{ result.value }}</p>
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    }
   </div>
 </div>

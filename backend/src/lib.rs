@@ -11,3 +11,4 @@ mod util;
 
 pub use config::CONFIG;
 pub use server::server;
+pub use util::setup_tracing;

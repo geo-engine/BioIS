@@ -4,6 +4,9 @@ use geoengine_api_client::models::{
 };
 use std::ops::Deref;
 use tracing::error;
+use tracing_subscriber::{
+    EnvFilter, filter::Directive, layer::SubscriberExt, util::SubscriberInitExt,
+};
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
 pub fn to_api_workflow(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
@@ -88,6 +91,46 @@ impl<T> From<T> for Secret<T> {
     }
 }
 
+/// Extracts the heading from a markdown string, if it starts with a level 1 heading (`# `).
+pub fn md_heading(s: &str) -> &str {
+    let mut lines = s.lines();
+    let first_line = lines.next().unwrap_or("");
+    if !first_line.starts_with("# ") {
+        return "";
+    }
+    first_line.trim_start_matches("# ").trim()
+}
+
+/// Extracts the content from a markdown string, removing the first heading if it exists.
+pub fn md_content(s: &str) -> &str {
+    let mut lines = s.lines();
+    let first_line = lines.next().unwrap_or("");
+    if !first_line.starts_with("# ") {
+        return s.trim();
+    }
+
+    // TODO: use `.remainder()` once it is stabilized
+
+    let heading_end_index = s.find('\n').unwrap_or(0);
+
+    let first_content_index = s[heading_end_index..]
+        .find(|c: char| !c.is_whitespace())
+        .map_or(heading_end_index, |idx| heading_end_index + idx);
+
+    s[first_content_index..].trim()
+}
+
+pub fn setup_tracing(log_level: Directive) {
+    tracing_subscriber::registry()
+        .with(
+            EnvFilter::builder()
+                .with_default_directive(log_level)
+                .from_env_lossy(),
+        )
+        .with(tracing_subscriber::fmt::layer().pretty())
+        .init();
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -97,6 +140,7 @@ mod tests {
         GdalSourceParameters, RasterOperator, RasterVectorJoin, RasterVectorJoinParameters,
         SingleVectorMultipleRasterSources, TemporalAggregationMethod, VectorOperator,
     };
+    use indoc::indoc;
     use pretty_assertions::assert_eq;
     use std::sync::{Arc, RwLock};
 
@@ -239,5 +283,52 @@ mod tests {
             let guard = read_lock(&lock);
             assert_eq!(*guard, 10);
         }
+    }
+
+    #[test]
+    fn it_extracts_md_content() {
+        let md = indoc! {"
+            # Heading
+
+            Content
+        "};
+        assert_eq!(md_heading(md), "Heading");
+        assert_eq!(md_content(md), "Content");
+
+        let md_no_heading = indoc! {"
+            Content without heading
+        "};
+        assert_eq!(md_heading(md_no_heading), "");
+        assert_eq!(md_content(md_no_heading), "Content without heading");
+
+        let md_only_heading = indoc! {"
+            # Only Heading
+        "};
+        assert_eq!(md_heading(md_only_heading), "Only Heading");
+        assert_eq!(md_content(md_only_heading), "");
+
+        let md_heading_with_whitespace = indoc! {"
+            # Heading with whitespace
+
+            Content with leading and trailing whitespace
+        "};
+        assert_eq!(
+            md_heading(md_heading_with_whitespace),
+            "Heading with whitespace"
+        );
+        assert_eq!(
+            md_content(md_heading_with_whitespace),
+            "Content with leading and trailing whitespace"
+        );
+    }
+
+    #[test]
+    fn it_sets_up_tracing() {
+        let result = std::panic::catch_unwind(|| {
+            setup_tracing("info".parse().unwrap());
+            tracing::info!("tracing initialized");
+        });
+
+        assert!(result.is_ok());
     }
 }

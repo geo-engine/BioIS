@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   resource,
   ResourceRef,
@@ -17,13 +18,24 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../user.service';
 import {
-  NDVIProcessOutputs,
+  InlineOrRefData,
+  Link as LinkValue,
   ProcessesApi,
-  PointGeoJsonType,
-  PointGeoJsonInputMediaType,
+  QualifiedInputValue,
+  Schema,
 } from '@geoengine/biois';
 import { CommonModule } from '@angular/common';
 import { ColorBreakpoint, NumberIndicatorComponent } from './number-indicator.component';
+import { processName } from '../util/processes';
+import { MatTableModule } from '@angular/material/table';
+import { MatListModule } from '@angular/material/list';
+import { LongTextComponent } from '../util/long-text.component';
+import { PageTitleComponent } from '../navigation/page-title.component';
+import {
+  Column,
+  tableColumnInfoFromValue,
+  DataResourceTableComponent,
+} from './data-resource-table.component';
 
 @Component({
   selector: 'app-result',
@@ -32,61 +44,63 @@ import { ColorBreakpoint, NumberIndicatorComponent } from './number-indicator.co
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    DataResourceTableComponent,
+    LongTextComponent,
     MatButtonModule,
     MatCardModule,
     MatGridListModule,
     MatIconModule,
+    MatListModule,
     MatMenuModule,
+    MatTableModule,
     NumberIndicatorComponent,
+    PageTitleComponent,
   ],
 })
-export class DashboardComponent {
+export class ResultComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
 
-  readonly processId: Signal<string | undefined>;
+  readonly resultId: Signal<string | undefined>;
 
-  private readonly mockInputs: NDVIProcessOutputs = {
-    ndvi: null,
-    kNdvi: null,
-    inputs: {
-      coordinate: {
-        value: {
-          type: PointGeoJsonType.Point,
-          coordinates: [0, 0],
-        },
-        mediaType: PointGeoJsonInputMediaType.ApplicationGeojson,
-      },
-      year: 0,
-      month: 0,
-    },
-  };
-
-  readonly result: ResourceRef<NDVIProcessOutputs> = resource({
+  readonly result: ResourceRef<Record<string, InlineOrRefData>> = resource({
     params: () => ({
-      processId: this.processId(),
+      resultId: this.resultId(),
     }),
-    defaultValue: this.mockInputs,
+    defaultValue: {},
     loader: async ({ params }) => {
       const api = new ProcessesApi(this.userService.apiConfiguration());
-      if (!params.processId) return this.mockInputs;
+      if (!params.resultId) return {};
 
-      const [status, result] = await Promise.all([
-        api.status(params.processId),
-        api.results(params.processId),
-      ]);
-
-      if (status.processID !== 'ndvi') {
-        throw new Error(`Expected NDVI job but got process: ${status.processID ?? 'unknown'}`);
-      }
+      const result = await api.results(params.resultId);
 
       if (result instanceof Blob) {
-        throw new Error('Expected NDVIProcessOutputs but received HttpFile');
+        throw new Error('Expected document output but received HttpFile');
       }
 
-      return result as NDVIProcessOutputs;
+      return result;
     },
+  });
+
+  readonly fieldName = processName;
+  readonly ResultType = ResultType;
+
+  readonly results = computed(() => {
+    const result = this.result.value();
+    if (!result) return [];
+
+    return Object.entries(result)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)) // TODO: get order from process description when available
+      .map(([key, rawValue]) => {
+        const value = fixDataValue(rawValue) as unknown;
+        return {
+          key,
+          title: this.fieldName(key),
+          value: value instanceof QualifiedInputValue ? (value.value as unknown) : value,
+          type: this.typeOfValue(value),
+        };
+      });
   });
 
   readonly colspan = toSignal(
@@ -105,23 +119,166 @@ export class DashboardComponent {
   ];
 
   constructor() {
-    this.processId = toSignal(
+    this.resultId = toSignal(
       this.activatedRoute.params.pipe(
         map((params) => ('resultId' in params ? (params['resultId'] as string) : undefined)),
       ),
     );
   }
 
-  async download(): Promise<void> {
-    const processId = this.processId();
-    if (!processId) return;
+  asNumber(value: unknown): number {
+    return value as number;
+  }
 
-    const api = new ProcessesApi(this.userService.apiConfiguration());
-    const result = await api.results(processId);
+  asArray(value: unknown): Array<unknown> {
+    return value as Array<unknown>;
+  }
+
+  protected typeOfValue(value: InlineOrRefData): ResultType {
+    if (value instanceof QualifiedInputValue) {
+      if (value.mediaType === 'text/plain; spectral=ndvi') return ResultType.Ndvi;
+      if (value.mediaType === 'application/json') return ResultType.Json;
+      if (value.mediaType === 'application/vnd.dataresource+json') return ResultType.JsonTable;
+
+      // TODO: special handling for…
+      // … Input references
+      // … Errors
+      // … Documentation sources
+    }
+
+    if (value instanceof LinkValue) return ResultType.Link;
+
+    if (Array.isArray(value)) return ResultType.Array;
+
+    switch (typeof value) {
+      case 'number':
+      case 'bigint':
+        return ResultType.Number;
+      case 'boolean':
+        return ResultType.Boolean;
+      case 'object':
+        if (value === null) return ResultType.String; // treat null as string
+        return ResultType.Json;
+      case 'string':
+      case 'undefined': // fallback
+      case 'symbol': // fallback
+      case 'function': // fallback
+        return ResultType.String;
+    }
+  }
+
+  async download(field?: string): Promise<void> {
+    const resultId = this.resultId();
+    const result = this.result.value();
+
+    if (!resultId && !result) return;
 
     const link = document.createElement('a');
-    link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(result));
-    link.download = `result-${processId}.json`;
-    link.click();
+
+    if (!field) {
+      link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(result));
+      link.download = `result-${resultId}.json`;
+      return link.click();
+    }
+
+    if (!(field in result)) return;
+    const value = fixDataValue(result[field]) as unknown;
+
+    let blob: Blob;
+
+    if (value instanceof QualifiedInputValue) {
+      blob = new Blob([JSON.stringify(value.value)], { type: value.mediaType });
+    } else if (value instanceof LinkValue) {
+      const response = await fetch(value.href);
+      blob = await response.blob();
+    } else {
+      blob = new Blob([JSON.stringify(value)], { type: 'application/json' });
+    }
+
+    link.download = `result-${resultId}-${field}.json`;
+    link.href = URL.createObjectURL(blob);
+    return link.click();
   }
+
+  asJsonTableRows(value: unknown): Array<Record<string, unknown>> {
+    if (!value || !(typeof value === 'object') || !('data' in value) || !('schema' in value))
+      return [];
+
+    return value.data as Array<Record<string, unknown>>;
+  }
+
+  columns(value: unknown): Column[] {
+    if (!value || !(typeof value === 'object') || !('data' in value) || !('schema' in value))
+      return [];
+
+    const schema = value.schema;
+    if (!schema || !(typeof schema === 'object')) return [];
+
+    return tableColumnInfoFromValue(
+      value.schema as Record<string, unknown>,
+      this.asJsonTableRows(value),
+    );
+  }
+}
+
+enum ResultType {
+  Boolean = 'boolean',
+  Errors = 'errors',
+  Input = 'input',
+  Json = 'json',
+  JsonTable = 'jsonTable',
+  Ndvi = 'ndvi',
+  Number = 'number',
+  String = 'string',
+  Link = 'link',
+  Array = 'array',
+}
+
+/**
+ * Fixes the given data value to ensure it is properly typed as either a Link or a QualifiedInputValue.
+ */
+export function fixDataValue(data: InlineOrRefData): InlineOrRefData {
+  if (data instanceof QualifiedInputValue) return data;
+  if (data instanceof LinkValue) return data;
+
+  // type was link but not in Link class format, try to fix it
+  if (typeof data === 'object' && 'href' in data && 'rel' in data) {
+    const linkData = data as {
+      href: string;
+      rel: string;
+      type?: string;
+      templated?: boolean;
+      varBase?: string;
+      hreflang?: string;
+      title?: string;
+      length?: number;
+    };
+    const link = new LinkValue();
+    link.href = linkData.href;
+    link.rel = linkData.rel;
+    link.type = linkData.type;
+    link.templated = linkData.templated;
+    link.varBase = linkData.varBase;
+    link.hreflang = linkData.hreflang;
+    link.title = linkData.title;
+    link.length = linkData.length;
+    return link;
+  }
+
+  if (typeof data === 'object' && 'value' in data && 'mediaType' in data) {
+    const qualifiedValueData = data as {
+      value: unknown;
+      mediaType: string;
+      encoding?: string;
+      schema?: Schema;
+    };
+    const qualifiedValue = new QualifiedInputValue();
+    qualifiedValue.value = qualifiedValueData.value;
+    qualifiedValue.mediaType = qualifiedValueData.mediaType;
+    qualifiedValue.encoding = qualifiedValueData.encoding;
+    qualifiedValue.schema = qualifiedValueData.schema;
+    return qualifiedValue;
+  }
+
+  return data;
 }

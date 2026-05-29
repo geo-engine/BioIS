@@ -4,13 +4,58 @@ import { PromiseMiddleware, Middleware, PromiseMiddlewareWrapper } from '../midd
 
 import { AdditionalParameter } from '../models/AdditionalParameter';
 import { AdditionalParameters } from '../models/AdditionalParameters';
+import { AnyField } from '../models/AnyField';
+import { ArrayField } from '../models/ArrayField';
 import { AuthCodeResponse } from '../models/AuthCodeResponse';
+import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
+import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
+import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
+import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
+import { Constraints } from '../models/Constraints';
+import { Constraints1 } from '../models/Constraints1';
+import { Constraints10 } from '../models/Constraints10';
+import { Constraints10Enum } from '../models/Constraints10Enum';
+import { Constraints11 } from '../models/Constraints11';
+import { Constraints12 } from '../models/Constraints12';
+import { Constraints12Enum } from '../models/Constraints12Enum';
+import { Constraints13 } from '../models/Constraints13';
+import { Constraints14 } from '../models/Constraints14';
+import { Constraints1Enum } from '../models/Constraints1Enum';
+import { Constraints1Minimum } from '../models/Constraints1Minimum';
+import { Constraints2 } from '../models/Constraints2';
+import { Constraints3 } from '../models/Constraints3';
+import { Constraints4 } from '../models/Constraints4';
+import { Constraints5 } from '../models/Constraints5';
+import { Constraints6 } from '../models/Constraints6';
+import { Constraints7 } from '../models/Constraints7';
+import { Constraints8 } from '../models/Constraints8';
+import { Constraints9 } from '../models/Constraints9';
+import { DataResource } from '../models/DataResource';
+import { DateField } from '../models/DateField';
+import { DateTimeField } from '../models/DateTimeField';
 import { DescriptionType } from '../models/DescriptionType';
+import { DurationField } from '../models/DurationField';
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
+import { FeatureCollectionGeoJsonInput } from '../models/FeatureCollectionGeoJsonInput';
 import { Format } from '../models/Format';
+import { GeoJSONFeature } from '../models/GeoJSONFeature';
+import { GeoJSONFeatureCollection } from '../models/GeoJSONFeatureCollection';
+import { GeoJSONFeatureGeometry } from '../models/GeoJSONFeatureGeometry';
+import { GeoJSONFeatureId } from '../models/GeoJSONFeatureId';
+import { GeoJSONField } from '../models/GeoJSONField';
+import { GeoJSONGeometryCollection } from '../models/GeoJSONGeometryCollection';
+import { GeoJSONGeometryCollectionGeometriesInner } from '../models/GeoJSONGeometryCollectionGeometriesInner';
+import { GeoJSONLineString } from '../models/GeoJSONLineString';
+import { GeoJSONMultiLineString } from '../models/GeoJSONMultiLineString';
+import { GeoJSONMultiPoint } from '../models/GeoJSONMultiPoint';
+import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
+import { GeoJSONPoint } from '../models/GeoJSONPoint';
+import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
+import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { GeoPointField } from '../models/GeoPointField';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
@@ -18,22 +63,24 @@ import { InlineOrRefData } from '../models/InlineOrRefData';
 import { Input } from '../models/Input';
 import { InputDescription } from '../models/InputDescription';
 import { InputValue } from '../models/InputValue';
+import { IntegerField } from '../models/IntegerField';
 import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
 import { LandingPage } from '../models/LandingPage';
+import { License } from '../models/License';
 import { Link } from '../models/Link';
 import { MaxOccurs } from '../models/MaxOccurs';
 import { Metadata } from '../models/Metadata';
 import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
 import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
 import { NDVIProcessParams } from '../models/NDVIProcessParams';
+import { NumberField } from '../models/NumberField';
+import { ObjectField } from '../models/ObjectField';
 import { Output } from '../models/Output';
 import { OutputDescription } from '../models/OutputDescription';
-import { PointGeoJson } from '../models/PointGeoJson';
+import { Path } from '../models/Path';
 import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
-import { PointGeoJsonInputMediaType } from '../models/PointGeoJsonInputMediaType';
-import { PointGeoJsonType } from '../models/PointGeoJsonType';
 import { Process } from '../models/Process';
 import { ProcessList } from '../models/ProcessList';
 import { ProcessSummary } from '../models/ProcessSummary';
@@ -41,12 +88,29 @@ import { QualifiedInputValue } from '../models/QualifiedInputValue';
 import { Response } from '../models/Response';
 import { Results } from '../models/Results';
 import { Schema } from '../models/Schema';
+import { Source } from '../models/Source';
 import { StatusCode } from '../models/StatusCode';
 import { StatusInfo } from '../models/StatusInfo';
+import { StringField } from '../models/StringField';
+import { StringFieldCategories } from '../models/StringFieldCategories';
+import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
+import { StringFieldMissingValuesAnyOfInner } from '../models/StringFieldMissingValuesAnyOfInner';
 import { Subscriber } from '../models/Subscriber';
+import { TableDialect } from '../models/TableDialect';
+import { TableSchemaField } from '../models/TableSchemaField';
+import { TableSchemaForeignKey } from '../models/TableSchemaForeignKey';
+import { TableSchemaForeignKeyOneOf } from '../models/TableSchemaForeignKeyOneOf';
+import { TableSchemaForeignKeyOneOf1 } from '../models/TableSchemaForeignKeyOneOf1';
+import { TableSchemaForeignKeyOneOf1Reference } from '../models/TableSchemaForeignKeyOneOf1Reference';
+import { TableSchemaForeignKeyOneOfReference } from '../models/TableSchemaForeignKeyOneOfReference';
+import { TableSchemaPrimaryKey } from '../models/TableSchemaPrimaryKey';
+import { TimeField } from '../models/TimeField';
 import { TransmissionMode } from '../models/TransmissionMode';
+import { UnitForArea } from '../models/UnitForArea';
 import { UserInfo } from '../models/UserInfo';
 import { UserSession } from '../models/UserSession';
+import { YearField } from '../models/YearField';
+import { YearMonthField } from '../models/YearMonthField';
 import { ObservableCapabilitiesApi } from './ObservableAPI';
 
 import { CapabilitiesApiRequestFactory, CapabilitiesApiResponseProcessor} from "../apis/CapabilitiesApi";
@@ -192,6 +256,24 @@ export class PromiseProcessesApi {
     public _delete(jobId: string, _options?: PromiseConfigurationOptions): Promise<StatusInfo> {
         const observableOptions = wrapOptions(_options);
         const result = this.api._delete(jobId, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param biodiversitySensitiveAreasProcessParams
+     */
+    public executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param biodiversitySensitiveAreasProcessParams
+     */
+    public executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: PromiseConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams, observableOptions);
         return result.toPromise();
     }
 

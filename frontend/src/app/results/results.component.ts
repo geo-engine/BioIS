@@ -20,6 +20,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { MatAnchor, MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { PageTitleComponent } from '../navigation/page-title.component';
 
 @Component({
   selector: 'app-results',
@@ -28,16 +30,18 @@ import { MatAnchor, MatButtonModule } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
+    MatAnchor,
     MatButtonModule,
+    MatChipsModule,
     MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,
     MatSortModule,
     MatTableModule,
     MatTooltipModule,
+    PageTitleComponent,
     RouterLink,
     ScrollingModule,
-    MatAnchor,
   ],
 })
 export class ResultsComponent {
@@ -45,11 +49,14 @@ export class ResultsComponent {
   readonly paginator = viewChild.required(MatPaginator);
   readonly sort = viewChild.required(MatSort);
   readonly table = viewChild.required(MatTable);
-  readonly changeDetector = inject(ChangeDetectorRef);
+  readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly StatusCode = StatusCode;
 
-  readonly dataSource = new JobsDataSource(this.userService.apiConfiguration());
+  readonly dataSource = new JobsDataSource(
+    this.userService.apiConfiguration(),
+    this.changeDetectorRef,
+  );
 
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
   readonly displayedColumns = ['updated', 'jobID', 'processID', 'status', 'message'];

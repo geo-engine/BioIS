@@ -5,7 +5,6 @@ import {
   UserSession,
   UserApi,
   Configuration,
-  AuthMethodsConfiguration,
 } from '@geoengine/biois';
 
 const USER_SESSION_KEY = 'userSession';
@@ -76,7 +75,6 @@ export class UserService {
     };
     const config = createConfiguration({
       baseServer: new ServerConfiguration('/api', {}),
-      // authMethods: authMethods as AuthMethodsConfiguration,
       authMethods: {
         default: {
           getName: () => 'default',
@@ -86,11 +84,8 @@ export class UserService {
             context.setHeaderParam('Prefer', 'respond-async');
           },
         },
-      } as AuthMethodsConfiguration,
+      },
     });
-    // if (this.user()) {
-    //   config.baseServer = this.user().accessToken;
-    // }
     return config;
   }
 }

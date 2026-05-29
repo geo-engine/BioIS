@@ -1,6 +1,8 @@
 @use '@angular/material' as mat;
 
 $max-width: 1200px;
+$medium-breakpoint: 900px;
+$small-breakpoint: 600px;
 
 :host {
   display: block;
@@ -12,6 +14,8 @@ $max-width: 1200px;
     (
       standard-height: 6rem,
       mobile-height: 4rem,
+      container-background-color: var(--mat-sys-surface),
+      container-text-color: var(--mat-sys-on-surface),
     )
   );
 }
@@ -29,9 +33,25 @@ $max-width: 1200px;
     justify-content: space-between;
     padding: 0 2rem;
 
+    @media (max-width: $small-breakpoint) {
+      font-size: smaller;
+      text-wrap: wrap;
+    }
+
     mat-icon {
       height: 2.5rem;
       width: auto;
+      flex-shrink: 0;
+      padding-right: 1rem;
+    }
+
+    .auth-button-group {
+      border-radius: 999px;
+      background: var(--mat-sys-surface-container);
+
+      a {
+        margin: 0.25rem;
+      }
     }
   }
 }
@@ -39,6 +59,8 @@ $max-width: 1200px;
 .hero {
   padding: 2rem 2rem;
   position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
 
   color: var(--mat-sys-surface-bright);
   text-shadow: 0 2px 4px var(--mat-sys-on-surface);
@@ -52,15 +74,56 @@ $max-width: 1200px;
   flex-direction: column;
   justify-content: end;
 
-  img.background {
-    border-radius: 1rem;
-    @media (max-width: $max-width) {
-      border-radius: 0rem !important;
-    }
+  > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    inset-block: 0;
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0%) 35%, rgb(0 0 0 / 65%) 100%);
+  }
+
+  &::after {
+    inset-block: 0;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0%) 45%,
+      rgb(0 0 0 / 22%) 78%,
+      rgb(0 0 0 / 30%) 100%
+    );
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    mask-image: linear-gradient(to bottom, transparent 38%, black 76%, black 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 38%, black 76%, black 100%);
+  }
+
+  @media (max-width: $max-width) {
+    border-radius: 0;
   }
 
   a {
     text-shadow: none;
+  }
+
+  @media (max-width: $small-breakpoint) {
+    margin-top: 6rem;
+    font-size: smaller;
+  }
+}
+
+.general {
+  li {
+    margin-bottom: 1rem;
   }
 }
 
@@ -111,8 +174,12 @@ section.features {
 
   .features-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
     gap: 2rem;
+
+    @media (max-width: $medium-breakpoint) {
+      gap: 1rem;
+    }
   }
 
   .feature-card {
@@ -135,6 +202,8 @@ section .content.box {
   background: var(--mat-sys-surface);
   border-radius: var(--mat-sys-corner-medium);
   padding: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
 footer {
@@ -146,6 +215,7 @@ footer {
   gap: 3rem;
   padding-bottom: 1rem;
   margin: 0 auto;
+  flex-wrap: wrap;
 
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
@@ -156,28 +226,11 @@ footer {
     margin: 0;
     padding: 0;
     gap: 0.5rem;
+    flex-wrap: wrap;
 
     li:not(:first-child)::before {
       content: '•';
       padding-right: 0.5rem;
     }
-  }
-}
-
-@media (max-width: 900px) {
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero {
-    margin-top: 6rem;
-    font-size: smaller;
   }
 }

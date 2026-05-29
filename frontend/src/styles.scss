@@ -28,6 +28,12 @@ html {
       container-text-color: var(--mat-sys-surface),
     )
   );
+
+  @include mat.table-overrides(
+    (
+      header-headline-weight: 600,
+    )
+  );
 }
 
 body {

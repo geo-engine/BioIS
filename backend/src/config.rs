@@ -118,3 +118,19 @@ fn get_config() -> anyhow::Result<Config> {
 
     Ok(builder.build()?.try_deserialize()?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_converts_info_log_level_to_directive() {
+        let logging = Logging {
+            level: LogLevel::Info,
+        };
+
+        let directive: Directive = logging.into();
+
+        assert_eq!(directive.to_string(), "info");
+    }
+}

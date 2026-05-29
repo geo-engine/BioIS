@@ -12,14 +12,11 @@ $max-width: 1200px;
 }
 
 .sidenav-container {
-  height: 100%;
-
-  max-width: var(--max-width);
   margin: auto;
 }
 
 mat-sidenav {
-  width: 200px;
+  width: 260px;
 
   display: flex;
   flex-direction: column;
@@ -38,18 +35,37 @@ mat-sidenav {
       flex-shrink: 0;
     }
 
+    @include mat.list-overrides(
+      (
+        list-item-label-text-size: 0.9rem,
+        list-item-leading-icon-end-space: 0.5rem,
+        list-item-label-text-color: var(--mat-sys-surface-dim),
+        list-item-hover-label-text-color: var(--mat-sys-surface),
+        list-item-focus-label-text-color: var(--mat-sys-surface-dim),
+        list-item-hover-state-layer-color: var(--mat-sys-primary-fixed),
+        list-item-focus-state-layer-color: var(--mat-sys-primary),
+      )
+    );
+
     mat-nav-list {
       flex: 1;
 
       display: flex;
       flex-direction: column;
+
+      [mat-subheader] {
+        text-transform: uppercase;
+        color: var(--mat-sys-surface-dim);
+      }
     }
   }
 
   @include mat.sidenav-overrides(
     (
       container-divider-color: var(--mat-toolbar-container-background-color),
-      container-shape: 0,
+      // container-shape: 0,
+      container-background-color: var(--mat-toolbar-container-background-color),
+      container-text-color: var(--mat-toolbar-container-text-color),
     )
   );
 
@@ -61,19 +77,43 @@ mat-sidenav {
 mat-toolbar {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 1000;
+
+  &.background {
+    z-index: 1;
+  }
 
   mat-toolbar-row {
-    max-width: var(--max-width);
     margin: auto;
   }
 
   .logo {
     height: 1.8rem;
     width: auto;
+    margin-right: 0.5rem;
   }
 
   .spacer {
     flex: 1;
+  }
+}
+
+mat-sidenav-content {
+  @include mat.toolbar-overrides(
+    (
+      container-background-color: var(--mat-sys-surface),
+      container-text-color: var(--mat-sys-on-surface),
+    )
+  );
+
+  mat-toolbar-row {
+    button {
+      margin-right: 0.5rem;
+    }
+
+    .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

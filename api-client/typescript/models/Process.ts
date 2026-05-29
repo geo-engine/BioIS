@@ -10,9 +10,11 @@
  * Do not edit the class manually.
  */
 
+import { AdditionalParameters } from '../models/AdditionalParameters';
 import { InputDescription } from '../models/InputDescription';
 import { JobControlOptions } from '../models/JobControlOptions';
 import { Link } from '../models/Link';
+import { Metadata } from '../models/Metadata';
 import { OutputDescription } from '../models/OutputDescription';
 import { ProcessSummary } from '../models/ProcessSummary';
 import { TransmissionMode } from '../models/TransmissionMode';

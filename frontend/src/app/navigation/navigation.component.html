@@ -1,5 +1,3 @@
-<mat-toolbar class="background"></mat-toolbar>
-
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav
     #drawer
@@ -11,11 +9,30 @@
     <div class="menu-container">
       <mat-toolbar><mat-icon class="logo" svgIcon="biois:logo-white"></mat-icon></mat-toolbar>
       <mat-nav-list>
-        <a mat-list-item [routerLink]="['/app/results']"><mat-icon>assessment</mat-icon>Results</a>
-        <a mat-list-item [routerLink]="['/app/create']"><mat-icon>add</mat-icon>Create new</a>
+        <div mat-subheader>Outputs</div>
+        <a mat-list-item [routerLink]="['/app/results']">
+          <mat-icon matListItemIcon>assessment</mat-icon>
+          <span matListItemTitle>Results</span>
+        </a>
+        <div mat-subheader>Processes</div>
+        @for (process of processes.value()?.processes; track process) {
+          <a
+            mat-list-item
+            [routerLink]="['/app/create', process.id]"
+            [matTooltip]="process.title ?? processName(process.id)"
+          >
+            <mat-icon matListItemIcon>add</mat-icon>
+            <span matListItemTitle>
+              {{ process.title ?? processName(process.id) }}
+            </span>
+          </a>
+        }
         <div class="spacer"></div>
         <mat-divider></mat-divider>
-        <a mat-list-item [routerLink]="['/app/signout']"><mat-icon>logout</mat-icon>Logout</a>
+        <a mat-list-item [routerLink]="['/app/signout']">
+          <mat-icon matListItemIcon>logout</mat-icon>
+          <span matListItemTitle>Logout</span>
+        </a>
       </mat-nav-list>
     </div>
   </mat-sidenav>
@@ -29,10 +46,10 @@
           </button>
         }
         @if (!drawer.opened) {
-          <mat-icon class="logo" svgIcon="geoengine:logo"></mat-icon>
+          <mat-icon class="logo" svgIcon="biois:logo"></mat-icon>
         }
         <span class="spacer"></span>
-        <span>BioIS</span>
+        <span class="title" [matTooltip]="title()">{{ title() }}</span>
       </mat-toolbar-row>
     </mat-toolbar>
     <!-- Add Content Here -->

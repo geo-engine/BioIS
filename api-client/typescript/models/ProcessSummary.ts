@@ -10,26 +10,29 @@
  * Do not edit the class manually.
  */
 
+import { AdditionalParameters } from '../models/AdditionalParameters';
+import { DescriptionType } from '../models/DescriptionType';
 import { JobControlOptions } from '../models/JobControlOptions';
 import { Link } from '../models/Link';
+import { Metadata } from '../models/Metadata';
 import { TransmissionMode } from '../models/TransmissionMode';
 import { HttpFile } from '../http/http';
 
 /**
 * Process summary
 */
-export class ProcessSummary {
+export class ProcessSummary extends DescriptionType {
     'id': string;
     'version': string;
     'jobControlOptions'?: Array<JobControlOptions>;
     'outputTransmission'?: Array<TransmissionMode>;
     'links'?: Array<Link>;
 
-    static readonly discriminator: string | undefined = undefined;
+    static override readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+    static override readonly mapping: {[index: string]: string} | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
+    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
             "name": "id",
             "baseName": "id",
@@ -61,10 +64,11 @@ export class ProcessSummary {
             "format": ""
         }    ];
 
-    static getAttributeTypeMap() {
-        return ProcessSummary.attributeTypeMap;
+    static override getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(ProcessSummary.attributeTypeMap);
     }
 
     public constructor() {
+        super();
     }
 }

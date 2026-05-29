@@ -1,5 +1,5 @@
+<app-page-title title="Results" />
 <table mat-table class="full-width-table" aria-label="Jobs" [trackBy]="trackByFn">
-  <!-- <mat-text-column name="jobID" headerText="Job"></mat-text-column> -->
   <ng-container matColumnDef="jobID">
     <th mat-header-cell *matHeaderCellDef class="center">Results</th>
     <td mat-cell *matCellDef="let row" class="center">
@@ -15,7 +15,12 @@
     </td>
   </ng-container>
 
-  <mat-text-column name="processID" headerText="Process"></mat-text-column>
+  <ng-container matColumnDef="processID">
+    <th mat-header-cell *matHeaderCellDef class="center">Process</th>
+    <td mat-cell *matCellDef="let row" class="center">
+      <mat-chip class="process">{{ row.processID }}</mat-chip>
+    </td>
+  </ng-container>
 
   <ng-container matColumnDef="status">
     <th mat-header-cell *matHeaderCellDef class="center">Status</th>

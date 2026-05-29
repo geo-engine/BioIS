@@ -6,19 +6,21 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatChipsModule } from '@angular/material/chips';
 
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    RouterModule,
     CommonModule,
-    NgOptimizedImage,
-    MatToolbarModule,
-    MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    MatCardModule,
+    MatChipsModule,
     MatDividerModule,
+    MatIconModule,
+    MatToolbarModule,
+    NgOptimizedImage,
+    RouterModule,
   ],
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.scss'],
