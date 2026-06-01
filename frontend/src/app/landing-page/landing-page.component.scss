@@ -127,6 +127,11 @@ $small-breakpoint: 600px;
     text-shadow: none;
   }
 
+  h1 {
+    line-height: 1.2;
+    margin: 0 0 1rem;
+  }
+
   @media (max-width: $small-breakpoint) {
     margin-top: 6rem;
     font-size: smaller;
