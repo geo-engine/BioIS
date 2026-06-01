@@ -3,6 +3,9 @@ import { LogInGuard } from './log-in.guard';
 import { inject } from '@angular/core';
 import { UserService } from './user.service';
 
+export const TITLE = 'BioIS';
+export const LONG_TITLE = 'Biodiversity Indicator Service';
+
 const appRoutes: Routes = [
   {
     path: 'results',
@@ -28,7 +31,7 @@ const appRoutes: Routes = [
   },
   {
     path: 'signout',
-    title: 'BioIS – Sign Out',
+    title: `${TITLE} – Sign Out`,
     redirectTo: (): string => {
       const userService = inject(UserService);
       userService.logout();
@@ -44,18 +47,18 @@ const appRoutes: Routes = [
 export const routes: Routes = [
   {
     path: '',
-    title: 'BioIS – Biodiversity Indicator Service',
+    title: `${TITLE} – ${LONG_TITLE}`,
     loadComponent: () =>
       import('./landing-page/landing-page.component').then((m) => m.LandingPageComponent),
   },
   {
     path: 'app/signin',
-    title: 'BioIS – Sign In',
+    title: `${TITLE} – Sign In`,
     loadComponent: () => import('./signin/signin.component').then((m) => m.SigninComponent),
   },
   {
     path: 'app',
-    title: 'BioIS – App',
+    title: `${TITLE} – App`,
     children: appRoutes,
     loadComponent: () =>
       import('./navigation/navigation.component').then((m) => m.NavigationComponent),

@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltip } from '@angular/material/tooltip';
+import { LONG_TITLE, TITLE } from '../app.routes';
 
 @Component({
   selector: 'app-landing-page',
@@ -28,6 +29,7 @@ import { MatTooltip } from '@angular/material/tooltip';
   styleUrls: ['./landing-page.component.scss'],
 })
 export class LandingPageComponent {
-  readonly title = 'BioIS';
+  readonly title = TITLE;
+  readonly longTitle = LONG_TITLE;
   readonly currentYear = new Date().getFullYear();
 }
