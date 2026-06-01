@@ -35,7 +35,8 @@ $small-breakpoint: 600px;
 
     @media (max-width: $small-breakpoint) {
       font-size: smaller;
-      text-wrap: wrap;
+      flex-wrap: nowrap;
+      padding: 0 0.75rem;
     }
 
     mat-icon {
@@ -46,11 +47,22 @@ $small-breakpoint: 600px;
     }
 
     .auth-button-group {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: nowrap;
       border-radius: 999px;
       background: var(--mat-sys-surface-container);
 
       a {
         margin: 0.25rem;
+        white-space: nowrap;
+      }
+
+      @media (max-width: $small-breakpoint) {
+        a {
+          margin: 0.15rem;
+          padding-inline: 0.6rem;
+        }
       }
     }
   }
