@@ -127,11 +127,6 @@ $small-breakpoint: 600px;
     text-shadow: none;
   }
 
-  h1 {
-    line-height: 1.2;
-    margin: 0 0 1rem;
-  }
-
   @media (max-width: $small-breakpoint) {
     margin-top: 6rem;
     font-size: smaller;
@@ -148,6 +143,16 @@ header,
 section {
   margin-bottom: 2rem;
   padding: 2rem;
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.2;
+
+    &.gap {
+      margin-top: 3rem;
+    }
+  }
 }
 
 header:has(.background),
@@ -173,6 +178,11 @@ section {
 
   mat-card-content a mat-icon {
     vertical-align: bottom;
+  }
+
+  img:not(.background) {
+    width: 100%;
+    height: auto;
   }
 }
 

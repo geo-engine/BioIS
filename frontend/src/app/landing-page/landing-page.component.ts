@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-landing-page',
@@ -19,6 +20,7 @@ import { MatChipsModule } from '@angular/material/chips';
     MatDividerModule,
     MatIconModule,
     MatToolbarModule,
+    MatTooltip,
     NgOptimizedImage,
     RouterModule,
   ],

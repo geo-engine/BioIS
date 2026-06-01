@@ -14,10 +14,10 @@
 
 <header class="hero" role="region" aria-labelledby="landing-title">
   <img class="background" ngSrc="assets/hero-land.jpg" alt="" fill />
-  <h1>{{ title }} — Biodiversity Indicator Service</h1>
+  <h1>Turn Complex Geospatial Data into Audit-Ready Disclosures</h1>
   <p>
-    Easy-to-use biodiversity indicators and analytics for corporate ESG reporting, with metrics and
-    workflows tailored to ESRS E4 or VSME B5 requirements.
+    Turn your facility locations into traceable, audit-ready biodiversity disclosures.
+    {{ title }} delivers effortless corporate ESG metrics without the need for a GIS team.
   </p>
   <p>
     <a matButton="elevated" aria-label="Launch {{ title }} app" [routerLink]="['/app']">
@@ -29,96 +29,171 @@
 
 <section class="general info" aria-label="General information">
   <div class="content">
-    <h2>General information</h2>
+    <h2>ESRS E4 & VSME B5 Compliance, Simplified</h2>
     <p>
-      {{ title }} helps companies and sustainability teams discover, process, and analyze
-      biodiversity datasets to produce robust, auditable indicators needed for ESG disclosures. Our
-      platform streamlines the generation of biodiversity metrics that support
-      <mat-chip>ESRS E4</mat-chip> and
-      <mat-chip>VSME B5</mat-chip>
-      reporting and corporate sustainability workflows. We provide:
+      The EU sustainability landscape is highly interconnected. {{ title }} provides a single source
+      of truth for both sides of the market:
     </p>
     <ul>
       <li>
-        REST APIs and data ingestion pipelines for dataset discovery, processing workflows,
-        automated indicator computation, and reporting-ready exports
+        <mat-chip matTooltip="Corporate Sustainability Reporting Directive">CSRD</mat-chip> – For
+        Large Corporates: Meet strict, mandatory
+        <mat-chip matTooltip="European Sustainability Reporting Standard, Part E4">
+          ESRS E4
+        </mat-chip>
+        (Biodiversity & Ecosystems) disclosure requirements regarding your direct operations and
+        upstream value chains. Prove your impact margins with rigorous data.
       </li>
       <li>
-        Standards-based process interfaces (<a href="https://ogc.org/standards/ogcapi-processes/"
-          ><mat-icon aria-hidden="true" inline="true">launch</mat-icon> OGC API - Processes</a
-        >) and output formats aligned with ESRS E4 expectations
+        <mat-chip matTooltip="Voluntary Sustainability Reporting Standard for SME">VSME</mat-chip> –
+        For Non-Listed SMEs: Quickly answer ESG questionnaires from banks and enterprise clients.
+        Generate standard-compliant
+        <mat-chip matTooltip="Voluntary Sustainability Reporting Standard for SME, Part B5">
+          VSME B5
+        </mat-chip>
+        (Biodiversity & Ecosystems) disclosures demonstrating that your facilities are not in or
+        near biodiversity-sensitive areas—without hiring an expensive consulting firm.
       </li>
-      <li>
-        Pre-built and customizable biodiversity indicators (e.g., species richness, habitat
-        intactness, NDVI-based trends) with provenance and parameter traceability
-      </li>
-      <li>Secure, auditable job execution with status reporting and result retrieval</li>
     </ul>
+    <h3 class="gap">Most sustainability teams face two major hurdles:</h3>
+    <ol>
+      <li>
+        <strong>Technical Gap:</strong> Tracking species richness or habitat intactness requires
+        advanced Geographic Information Systems (GIS) skills.
+      </li>
+      <li>
+        <strong>Audit Risk:</strong> Financial auditors require a bulletproof, traceable data trail
+        for every metric published.
+      </li>
+    </ol>
+    <p>
+      <br /><strong>{{ title }} bridges this gap by automation.</strong>
+    </p>
   </div>
 </section>
 
 <section class="features" aria-label="Features">
   <img class="background" ngSrc="assets/GeoEngine_Structure_lightgreen.svg" alt="" fill />
   <div class="content">
-    <h2>Key features</h2>
+    <h2>Key Features</h2>
     <div class="features-grid">
       <mat-card class="feature-card">
         <mat-card-header>
-          <mat-icon mat-card-avatar aria-hidden="true">cloud_queue</mat-icon>
-          <mat-card-title>Cloud Processing</mat-card-title>
+          <mat-icon mat-card-avatar aria-hidden="true">fact_check</mat-icon>
+          <mat-card-title>Automated Site & Supply Chain Assessment</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          Easy-to-use cloud-processing for large-scale biodiversity indicators. Reproducible
-          workflows, provenance, and batch runs enable enterprise reporting and trend analysis.
+          Overlay your global operational footprints with state-of-the-art biodiversity datasets.
+          Automatically calculate species richness, habitat intactness, and NDVI-based trends for
+          all your locations at once.
         </mat-card-content>
       </mat-card>
 
       <mat-card class="feature-card">
         <mat-card-header>
-          <mat-icon mat-card-avatar aria-hidden="true">api</mat-icon>
-          <mat-card-title>APIs & Standards</mat-card-title>
+          <mat-icon mat-card-avatar aria-hidden="true">verified</mat-icon>
+          <mat-card-title>Auditable Data Provenance</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          REST APIs and
-          <a href="https://ogc.org/standards/ogcapi-processes/">
-            <mat-icon aria-hidden="true" inline="true">launch</mat-icon> OGC API - Processes
-          </a>
-          interfaces for programmatic access, automated indicator generation, and exports compatible
-          with corporate ESG reporting needs.
+          Protect your disclosures from greenwashing accusations. Every metric generated by
+          {{ title }}
+          comes with a fully traceable data trail, tracking exact scientific parameters and data
+          origins for third-party assurance.
         </mat-card-content>
       </mat-card>
 
       <mat-card class="feature-card">
         <mat-card-header>
-          <mat-icon mat-card-avatar aria-hidden="true">security</mat-icon>
-          <mat-card-title>Secure Jobs</mat-card-title>
+          <mat-icon mat-card-avatar aria-hidden="true">eco</mat-icon>
+          <mat-card-title>Report-Ready CSRD Exports</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          Secure, auditable job execution with access controls, audit trails, and result exports
-          suitable for governance and disclosure workflows.
+          Stop wrestling with messy spreadsheets. Generate and export data formatted specifically to
+          meet the strict reporting structures required by
+          <mat-chip matTooltip="European Sustainability Reporting Standard, Part E4">
+            ESRS E4
+          </mat-chip>
+          and
+          <mat-chip matTooltip="Voluntary Sustainability Reporting Standard for SME, Part B5">
+            VSME B5
+          </mat-chip>
+          frameworks and corporate governance workflows.
         </mat-card-content>
       </mat-card>
     </div>
   </div>
 </section>
 
+<section>
+  <div class="content">
+    <h2>See {{ title }} in Action</h2>
+    <div class="content">
+      <img
+        ngSrc="assets/in-app.png"
+        alt="{{ title }} in Action"
+        width="2880"
+        height="1800"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</section>
+
+<section aria-label="For IT and data engineering teams">
+  <img class="background" ngSrc="assets/GeoEngine_Structure_midblue.svg" alt="" fill />
+  <div class="content box">
+    <h2>For IT & Data Engineering Teams</h2>
+    <p>
+      Need to integrate biodiversity analytics directly into your existing enterprise ESG platform?
+      {{ title }} is built on a highly flexible, open-standard geospatial architecture.
+    </p>
+    <ul>
+      <li>
+        <a href="https://ogc.org/standards/ogcapi-processes/">
+          <mat-icon aria-hidden="true" inline="true">launch</mat-icon> OGC API - Processes</a
+        >: Programmatically trigger indicator computation workflows.
+      </li>
+      <li>
+        <a href="/api/swagger/">
+          <mat-icon aria-hidden="true" inline="true">launch</mat-icon> REST APIs</a
+        >: Seamlessly ingest local or global datasets into your custom workflows.
+      </li>
+      <li>
+        Enterprise Security: Secure, isolated job execution environments with strict access controls
+        and comprehensive audit logs.
+      </li>
+    </ul>
+  </div>
+</section>
+
 <section class="registration" aria-label="User registration" id="registration">
   <div class="content">
-    <h2>Registration & Contact</h2>
+    <h2>Shape the Future of Biodiversity Reporting</h2>
     <p>
-      This platform is in an early stage and available for pilots and early adopters focused on ESG
-      and biodiversity reporting. If you would like to test it, just get in contact with us to get
-      an account. If you would just like to now more, pleasure also feel free to reach out at:
+      {{ title }} is currently onboarding forward-thinking corporate sustainability teams and ESG
+      consultancies for our early-adopter pilot program.
     </p>
     <p>
-      <a matButton="outlined" href="mailto:info@geoengine.de">
+      Partner with us to align our automated workflows with your specific disclosure timelines and
+      validation needs.
+    </p>
+
+    <p>
+      <a
+        matButton="outlined"
+        href="mailto:info@geoengine.de?subject=BioIS%20Pilot%20Access"
+        aria-label="Contact our team for pilot access"
+      >
         <mat-icon aria-hidden="true">email</mat-icon>
-        info@geoengine.de
+        Contact Our Team for Pilot Access
       </a>
     </p>
     <p>
-      We welcome collaboration to align indicators, validation approaches, and reporting outputs
-      with your sustainability needs.
+      Questions? Email us directly at
+      <a href="mailto:info@geoengine.de">
+        <mat-icon aria-hidden="true" inline="true">email</mat-icon>
+        info@geoengine.de</a
+      >.
     </p>
   </div>
 </section>
@@ -126,11 +201,11 @@
 <section class="launch" aria-label="Launch the app">
   <img class="background" ngSrc="assets/GeoEngine_Structure_lightblue.svg" alt="" fill />
   <div class="content box">
-    <h2>Launch the app</h2>
+    <h2>Launch the App</h2>
     <p>
-      Open the BioIS application to explore biodiversity indicators, run ESRS E4–aligned and VSME
-      B5–aligned analyses, and configure reporting parameters for your ESG disclosures. The app lets
-      sustainability teams generate reporting-ready results, inspect provenance and inputs, and
+      Open the {{ title }} application to explore biodiversity indicators, run ESRS E4–aligned and
+      VSME B5–aligned analyses, and configure reporting parameters for your ESG disclosures. The app
+      lets sustainability teams generate reporting-ready results, inspect provenance and inputs, and
       export indicator data for governance and external reporting.
     </p>
     <a matButton="tonal" aria-label="Launch {{ title }} app" [routerLink]="['/app']">

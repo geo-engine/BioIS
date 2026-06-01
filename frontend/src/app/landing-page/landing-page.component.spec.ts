@@ -25,7 +25,7 @@ describe('LandingPage', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain(
-      'BioIS — Biodiversity Indicator Service',
+      'Turn Complex Geospatial Data into Audit-Ready Disclosures',
     );
   });
 });
