@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
@@ -13,8 +13,6 @@ import { RouterOutlet } from '@angular/router';
 export class App {
   private readonly matIconRegistry = inject(MatIconRegistry);
   private readonly sanitizer = inject(DomSanitizer);
-
-  protected readonly title = signal('BioIS');
 
   constructor() {
     this.matIconRegistry.addSvgIconInNamespace(
