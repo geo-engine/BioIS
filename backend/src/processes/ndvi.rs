@@ -67,6 +67,10 @@ pub struct NDVIProcessOutputs {
     pub inputs: Option<NDVIProcessInputs>,
 }
 
+impl NDVIProcess {
+    pub const ID: &'static str = "ndvi";
+}
+
 impl From<NDVIProcessOutputs> for ExecuteResults {
     fn from(outputs: NDVIProcessOutputs) -> Self {
         let mut result = ExecuteResults::default();
@@ -138,7 +142,7 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
 #[async_trait::async_trait]
 impl Processor for NDVIProcess {
     fn id(&self) -> &'static str {
-        "ndvi"
+        Self::ID
     }
 
     fn version(&self) -> &'static str {

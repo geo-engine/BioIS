@@ -2,6 +2,8 @@ use std::convert::Infallible;
 
 use crate::{
     config::CONFIG,
+    const_concat,
+    processes::{BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, NDVIProcess},
     state::USER,
     util::{Secret, error_response},
 };
@@ -130,7 +132,9 @@ impl<S> GeoEngineAuthMiddleware<S> {
                     "/health",
                     "/processes",
                     "/processes/echo",
-                    "/processes/ndvi",
+                    const_concat!("/processes/", NDVIProcess::ID),
+                    const_concat!("/processes/", BiodiversitySensitiveAreasProcess::ID),
+                    const_concat!("/processes/", HabitatDistanceProcess::ID),
                 ],
                 prefix: vec!["/api", "/swagger", "/auth/"],
             },

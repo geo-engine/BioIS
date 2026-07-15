@@ -143,7 +143,7 @@ mod output_keys {
 #[async_trait::async_trait]
 impl Processor for BiodiversitySensitiveAreasProcess {
     fn id(&self) -> &'static str {
-        "biodiversity-sensitive-areas"
+        Self::ID
     }
 
     fn version(&self) -> &'static str {
@@ -397,6 +397,8 @@ impl Processor for BiodiversitySensitiveAreasProcess {
 }
 
 impl BiodiversitySensitiveAreasProcess {
+    pub const ID: &'static str = "biodiversity-sensitive-areas";
+
     pub async fn new(connection: DbPool, natura2000_schema: &'static str) -> Result<Self> {
         let this = Self {
             connection,

@@ -44,6 +44,8 @@ struct Natura2000Exists {
 }
 
 impl HabitatDistanceProcess {
+    pub const ID: &'static str = "habitatDistance";
+
     pub async fn new(connection: DbPool, natura2000_schema: &'static str) -> Result<Self> {
         let this = Self {
             connection,
@@ -148,7 +150,7 @@ impl From<HabitatDistanceProcessOutputs> for ExecuteResults {
 #[async_trait::async_trait]
 impl Processor for HabitatDistanceProcess {
     fn id(&self) -> &'static str {
-        "habitatDistance"
+        Self::ID
     }
 
     fn version(&self) -> &'static str {

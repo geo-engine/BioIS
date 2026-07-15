@@ -131,6 +131,37 @@ pub fn setup_tracing(log_level: Directive) {
         .init();
 }
 
+/// A macro to concatenate two string literals at compile time.
+#[macro_export]
+macro_rules! const_concat {
+    ($a:expr, $b:expr) => {{
+        const A: &'static str = $a;
+        const B: &'static str = $b;
+        const LEN: usize = A.len() + B.len();
+
+        const BYTES: [u8; LEN] = {
+            let mut bytes = [0u8; LEN];
+            let mut i = 0;
+            while i < A.len() {
+                bytes[i] = A.as_bytes()[i];
+                i += 1;
+            }
+            let mut j = 0;
+            while j < B.len() {
+                bytes[A.len() + j] = B.as_bytes()[j];
+                j += 1;
+            }
+            bytes
+        };
+
+        const RESULT: &'static str = match std::str::from_utf8(&BYTES) {
+            Ok(s) => s,
+            Err(_) => panic!("Invalid UTF-8"),
+        };
+        RESULT
+    }};
+}
+
 #[cfg(test)]
 mod tests {
 
