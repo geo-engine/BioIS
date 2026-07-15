@@ -131,7 +131,14 @@ pub fn setup_tracing(log_level: Directive) {
         .init();
 }
 
-/// A macro to concatenate two string literals at compile time.
+/// A macro to concatenate two static strings (`&'static str`) at compile time.
+///
+/// Do not confuse this with the `concat!` macro, which concatenates string literals at compile time.
+/// This macro can concatenate any static strings, including those that are not literals.
+///
+/// # Panics
+///
+/// If the concatenated result is not valid UTF-8, this macro will panic at compile time.
 #[macro_export]
 macro_rules! const_concat {
     ($a:expr, $b:expr) => {{
@@ -361,5 +368,14 @@ mod tests {
         });
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    #[allow(clippy::items_after_statements, reason = "Makes sense for the test")]
+    fn it_concats_const_strings() {
+        assert_eq!(const_concat!("Hello, ", "World!"), "Hello, World!");
+        assert_eq!(const_concat!("Foo", ""), "Foo");
+        const BAR: &str = "Bar";
+        assert_eq!(const_concat!("", BAR), "Bar");
     }
 }
