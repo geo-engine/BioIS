@@ -696,7 +696,7 @@ pub struct SiteRow {
     pub buffer_distance_km: Kilometers,
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
+#[derive(Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[approx(epsilon_type = f64)]
 pub struct SiteRowOutput {

@@ -13,6 +13,7 @@ pub struct Config {
     pub server: Server,
     pub database: Database,
     pub geoengine: GeoEngineInstance,
+    pub data_ids: DataIdsConfig,
     pub logging: Logging,
 }
 
@@ -98,6 +99,12 @@ impl From<Logging> for Directive {
         };
         level_filter.into()
     }
+}
+
+/// Data IDs configuration, containing identifiers for specific datasets used in the application.
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct DataIdsConfig {
+    pub land_use_imperviousness_builtup: String,
 }
 
 fn get_config() -> anyhow::Result<Config> {

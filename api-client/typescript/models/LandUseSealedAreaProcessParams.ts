@@ -10,15 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
+import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
 import { Response } from '../models/Response';
 import { HttpFile } from '../http/http';
 
 /**
-* Process execution (Biodiversity Sensitive Areas – ESRS E4-5)
+* Process execution (Land Use Sealed Area – ESRS E4-5)
 */
-export class BiodiversitySensitiveAreasProcessParams {
-    'inputs': BiodiversitySensitiveAreasProcessInputs;
+export class LandUseSealedAreaProcessParams {
+    'inputs': LandUseSealedAreaProcessInputs;
     'outputs'?: { [key: string]: any; };
     'response'?: Response;
 
@@ -30,7 +30,7 @@ export class BiodiversitySensitiveAreasProcessParams {
         {
             "name": "inputs",
             "baseName": "inputs",
-            "type": "BiodiversitySensitiveAreasProcessInputs",
+            "type": "LandUseSealedAreaProcessInputs",
             "format": ""
         },
         {
@@ -47,7 +47,7 @@ export class BiodiversitySensitiveAreasProcessParams {
         }    ];
 
     static getAttributeTypeMap() {
-        return BiodiversitySensitiveAreasProcessParams.attributeTypeMap;
+        return LandUseSealedAreaProcessParams.attributeTypeMap;
     }
 
     public constructor() {

@@ -6,8 +6,8 @@ use crate::{
     handler,
     jobs::JobHandler,
     processes::{
-        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, NDVIProcess,
-        ProcessesOpenApiSpec,
+        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, LandUseSealedAreaProcess,
+        NDVIProcess, ProcessesOpenApiSpec,
     },
     state::spawn_with_user,
 };
@@ -38,7 +38,11 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .get_openapi_mut()
         .merge(ProcessesOpenApiSpec::openapi());
 
-    let mut processors: Vec<Box<dyn Processor>> = vec![Box::new(Echo), Box::new(NDVIProcess)];
+    let mut processors: Vec<Box<dyn Processor>> = vec![
+        Box::new(Echo),
+        Box::new(NDVIProcess),
+        Box::new(LandUseSealedAreaProcess),
+    ];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
     add_biodiversity_sensitive_areas_process(&mut processors, db_pool.clone()).await;
 

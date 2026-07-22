@@ -67,6 +67,12 @@ import { IntegerField } from '../models/IntegerField';
 import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
+import { JsonInputMediaType } from '../models/JsonInputMediaType';
+import { JsonInputPreviousLandUseSummary } from '../models/JsonInputPreviousLandUseSummary';
+import { JsonInputPreviousLandUseSummaryValue } from '../models/JsonInputPreviousLandUseSummaryValue';
+import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
+import { LandUseSealedAreaProcessOutputs } from '../models/LandUseSealedAreaProcessOutputs';
+import { LandUseSealedAreaProcessParams } from '../models/LandUseSealedAreaProcessParams';
 import { LandingPage } from '../models/LandingPage';
 import { License } from '../models/License';
 import { Link } from '../models/Link';
@@ -245,6 +251,15 @@ export interface ProcessesApiExecuteHabitatDistanceRequest {
     habitatDistanceProcessParams: HabitatDistanceProcessParams
 }
 
+export interface ProcessesApiExecuteLandUseSealedAreaRequest {
+    /**
+     * 
+     * @type LandUseSealedAreaProcessParams
+     * @memberof ProcessesApiexecuteLandUseSealedArea
+     */
+    landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams
+}
+
 export interface ProcessesApiExecuteNdviRequest {
     /**
      * 
@@ -373,6 +388,20 @@ export class ObjectProcessesApi {
      */
     public executeHabitatDistance(param: ProcessesApiExecuteHabitatDistanceRequest, options?: ConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
         return this.api.executeHabitatDistance(param.habitatDistanceProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeLandUseSealedAreaWithHttpInfo(param: ProcessesApiExecuteLandUseSealedAreaRequest, options?: ConfigurationOptions): Promise<HttpInfo<LandUseSealedAreaProcessOutputs>> {
+        return this.api.executeLandUseSealedAreaWithHttpInfo(param.landUseSealedAreaProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeLandUseSealedArea(param: ProcessesApiExecuteLandUseSealedAreaRequest, options?: ConfigurationOptions): Promise<LandUseSealedAreaProcessOutputs> {
+        return this.api.executeLandUseSealedArea(param.landUseSealedAreaProcessParams,  options).toPromise();
     }
 
     /**

@@ -21,3 +21,6 @@ base_url = "http://localhost:3030/api"
 [logging]
 # Possible values: "off", "error", "warn", "info", "debug",
 level = "info"
+
+[data_ids]
+land_use_imperviousness_builtup = "land_use_impervious_built_up"

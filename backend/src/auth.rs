@@ -3,7 +3,10 @@ use std::convert::Infallible;
 use crate::{
     config::CONFIG,
     const_concat,
-    processes::{BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, NDVIProcess},
+    processes::{
+        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, LandUseSealedAreaProcess,
+        NDVIProcess,
+    },
     state::USER,
     util::{Secret, error_response},
 };
@@ -135,6 +138,7 @@ impl<S> GeoEngineAuthMiddleware<S> {
                     const_concat!("/processes/", NDVIProcess::ID),
                     const_concat!("/processes/", BiodiversitySensitiveAreasProcess::ID),
                     const_concat!("/processes/", HabitatDistanceProcess::ID),
+                    const_concat!("/processes/", LandUseSealedAreaProcess::ID),
                 ],
                 prefix: vec!["/api", "/swagger", "/auth/"],
             },
@@ -368,7 +372,7 @@ mod tests {
         );
 
         let mut configuration = configuration::Configuration::new();
-        configuration.base_path = server.url_str("");
+        configuration.base_path = server.url_str("/");
         let mut middleware =
             GeoEngineAuthMiddleware::from_configuration(mock_inner_outputs_user(), configuration);
 
@@ -428,7 +432,7 @@ mod tests {
         );
 
         let mut configuration = configuration::Configuration::new();
-        configuration.base_path = server.url_str("");
+        configuration.base_path = server.url_str("/");
         let mut middleware =
             GeoEngineAuthMiddleware::from_configuration(mock_inner_outputs_user(), configuration);
 

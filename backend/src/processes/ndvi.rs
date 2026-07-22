@@ -43,7 +43,7 @@ use crate::{
     config::CONFIG,
     processes::parameters::{Month, PointGeoJsonInput, Year},
     state::USER,
-    util::{error_response, to_api_workflow},
+    util::{error_response, to_api_vector_process},
 };
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
@@ -376,7 +376,7 @@ async fn compute_ndvi(
             });
         }
     };
-    let workflow = to_api_workflow(&VectorOperator::RasterVectorJoin(
+    let workflow = to_api_vector_process(&VectorOperator::RasterVectorJoin(
         RasterVectorJoin {
             r#type: Default::default(),
             params: RasterVectorJoinParameters {
@@ -803,7 +803,7 @@ mod tests {
 
         // Build API configuration pointing to the mock server
         let mut api_config = ApiConfiguration::new();
-        api_config.base_path = server.url_str("");
+        api_config.base_path = server.url_str("/");
 
         // Call compute_ndvi with both outputs requested
         let coordinates = PointType::from((12.34, 56.78));
