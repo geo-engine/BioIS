@@ -5,7 +5,7 @@ import { CreateComponent } from './create.component';
 import { inputBinding } from '@angular/core';
 import { mockResizeObserverClass } from '../util/resize-signal.spec';
 
-describe('CreateNewAutoComponent', () => {
+describe('CreateComponent', () => {
   let component: CreateComponent;
   let fixture: ComponentFixture<CreateComponent>;
 

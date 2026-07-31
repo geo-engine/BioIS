@@ -278,7 +278,7 @@ mod tests {
         let time_interval = TimeDescriptor {
             bounds: Some(Some(Box::new(geoengine_api_client::models::TimeInterval {
                 start: 1_609_459_200_000, // 2021-01-01T00:00:00Z
-                end: 1_672_540_800_000,   // 2023-01-01T00:00:00Z - EXCUSIVE!
+                end: 1_672_540_800_000,   // 2023-01-01T00:00:00Z - EXCLUSIVE!
             }))),
             ..Default::default()
         };

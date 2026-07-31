@@ -397,7 +397,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_sets_up_tracing_andspawns_blocking_task_with_preserved_span() {
+    async fn it_sets_up_tracing_and_spawns_blocking_task_with_preserved_span() {
         fn current_span_name() -> String {
             tracing::Span::current()
                 .metadata()

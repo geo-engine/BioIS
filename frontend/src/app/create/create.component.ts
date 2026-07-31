@@ -210,12 +210,9 @@ function outputsForRequest(outputs: Record<string, boolean>): Record<string, Out
  * @returns A new object containing only the defined inputs.
  */
 function inputsForRequest(inputs: Record<string, unknown>): Record<string, Input> {
-  for (const key of Object.keys(inputs)) {
-    if (isNullOrUndefined(inputs[key])) {
-      delete inputs[key];
-    }
-  }
-  return inputs;
+  return Object.fromEntries(
+    Object.entries(inputs).filter(([_, value]) => !isNullOrUndefined(value)),
+  );
 }
 
 function availableFieldsForRelativeJsonPointers(
