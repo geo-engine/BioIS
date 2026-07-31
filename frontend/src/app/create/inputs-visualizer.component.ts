@@ -147,7 +147,6 @@ import { isNullOrUndefined } from '../util/assertions';
       }
     `,
   ],
-  standalone: true,
   imports: [
     CommonModule,
     FormField,

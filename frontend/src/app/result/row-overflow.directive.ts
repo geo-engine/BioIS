@@ -10,7 +10,6 @@ import {
 
 @Directive({
   selector: '[appRowOverflow]',
-  standalone: true,
   exportAs: 'rowOverflow',
 })
 export class RowOverflowDirective {
