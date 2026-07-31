@@ -293,7 +293,7 @@ export function defaultInput(
   { type, schema, children, optional }: InputDescription,
   { ignoreOptional }: { ignoreOptional?: boolean } = { ignoreOptional: false },
 ): Input {
-  if (optional && !ignoreOptional) return null;
+  if (optional && !ignoreOptional) return null; // validator does not accept `undefined`
 
   switch (type) {
     case FieldType.Number:

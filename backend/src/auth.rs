@@ -173,22 +173,23 @@ where
     }
 
     fn call(&mut self, request: Request) -> Self::Future {
-        if self.path_is_whitelisted(request.uri().path()) {
-            return Box::pin(self.inner.call(request));
-        }
+        let auth_header = match bearer_token_from_header(request.headers()) {
+            Ok(auth_header) => auth_header,
+            Err(_) if self.path_is_whitelisted(request.uri().path()) => {
+                return Box::pin(self.inner.call(request));
+            }
+            Err(error) => {
+                let status = StatusCode::UNAUTHORIZED;
+                let exception = Exception::new_from_status(status.as_u16()).detail(error);
+                return Box::pin(
+                    async move { Ok((status, exception.to_string()).into_response()) },
+                );
+            }
+        };
 
         let mut inner = self.inner.clone();
         let mut configuration = self.configuration.clone();
         Box::pin(async move {
-            let auth_header = match bearer_token_from_header(request.headers()) {
-                Ok(auth_header) => auth_header,
-                Err(error) => {
-                    let status = StatusCode::UNAUTHORIZED;
-                    let exception = Exception::new_from_status(status.as_u16()).detail(error);
-                    return Ok((status, exception.to_string()).into_response());
-                }
-            };
-
             configuration.bearer_access_token = Some(auth_header.into());
 
             let session = match session_handler(&configuration).await {

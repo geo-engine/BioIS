@@ -110,12 +110,16 @@ pub fn year_range_from_time_descriptor(time_descriptor: &TimeDescriptor) -> Resu
         .and_then(Option::as_ref)
         .context("Missing time information")?;
 
-    let start = DateTime::<Utc>::from_timestamp_millis(time_interval.start)
+    let start_inclusive = DateTime::<Utc>::from_timestamp_millis(time_interval.start)
         .context("Invalid start time")?;
-    let end =
+    let end_exclusive =
         DateTime::<Utc>::from_timestamp_millis(time_interval.end).context("Invalid end time")?;
 
-    Ok((Year(start.year() as u16), Year(end.year() as u16)))
+    let start_year = start_inclusive.year() as u16;
+    let end_year_exclusive = end_exclusive.year() as u16;
+    let end_year_inclusive = end_year_exclusive.saturating_sub(1).max(start_year);
+
+    Ok((Year::new(start_year), Year::new(end_year_inclusive)))
 }
 
 pub fn set_min_max_in_schema(schema: &mut schemars::Schema, min: i64, max: i64) -> Result<()> {
@@ -274,7 +278,7 @@ mod tests {
         let time_interval = TimeDescriptor {
             bounds: Some(Some(Box::new(geoengine_api_client::models::TimeInterval {
                 start: 1_609_459_200_000, // 2021-01-01T00:00:00Z
-                end: 1_640_995_200_000,   // 2022-01-01T00:00:00Z
+                end: 1_672_540_800_000,   // 2023-01-01T00:00:00Z - EXCUSIVE!
             }))),
             ..Default::default()
         };

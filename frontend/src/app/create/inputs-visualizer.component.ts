@@ -189,15 +189,10 @@ export class InputsFormComponent {
   });
 
   toggleOptionalField(checked: boolean, inputDescription: InputDescription): void {
-    let value = undefined;
-
-    if (checked) {
-      // `Input` consists of `any` type
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      value = defaultInput(inputDescription, { ignoreOptional: true });
-    }
-
-    this.updateFormField.emit({ key: inputDescription.key, value });
+    this.updateFormField.emit({
+      key: inputDescription.key,
+      value: defaultInput(inputDescription, { ignoreOptional: checked }),
+    });
   }
 
   asPrimitiveInput(
