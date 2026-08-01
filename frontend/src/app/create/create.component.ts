@@ -23,7 +23,6 @@ import { LongTextComponent } from '../util/long-text.component';
 import { PageTitleComponent } from '../navigation/page-title.component';
 import { InputsFormComponent } from './inputs-visualizer.component';
 import { MatError } from '@angular/material/select';
-import { MatIcon } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   FieldType,
@@ -33,17 +32,18 @@ import {
   defaultInputs,
 } from './schema-info';
 import { assertNever, isNullOrUndefined } from '../util/assertions';
+import { InfoIconComponent } from '../util/info-icon.component';
 
 @Component({
   selector: 'app-create',
   imports: [
     CommonModule,
+    InfoIconComponent,
     InputsFormComponent,
     LongTextComponent,
     MatButtonModule,
     MatCheckboxModule,
     MatError,
-    MatIcon,
     MatTooltipModule,
     PageTitleComponent,
   ],

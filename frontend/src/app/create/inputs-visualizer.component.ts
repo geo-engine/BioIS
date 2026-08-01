@@ -13,7 +13,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { FeatureCollectionGeoJsonInput, PointGeoJsonInput } from '@geoengine/biois';
-import { MatIcon } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { processName } from '../util/processes';
 import { type JSONSchema } from 'ya-json-schema-types';
@@ -21,20 +20,29 @@ import { SimpleFormFieldComponent } from './simple-form-field';
 import { GeoJsonFormFieldComponent } from './geo-json-field.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { isNullOrUndefined } from '../util/assertions';
+import { InfoIconComponent } from '../util/info-icon.component';
 
 @Component({
   selector: 'app-inputs-form',
   template: `
     @for (input of inputs(); track input.key) {
       <p>
+        <ng-template #fieldInfo>
+          <span class="padding">{{ input.title }}</span>
+          @if (input.description) {
+            <app-info-icon [description]="input.description" />
+          }
+        </ng-template>
         @if (input.optional) {
           <mat-slide-toggle
+            labelPosition="after"
             [checked]="isFieldSet()[input.key]"
             (change)="toggleOptionalField($event.checked, input)"
-          ></mat-slide-toggle>
+            ><ng-container *ngTemplateOutlet="fieldInfo"
+          /></mat-slide-toggle>
+        } @else {
+          <ng-container *ngTemplateOutlet="fieldInfo" />
         }
-        <span class="padding">{{ input.title }}</span>
-        <mat-icon [matTooltip]="input.description">info</mat-icon>
       </p>
       @if (!input.optional || isFieldSet()[input.key]) {
         @switch (input.type) {
@@ -151,8 +159,8 @@ import { isNullOrUndefined } from '../util/assertions';
     CommonModule,
     FormField,
     GeoJsonFormFieldComponent,
+    InfoIconComponent,
     MatFormFieldModule,
-    MatIcon,
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,

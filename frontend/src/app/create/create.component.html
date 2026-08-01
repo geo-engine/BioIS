@@ -23,7 +23,7 @@
         >{{ output.title }}</mat-checkbox
       >
       @if (output.description) {
-        <mat-icon [matTooltip]="output.description">info</mat-icon>
+        <app-info-icon [description]="output.description" />
       }
     }
 

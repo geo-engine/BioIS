@@ -131,6 +131,14 @@ function typeFromSchema(schema: JSONSchema | undefined): FieldType {
 }
 
 function isOptional(schema: JSONSchema | undefined): boolean {
+  function anySubSchemaIsNull(subSchemas: JSONSchema[] | undefined): boolean {
+    if (!subSchemas) return false;
+    for (const subSchema of subSchemas) {
+      if (typeof subSchema === 'object' && subSchema.type === 'null') return true;
+    }
+    return false;
+  }
+
   if (!schema) return true;
 
   if (typeof schema === 'boolean') return false; // boolean schemas don't have a concept of optionality
@@ -138,14 +146,9 @@ function isOptional(schema: JSONSchema | undefined): boolean {
   // Check for nullable types
   if (Array.isArray(schema.type) && schema.type.includes('null')) return true;
 
-  // Check for anyOf with null type
-  if (schema.anyOf && Array.isArray(schema.anyOf)) {
-    for (const subSchema of schema.anyOf as JSONSchema[]) {
-      if (typeof subSchema === 'object' && subSchema.type === 'null') {
-        return true;
-      }
-    }
-  }
+  // Check for sub-schemas with null type
+  if (anySubSchemaIsNull(schema.anyOf as JSONSchema[] | undefined)) return true;
+  if (anySubSchemaIsNull(schema.oneOf as JSONSchema[] | undefined)) return true;
 
   return false;
 }
