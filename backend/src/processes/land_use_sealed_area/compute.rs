@@ -576,13 +576,13 @@ fn build_sealed_area_vector_operator(upload_data_id: String) -> ComputeOperators
                 value: AREA_COLUMN_NAME.to_string(),
             }))),
             geometry_column_name: Some("geom".into()),
-            output_measurement: Box::new(Measurement::Continuous(Box::new(
+            output_measurement: Some(Box::new(Measurement::Continuous(Box::new(
                 ContinuousMeasurement {
                     r#type: Default::default(),
                     measurement: "area".into(),
                     unit: Some(Some("m²".into())),
                 },
-            ))),
+            )))),
         }),
         sources: Box::new(SingleVectorSource {
             vector: Box::new(locations_with_sealed_area),

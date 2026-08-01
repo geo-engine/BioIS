@@ -67,7 +67,7 @@ diesel-async = { version = "0.9", features = ["migrations", "postgres", "bb8"] }
 diesel-derive-enum = { version = "3.0.0-beta.1", features = ["postgres"] }
 futures = "0.3"
 geo-types = "0.7"
-geoengine-api-client = { git = "https://github.com/geo-engine/geoengine", branch = "feat/vector-expression-api-model" }
+geoengine-api-client = "0.9.3"
 geojson = "1.0"
 indoc = "2.0"
 nom = "8.0"

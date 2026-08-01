@@ -1362,8 +1362,9 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.9.2"
-source = "git+https://github.com/geo-engine/geoengine?branch=feat%2Fvector-expression-api-model#34ee30cda28e016464a06125a05118578995cd75"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1042b3cd1f58af298728be1b101fa78b4bf558828fe770c1a8d1fb7740142c9d"
 dependencies = [
  "reqwest",
  "serde",
