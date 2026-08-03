@@ -7,8 +7,8 @@ use crate::{
         },
         parameters::{
             Area, BoundingBox, DocumentationSource, FeatureCollectionGeoJsonInput,
-            GeoJsonFeatureCollection, SquareMeter, Year, geojson_feature_collection_utils,
-            geojson_feature_utils,
+            GeoJsonFeatureCollection, Percentage, SquareMeter, Year,
+            geojson_feature_collection_utils, geojson_feature_utils,
         },
         util::{
             raster_result_descriptor, vector_result_descriptor, year_range_from_time_descriptor,
@@ -446,10 +446,13 @@ pub fn compute_summary_from_sites(
 
 /// Helper function to calculate percentage change between two areas.
 /// If the previous value is None or zero, returns None to avoid division by zero.
-fn calculate_percentage_change(previous: Option<SquareMeter>, current: SquareMeter) -> Option<f64> {
+fn calculate_percentage_change(
+    previous: Option<SquareMeter>,
+    current: SquareMeter,
+) -> Option<Percentage> {
     match previous {
         None | Some(SquareMeter(0.0)) => None, // Avoid division by zero
-        Some(previous) => Some(((current - previous) / previous) * 100.),
+        Some(previous) => Some(Percentage::from_fraction((current - previous) / previous)),
     }
 }
 
@@ -636,6 +639,8 @@ pub async fn compute_documentation_sources(
 
 #[cfg(test)]
 mod tests {
+    use approx::assert_abs_diff_eq;
+
     use super::*;
     use crate::processes::parameters::UnitForArea;
 
@@ -643,11 +648,15 @@ mod tests {
     fn it_calculates_percentage_change() {
         // Normal case: positive change
         let result = calculate_percentage_change(Some(SquareMeter(100.0)), SquareMeter(150.0));
-        assert_eq!(result, Some(50.0));
+        assert_eq!(result, Some(Percentage::from_percent(50.0)));
 
         // Normal case: negative change
         let result = calculate_percentage_change(Some(SquareMeter(150.0)), SquareMeter(100.0));
-        assert_eq!(result, Some(-33.333_333_333_333_33));
+        assert_abs_diff_eq!(
+            result.unwrap().as_fraction(),
+            Percentage::from_percent(-33.333_333_333_333_33).as_fraction(),
+            epsilon = 1e-12
+        );
 
         // No previous data
         let result = calculate_percentage_change(None, SquareMeter(100.0));
@@ -701,7 +710,10 @@ mod tests {
             summary.total_sealed_area.reporting_year,
             SquareMeter(1300.0)
         );
-        assert_eq!(summary.total_sealed_area.percentage_change, Some(30.0));
+        assert_eq!(
+            summary.total_sealed_area.percentage_change,
+            Some(Percentage::from_percent(30.0))
+        );
 
         // Nature on-site: 300, previous = 250
         assert_eq!(
@@ -710,7 +722,7 @@ mod tests {
         );
         assert_eq!(
             summary.total_nature_on_site_area.percentage_change,
-            Some(20.0)
+            Some(Percentage::from_percent(20.0))
         );
 
         // Nature off-site: 200, no previous data
@@ -725,9 +737,14 @@ mod tests {
             summary.total_use_of_land.reporting_year,
             SquareMeter(3500.0)
         );
-        assert_eq!(
-            summary.total_use_of_land.percentage_change,
-            Some(16.666_666_666_666_664)
+        assert_abs_diff_eq!(
+            summary
+                .total_use_of_land
+                .percentage_change
+                .unwrap()
+                .as_fraction(),
+            Percentage::from_percent(16.666_666_666_666_664).as_fraction(),
+            epsilon = 1e-12
         );
     }
 

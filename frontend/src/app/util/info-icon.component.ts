@@ -12,8 +12,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   selector: 'app-info-icon',
   template: `
-    <mat-icon [matTooltip]="description()">info</mat-icon
-    ><span class="cdk-visually-hidden">{{ description() }}</span>
+    <mat-icon
+      [matTooltip]="description()"
+      [attr.aria-label]="description()"
+      tabindex="0"
+      role="button"
+      >info</mat-icon
+    >
   `,
   styles: [
     `

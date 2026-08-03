@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use utoipa::ToSchema;
 
 pub use data_resource::{
-    DataResource, DataResourceSchema, Fields, TableSchemaField, TableSchemaItemType,
-    TableSchemaType,
+    DataResource, DataResourceSchema, Fields, HasTableSchemaType, TableSchemaField,
+    TableSchemaItemType, TableSchemaType,
 };
 #[cfg(test)]
 pub use geo_json::GeoJsonInputMediaType;
@@ -21,7 +21,7 @@ pub use geo_json::{
 };
 #[cfg(test)]
 pub use units::Hectare;
-pub use units::{Area, Kilometers, Month, SquareMeter, UnitForArea, Year};
+pub use units::{Area, Kilometers, Month, Percentage, SquareMeter, UnitForArea, Year};
 
 mod data_resource;
 mod geo_json;

@@ -1149,25 +1149,25 @@ mod tests {
                                 "landUseType": "Total sealed area",
                                 "previousYear": 1500.0,
                                 "reportingYear": 4492.92,
-                                "percentageChange": 199.528
+                                "percentageChange": "199.53 %"
                             },
                             {
                                 "landUseType": "Total nature-oriented area on-site",
                                 "previousYear": 200.0,
                                 "reportingYear": 500.0,
-                                "percentageChange": 150.0
+                                "percentageChange": "150 %"
                             },
                             {
                                 "landUseType": "Total nature-oriented area off-site",
                                 "previousYear": 800.0,
                                 "reportingYear": 3000.0,
-                                "percentageChange": 275.0
+                                "percentageChange": "275 %"
                             },
                             {
                                 "landUseType": "Total use of land",
                                 "previousYear": 2500.0,
                                 "reportingYear": 8800.0,
-                                "percentageChange": 252.0
+                                "percentageChange": "252 %"
                             }
                         ],
                         "schema": {
@@ -1189,7 +1189,7 @@ mod tests {
                                 },
                                 {
                                     "name": "percentageChange",
-                                    "type": "number",
+                                    "type": "string",
                                     "title": "% change"
                                 }
                             ],

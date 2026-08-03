@@ -189,17 +189,23 @@ function retrieveSubSchema(
 }
 
 function getActualObjectSchema(schema: JSONSchema, rootSchema: JSONSchema): JSONSchema {
+  function subSchemaType(subSchemas: JSONSchema[] | undefined): JSONSchema | undefined {
+    if (!subSchemas) return undefined;
+    for (const subSchema of subSchemas) {
+      if (typeof subSchema !== 'object' || subSchema.type === 'null') continue;
+      const resolved = resolveSchemaRef(rootSchema, subSchema);
+      return getActualObjectSchema(resolved, rootSchema);
+    }
+    return undefined;
+  }
+
   if (!schema || typeof schema !== 'object') return schema;
 
-  // Handle anyOf - find the non-null type
-  if (schema.anyOf && Array.isArray(schema.anyOf)) {
-    for (const item of schema.anyOf as JSONSchema[]) {
-      if (typeof item === 'object' && item.type !== 'null') {
-        const resolved = resolveSchemaRef(rootSchema, item);
-        return getActualObjectSchema(resolved, rootSchema);
-      }
-    }
-  }
+  // Handle sub schemas (anyOf, oneOf) - find the non-null type
+  let subSchema = subSchemaType(schema.anyOf as JSONSchema[] | undefined);
+  if (subSchema) return subSchema;
+  subSchema = subSchemaType(schema.oneOf as JSONSchema[] | undefined);
+  if (subSchema) return subSchema;
 
   // Handle $ref at top level
   if (schema.$ref && typeof schema.$ref === 'string') {

@@ -22,7 +22,6 @@ import { marked } from 'marked';
 import { LongTextComponent } from '../util/long-text.component';
 import { PageTitleComponent } from '../navigation/page-title.component';
 import { InputsFormComponent } from './inputs-visualizer.component';
-import { MatError } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   FieldType,
@@ -33,6 +32,7 @@ import {
 } from './schema-info';
 import { assertNever, isNullOrUndefined } from '../util/assertions';
 import { InfoIconComponent } from '../util/info-icon.component';
+import { MatError } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-create',

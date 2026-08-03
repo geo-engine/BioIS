@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::ops::{Add, AddAssign, Deref, Div, Mul, Sub};
 use utoipa::ToSchema;
 
+use crate::processes::parameters::{TableSchemaType, data_resource::HasTableSchemaType};
+
 /// Area in square meters
 #[derive(
     Deserialize, Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema, Copy, Clone,
@@ -174,6 +176,126 @@ impl Area {
         match self {
             Area::Hectare(Hectare(v)) | Area::SquareMeter(SquareMeter(v)) => *v,
         }
+    }
+}
+
+/// Percentage value, e.g. of change. Stores it as the plain value, e.g. 0.23 for 23%, but serializes it as a string with a percent sign, e.g. "23 %".
+#[derive(Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq, AbsDiffEq)]
+#[schemars(example = Percentage(23.0))]
+pub struct Percentage(f64);
+
+impl Percentage {
+    /// Creates a Percentage from a whole number (e.g., 23.0 for 23%)
+    pub fn from_percent(percent: f64) -> Self {
+        Self(percent / 100.0)
+    }
+
+    /// Creates a Percentage directly from a fraction (e.g., 0.23 for 23%)
+    pub fn from_fraction(fraction: f64) -> Self {
+        Self(fraction)
+    }
+
+    /// Returns the normalized decimal fraction (0.23) for math operations
+    pub fn as_fraction(self) -> f64 {
+        self.0
+    }
+
+    /// Returns the percentage scalar (23.0) for display/logging
+    pub fn as_percent(self) -> f64 {
+        self.0 * 100.0
+    }
+
+    /// Helper to apply the percentage directly to a value
+    pub fn apply_to(self, value: f64) -> f64 {
+        value * self.0
+    }
+}
+
+impl Serialize for Percentage {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let value = self.as_percent();
+        let mut formatted = format!("{value:.2}")
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string();
+        formatted.push_str(" %");
+        serializer.serialize_str(&formatted)
+    }
+}
+
+impl<'de> Deserialize<'de> for Percentage {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Visitor;
+
+        struct PercentageVisitor;
+
+        impl Visitor<'_> for PercentageVisitor {
+            type Value = Percentage;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a percentage value as a string like '23 %' or a number")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Percentage, E>
+            where
+                E: serde::de::Error,
+            {
+                // Remove leading/trailing whitespace
+                let trimmed = value.trim();
+                // Remove trailing % and whitespace
+                let without_percent = trimmed
+                    .trim_end_matches(|c: char| c == '%' || c.is_whitespace())
+                    .trim_end();
+
+                without_percent
+                    .parse::<f64>()
+                    .map(Percentage::from_percent)
+                    .map_err(|_| E::custom("expected a number followed by optional %"))
+            }
+
+            fn visit_string<E>(self, value: String) -> Result<Percentage, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(&value)
+            }
+
+            fn visit_f64<E>(self, value: f64) -> Result<Percentage, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Percentage::from_percent(value))
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<Percentage, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Percentage::from_percent(value as f64))
+            }
+        }
+
+        deserializer.deserialize_any(PercentageVisitor)
+    }
+}
+
+impl Deref for Percentage {
+    type Target = f64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl HasTableSchemaType for Percentage {
+    fn table_schema_type() -> TableSchemaType {
+        TableSchemaType::String // Represented as a string with a percent sign in the table schema
     }
 }
 
@@ -365,5 +487,47 @@ mod tests {
         let ha: Hectare = sqm.into();
         let sqm_back: SquareMeter = ha.into();
         assert_abs_diff_eq!(sqm_back, sqm, epsilon = 0.0001);
+    }
+
+    #[test]
+    fn it_serializes_and_deserializes_percentage_as_string_with_percent_sign() {
+        // Test integer-like value
+        let percentage = Percentage::from_percent(23.0);
+        let serialized = serde_json::to_string(&percentage).unwrap();
+        assert_eq!(serialized, "\"23 %\"");
+
+        let deserialized: Percentage = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, Percentage::from_percent(23.0));
+
+        // Test with one decimal
+        let percentage_decimal = Percentage::from_percent(42.5);
+        let serialized_decimal = serde_json::to_string(&percentage_decimal).unwrap();
+        assert_eq!(serialized_decimal, "\"42.5 %\"");
+        let deserialized_decimal: Percentage = serde_json::from_str(&serialized_decimal).unwrap();
+        assert_eq!(deserialized_decimal, Percentage::from_percent(42.5));
+
+        // Test with two decimals
+        let percentage_two_decimals = Percentage::from_percent(33.33);
+        let serialized_two = serde_json::to_string(&percentage_two_decimals).unwrap();
+        assert_eq!(serialized_two, "\"33.33 %\"");
+
+        // Test truncation to 2 decimal places
+        let percentage_many_decimals = Percentage::from_percent(42.12345);
+        let serialized_truncated = serde_json::to_string(&percentage_many_decimals).unwrap();
+        assert_eq!(serialized_truncated, "\"42.12 %\"");
+
+        // Test deserialization with various formats
+        assert_eq!(
+            serde_json::from_str::<Percentage>("\"15 %\"").unwrap(),
+            Percentage::from_percent(15.0)
+        );
+        assert_eq!(
+            serde_json::from_str::<Percentage>("\"15%\"").unwrap(),
+            Percentage::from_percent(15.0)
+        );
+        assert_eq!(
+            serde_json::from_str::<Percentage>("\" 15 % \"").unwrap(),
+            Percentage::from_percent(15.0)
+        );
     }
 }

@@ -1,5 +1,6 @@
 use crate::processes::parameters::{
-    Area, DataResource, Fields, SquareMeter, TableSchemaField, TableSchemaType, UnitForArea,
+    Area, DataResource, Fields, HasTableSchemaType, Percentage, SquareMeter, TableSchemaField,
+    TableSchemaType, UnitForArea,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -15,7 +16,7 @@ pub struct LandUseSummaryRow {
     /// Reporting year
     pub reporting_year: SquareMeter,
     /// % change
-    pub percentage_change: Option<f64>,
+    pub percentage_change: Option<Percentage>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -51,7 +52,7 @@ pub struct LandUseSummaryRowOutput {
     /// Reporting year
     pub reporting_year: Area,
     /// % change
-    pub percentage_change: Option<f64>,
+    pub percentage_change: Option<Percentage>,
 }
 
 fn land_use_summary_row_to_output(
@@ -240,7 +241,7 @@ pub fn summary_to_data_resource(
                 },
                 TableSchemaField {
                     name: "percentageChange".into(),
-                    r#type: Some(TableSchemaType::Number),
+                    r#type: Some(Percentage::table_schema_type()),
                     title: Some("% change".into()),
                     ..Default::default()
                 },
@@ -331,7 +332,7 @@ mod tests {
             land_use_type: LandUseSummaryRowType::TotalSealedArea,
             previous_year: Some(SquareMeter(10000.0)),
             reporting_year: SquareMeter(15000.0),
-            percentage_change: Some(50.0),
+            percentage_change: Some(Percentage::from_percent(50.0)),
         };
         let output = land_use_summary_row_to_output(row, unit);
         assert_eq!(output.land_use_type, "Total sealed area");
@@ -415,7 +416,7 @@ mod tests {
                 land_use_type: LandUseSummaryRowType::TotalSealedArea,
                 previous_year: Some(SquareMeter(100.0)),
                 reporting_year: SquareMeter(150.0),
-                percentage_change: Some(50.0),
+                percentage_change: Some(Percentage::from_percent(50.0)),
             },
             total_nature_on_site_area: LandUseSummaryRow {
                 land_use_type: LandUseSummaryRowType::TotalNatureOnSiteArea,

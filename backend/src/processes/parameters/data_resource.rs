@@ -64,6 +64,11 @@ pub enum TableSchemaItemType {
     // TODO: more types
 }
 
+/// Trait that provides a method to get the table schema type of a struct.
+pub trait HasTableSchemaType {
+    fn table_schema_type() -> TableSchemaType;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
