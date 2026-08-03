@@ -158,7 +158,7 @@ mod tests {
         );
 
         let api_config = GeoEngineInstance {
-            base_url: Url::parse(&server.url_str("")).expect("valid url"),
+            base_url: Url::parse(&server.url_str("/")).expect("valid url"),
         }
         .api_config(None);
 

@@ -10,16 +10,17 @@
  * Do not edit the class manually.
  */
 
+import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
+import { Response } from '../models/Response';
 import { HttpFile } from '../http/http';
 
-export class SiteRow {
-    'location': string;
-    'areaHa': number;
-    /**
-    * Area in hectares
-    */
-    'biodiversitySensitiveAreaHa': number;
-    'specification': string;
+/**
+* Process execution (Land Use Sealed Area – ESRS E4-5)
+*/
+export class LandUseSealedAreaProcessParams {
+    'inputs': LandUseSealedAreaProcessInputs;
+    'outputs'?: { [key: string]: any; };
+    'response'?: Response;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -27,34 +28,30 @@ export class SiteRow {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "location",
-            "baseName": "location",
-            "type": "string",
+            "name": "inputs",
+            "baseName": "inputs",
+            "type": "LandUseSealedAreaProcessInputs",
             "format": ""
         },
         {
-            "name": "areaHa",
-            "baseName": "area_ha",
-            "type": "number",
-            "format": "double"
+            "name": "outputs",
+            "baseName": "outputs",
+            "type": "{ [key: string]: any; }",
+            "format": ""
         },
         {
-            "name": "biodiversitySensitiveAreaHa",
-            "baseName": "biodiversity_sensitive_area_ha",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "specification",
-            "baseName": "specification",
-            "type": "string",
+            "name": "response",
+            "baseName": "response",
+            "type": "Response",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return SiteRow.attributeTypeMap;
+        return LandUseSealedAreaProcessParams.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
+
+

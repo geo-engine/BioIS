@@ -9,6 +9,7 @@ use crate::processes::{
         BiodiversitySensitiveAreasProcessInputs, BiodiversitySensitiveAreasProcessOutputs,
     },
     habitat_distance::{HabitatDistanceProcessInputs, HabitatDistanceProcessOutputs},
+    land_use_sealed_area::{LandUseSealedAreaProcessInputs, LandUseSealedAreaProcessOutputs},
     ndvi::{NDVIProcessInputs, NDVIProcessOutputs},
 };
 use axum::Json;
@@ -60,7 +61,7 @@ pub struct HabitatDistanceProcessParams {
 )]
 fn execute_habitat_distance(Json(_input): Json<HabitatDistanceProcessParams>) {}
 
-/// Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)
+/// Process execution (Biodiversity Sensitive Areas – ESRS E4-5)
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(Deserialize, ToSchema, Debug)]
 pub struct BiodiversitySensitiveAreasProcessParams {
@@ -84,13 +85,35 @@ fn execute_biodiversity_sensitive_areas(
 ) {
 }
 
+/// Process execution (Land Use Sealed Area – ESRS E4-5)
+#[allow(unused, reason = "Placeholder for spec only")]
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct LandUseSealedAreaProcessParams {
+    pub inputs: LandUseSealedAreaProcessInputs,
+    #[serde(default)]
+    #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
+    pub outputs: HashMap<String, ()>,
+    #[serde(default)]
+    pub response: Response,
+}
+
+#[allow(unused, reason = "Placeholder for spec only")]
+#[utoipa::path(
+    post,
+    path = "/processes/land-use-sealed-area/execution",
+    tag = "Processes",
+    responses((status = OK, body = LandUseSealedAreaProcessOutputs))
+)]
+fn execute_land_use_sealed_area(Json(_input): Json<LandUseSealedAreaProcessParams>) {}
+
 /// OpenAPI extension to include process endpoints in the generated documentation
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(OpenApi)]
 #[openapi(paths(
     execute_ndvi,
     execute_habitat_distance,
-    execute_biodiversity_sensitive_areas
+    execute_biodiversity_sensitive_areas,
+    execute_land_use_sealed_area
 ))]
 pub struct ProcessesOpenApiSpec;
 

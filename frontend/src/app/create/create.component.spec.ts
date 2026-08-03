@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { Process, ProcessesApi } from '@geoengine/biois';
-import { CreateNewAutoComponent } from './create-new-auto.component';
+import { CreateComponent } from './create.component';
 import { inputBinding } from '@angular/core';
 import { mockResizeObserverClass } from '../util/resize-signal.spec';
 
-describe('CreateNewAutoComponent', () => {
-  let component: CreateNewAutoComponent;
-  let fixture: ComponentFixture<CreateNewAutoComponent>;
+describe('CreateComponent', () => {
+  let component: CreateComponent;
+  let fixture: ComponentFixture<CreateComponent>;
 
   beforeEach(async () => {
     globalThis.ResizeObserver = mockResizeObserverClass([]);
@@ -16,10 +16,10 @@ describe('CreateNewAutoComponent', () => {
     vi.spyOn(ProcessesApi.prototype, 'process').mockResolvedValue(ndviProcess());
 
     await TestBed.configureTestingModule({
-      imports: [CreateNewAutoComponent],
+      imports: [CreateComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CreateNewAutoComponent, {
+    fixture = TestBed.createComponent(CreateComponent, {
       bindings: [inputBinding('processId', () => 'ndvi')],
     });
     component = fixture.componentInstance;

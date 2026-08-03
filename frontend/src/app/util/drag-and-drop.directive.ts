@@ -2,7 +2,6 @@ import { Directive, output, signal } from '@angular/core';
 
 @Directive({
   selector: '[appDnd]',
-  standalone: true,
   host: {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     '[class.fileover]': 'isOver()',

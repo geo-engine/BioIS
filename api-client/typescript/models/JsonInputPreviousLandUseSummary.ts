@@ -10,20 +10,16 @@
  * Do not edit the class manually.
  */
 
+import { JsonInputMediaType } from '../models/JsonInputMediaType';
+import { JsonInputPreviousLandUseSummaryValue } from '../models/JsonInputPreviousLandUseSummaryValue';
 import { HttpFile } from '../http/http';
 
 /**
-* Documentation source for audit and provenance, e.g. a Geo Engine workflow or a scientific paper. This is included in the outputs of the process for traceability and auditing purposes.
+* Helper struct to define complex input specifications for processes.
 */
-export class DocumentationSource {
-    /**
-    * A human-readable identifier of the documentation source (e.g. \"Geo Engine workflow XYZ\")
-    */
-    'data': string;
-    /**
-    * A description, citation or URL pointing to the source of the documentation (e.g. a link to a Geo Engine workflow, or a scientific paper)
-    */
-    'documentationSource': string;
+export class JsonInputPreviousLandUseSummary {
+    'value': JsonInputPreviousLandUseSummaryValue;
+    'mediaType': JsonInputMediaType;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -31,22 +27,24 @@ export class DocumentationSource {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "data",
-            "baseName": "data",
-            "type": "string",
+            "name": "value",
+            "baseName": "value",
+            "type": "JsonInputPreviousLandUseSummaryValue",
             "format": ""
         },
         {
-            "name": "documentationSource",
-            "baseName": "documentation_source",
-            "type": "string",
+            "name": "mediaType",
+            "baseName": "mediaType",
+            "type": "JsonInputMediaType",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return DocumentationSource.attributeTypeMap;
+        return JsonInputPreviousLandUseSummary.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
+
+

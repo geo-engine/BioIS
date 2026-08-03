@@ -12,6 +12,6 @@
 
 import { HttpFile } from '../http/http';
 
-export enum PointGeoJsonInputMediaType {
-    ApplicationGeojson = 'application/geo+json'
+export enum JsonInputMediaType {
+    ApplicationJson = 'application/json'
 }

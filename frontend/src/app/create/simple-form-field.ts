@@ -9,9 +9,9 @@ import {
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormValueControl, ValidationError, WithOptionalFieldTree } from '@angular/forms/signals';
-import { FieldType } from './create-new-auto.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInput, MatInputModule } from '@angular/material/input';
+import { FieldType } from './schema-info';
 
 @Component({
   selector: 'app-simple-form-field',

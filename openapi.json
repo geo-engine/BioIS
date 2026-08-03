@@ -691,6 +691,36 @@
           }
         }
       }
+    },
+    "/processes/land-use-sealed-area/execution": {
+      "post": {
+        "tags": [
+          "Processes"
+        ],
+        "operationId": "execute_land_use_sealed_area",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LandUseSealedAreaProcessParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandUseSealedAreaProcessOutputs"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -847,7 +877,7 @@
       },
       "BiodiversitySensitiveAreasProcessParams": {
         "type": "object",
-        "description": "Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)",
+        "description": "Process execution (Biodiversity Sensitive Areas – ESRS E4-5)",
         "required": [
           "inputs"
         ],
@@ -1221,6 +1251,188 @@
         "enum": [
           "process"
         ]
+      },
+      "JsonInputMediaType": {
+        "type": "string",
+        "enum": [
+          "application/json"
+        ]
+      },
+      "JsonInput_PreviousLandUseSummary": {
+        "type": "object",
+        "description": "Helper struct to define complex input specifications for processes.",
+        "required": [
+          "value",
+          "mediaType"
+        ],
+        "properties": {
+          "value": {
+            "type": "object",
+            "description": "If the previous year data is available, it will be used to calculate the percentage change for each land use category.",
+            "required": [
+              "totalSealedArea",
+              "totalNatureOnSiteArea",
+              "totalNatureOffSiteArea",
+              "totalUseOfLand",
+              "unitForArea"
+            ],
+            "properties": {
+              "totalSealedArea": {
+                "type": "number",
+                "format": "double",
+                "description": "Total sealed area"
+              },
+              "totalNatureOnSiteArea": {
+                "type": "number",
+                "format": "double",
+                "description": "Total nature-oriented area on-site"
+              },
+              "totalNatureOffSiteArea": {
+                "type": "number",
+                "format": "double",
+                "description": "Total nature-oriented area off-site"
+              },
+              "totalUseOfLand": {
+                "type": "number",
+                "format": "double",
+                "description": "Total use of land"
+              },
+              "unitForArea": {
+                "$ref": "#/components/schemas/UnitForArea",
+                "description": "Unit for area values (e.g., \"ha\" for hectares, \"m²\" for square meters)"
+              }
+            }
+          },
+          "mediaType": {
+            "$ref": "#/components/schemas/JsonInputMediaType"
+          }
+        }
+      },
+      "LandUseSealedAreaProcessInputs": {
+        "type": "object",
+        "required": [
+          "sites",
+          "locationNameField",
+          "siteTypeField",
+          "unitForArea",
+          "year"
+        ],
+        "properties": {
+          "sites": {
+            "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput",
+            "description": "`GeoJSON` `FeatureCollection` representing sites to analyze for land-use calculation."
+          },
+          "locationNameField": {
+            "$ref": "#/components/schemas/RelativeJsonPointer",
+            "description": "Property name in the features that contains the location/site name."
+          },
+          "siteTypeField": {
+            "$ref": "#/components/schemas/RelativeJsonPointer",
+            "description": "Property name in the features that contains the site type (e.g., \"site\", \"natureOnSite\", \"natureOffSite\")."
+          },
+          "unitForArea": {
+            "$ref": "#/components/schemas/UnitForArea",
+            "description": "Unit for area measurement, with options for hectares (ha) or square meters (m²)."
+          },
+          "year": {
+            "$ref": "#/components/schemas/Year",
+            "description": "Reporting year for the land-use calculation."
+          },
+          "previousYearData": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonInput_PreviousLandUseSummary",
+                "description": "Optional: Site data from the previous reporting period for year-over-year comparison."
+              }
+            ]
+          }
+        }
+      },
+      "LandUseSealedAreaProcessOutputs": {
+        "type": "object",
+        "properties": {
+          "landUseSummary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Land-use summary table with sealed areas, nature-oriented areas, and calculations"
+          },
+          "siteLandUseTable": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Per-site land-use calculations"
+          },
+          "inputs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LandUseSealedAreaProcessInputs",
+                "description": "Echo of inputs for auditing and traceability"
+              }
+            ]
+          },
+          "errors": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Errors encountered during processing, if any"
+          },
+          "documentationSources": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Data sources and workflow references used for audits and provenance"
+          }
+        }
+      },
+      "LandUseSealedAreaProcessParams": {
+        "type": "object",
+        "description": "Process execution (Land Use Sealed Area – ESRS E4-5)",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/LandUseSealedAreaProcessInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
+          }
+        }
       },
       "LandingPage": {
         "type": "object",

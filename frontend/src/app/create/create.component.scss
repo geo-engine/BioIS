@@ -32,18 +32,8 @@ fieldset {
   }
 }
 
-mat-icon {
+app-info-icon {
   margin-left: 0.5rem;
-
-  @include mat.icon-overrides(
-    (
-      color: var(--mat-sys-primary),
-    )
-  );
-}
-
-p > mat-icon {
-  vertical-align: text-bottom;
 }
 
 mat-checkbox ~ mat-icon {

@@ -30,6 +30,7 @@ install-llvm-cov:
 install-frontend-deps: _clear
     rm -rf node_modules/@geoengine/biois \
            .angular/cache
+    cd ../api-client/typescript && npm install
     npm link ../api-client/typescript
     npm ci
 
@@ -52,6 +53,7 @@ build-backend mode="": _clear
 [group('build')]
 [working-directory('api-client')]
 build-api-client: _clear
+    rm -rf typescript/*
     npx {{ OPENAPI_GENERATOR_PACKAGE }} batch config.yaml
     ./post-process.py
 

@@ -1,19 +1,30 @@
 use geoengine_api_client::models::{
-    TypedOperator, TypedVectorOperator, VectorOperator, Workflow,
-    typed_vector_operator::Type as VectorType,
+    RasterOperator, TypedOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
+    Workflow, typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
 };
 use std::ops::Deref;
+use tokio::task::JoinHandle;
 use tracing::error;
 use tracing_subscriber::{
     EnvFilter, filter::Directive, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_workflow(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
+pub fn to_api_vector_process(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
     Workflow::TypedOperator(Box::new(TypedOperator::TypedVectorOperator(Box::new(
         TypedVectorOperator {
             operator: Box::new(operator.clone()),
             r#type: VectorType::Vector,
+        },
+    ))))
+}
+
+/// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
+pub fn to_api_raster_process(operator: &RasterOperator) -> geoengine_api_client::models::Workflow {
+    Workflow::TypedOperator(Box::new(TypedOperator::TypedRasterOperator(Box::new(
+        TypedRasterOperator {
+            operator: Box::new(operator.clone()),
+            r#type: RasterType::Raster,
         },
     ))))
 }
@@ -169,6 +180,23 @@ macro_rules! const_concat {
     }};
 }
 
+/// A wrapper around `tokio::task::spawn_blocking` that keeps the current
+/// `tracing` span active inside the blocking task.
+#[inline]
+pub fn spawn_blocking<F, R>(f: F) -> JoinHandle<R>
+where
+    F: FnOnce() -> R + Send + 'static,
+    R: Send + 'static,
+{
+    let parent_span = tracing::Span::current();
+
+    tokio::task::spawn_blocking(move || {
+        let _entered_span = parent_span.enter();
+
+        f()
+    })
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -215,30 +243,24 @@ mod tests {
             .into(),
         );
 
-        let api_workflow = to_api_workflow(&raster_vector_join);
+        let api_workflow = to_api_vector_process(&raster_vector_join);
 
         assert_eq!(
-            serde_json::to_string_pretty(&api_workflow).unwrap(),
-            serde_json::to_string_pretty(&serde_json::json!({
+            serde_json::to_value(&api_workflow).unwrap(),
+            serde_json::json!({
                 "type": "Vector",
                 "operator": {
                     "type": "RasterVectorJoin",
                     "params": {
-                        "featureAggregation": "first",
-                        "featureAggregationIgnoreNoData": true,
                         "names": {
                             "type": "default"
                         },
+                        "featureAggregation": "first",
+                        "featureAggregationIgnoreNoData": true,
                         "temporalAggregation": "first",
                         "temporalAggregationIgnoreNoData": true
                     },
                     "sources": {
-                        "rasters": [{
-                            "type": "GdalSource",
-                            "params": {
-                                "data": "ndvi"
-                            },
-                        }],
                         "vector": {
                             "type": "MockPointSource",
                             "params": {
@@ -247,11 +269,16 @@ mod tests {
                                     "type": "derive"
                                 }
                             },
-                        }
+                        },
+                        "rasters": [{
+                            "type": "GdalSource",
+                            "params": {
+                                "data": "ndvi"
+                            },
+                        }]
                     }
                 }
-            }))
-            .unwrap()
+            })
         );
     }
 
@@ -361,21 +388,47 @@ mod tests {
     }
 
     #[test]
-    fn it_sets_up_tracing() {
-        let result = std::panic::catch_unwind(|| {
-            setup_tracing("info".parse().unwrap());
-            tracing::info!("tracing initialized");
-        });
-
-        assert!(result.is_ok());
-    }
-
-    #[test]
     #[allow(clippy::items_after_statements, reason = "Makes sense for the test")]
     fn it_concats_const_strings() {
         assert_eq!(const_concat!("Hello, ", "World!"), "Hello, World!");
         assert_eq!(const_concat!("Foo", ""), "Foo");
         const BAR: &str = "Bar";
         assert_eq!(const_concat!("", BAR), "Bar");
+    }
+
+    #[tokio::test]
+    async fn it_sets_up_tracing_and_spawns_blocking_task_with_preserved_span() {
+        fn current_span_name() -> String {
+            tracing::Span::current()
+                .metadata()
+                .map(|m| m.name().to_string())
+                .unwrap_or_default()
+        }
+
+        let result = std::panic::catch_unwind(|| {
+            setup_tracing("info".parse().unwrap());
+            tracing::info!("tracing initialized");
+        });
+
+        assert!(result.is_ok());
+
+        // Initialize a subscriber for this test
+        let _ = tracing_subscriber::fmt().with_test_writer().try_init();
+
+        let span = tracing::info_span!("test_span");
+        let _entered = span.enter();
+
+        assert_eq!(
+            spawn_blocking(current_span_name).await.unwrap(),
+            "test_span"
+        );
+
+        // Test with tokio's spawn_blocking directly - span is lost
+        assert_eq!(
+            tokio::task::spawn_blocking(current_span_name)
+                .await
+                .unwrap(),
+            ""
+        );
     }
 }

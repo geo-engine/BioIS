@@ -1,0 +1,36 @@
+<app-page-title [title]="processName()" />
+<form (submit)="onSubmit()">
+  <app-long-text>
+    <p [innerHTML]="processDescriptionHtml()"></p>
+  </app-long-text>
+  <fieldset>
+    <legend>Inputs</legend>
+    <app-inputs-form
+      [inputs]="inputs()"
+      [form]="form.inputs"
+      [relativeJsonPointerAvailableFields]="relativeJsonPointerAvailableFields()"
+      (updateFormField)="updateFormInputField($event.key, $event.value)"
+    ></app-inputs-form>
+  </fieldset>
+
+  <fieldset>
+    <legend>Outputs</legend>
+
+    @for (output of outputs(); track output.key) {
+      <mat-checkbox
+        [checked]="form.outputs[output.key]"
+        (change)="toggleOutput(output.key, $event.checked)"
+        >{{ output.title }}</mat-checkbox
+      >
+      @if (output.description) {
+        <app-info-icon [description]="output.description" />
+      }
+    }
+
+    @for (error of form.outputs().errors(); track error) {
+      <mat-error>{{ error.message }}</mat-error>
+    }
+  </fieldset>
+
+  <button mat-raised-button type="submit" [disabled]="!form().valid()">Submit</button>
+</form>

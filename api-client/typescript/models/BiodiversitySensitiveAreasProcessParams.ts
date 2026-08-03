@@ -15,7 +15,7 @@ import { Response } from '../models/Response';
 import { HttpFile } from '../http/http';
 
 /**
-* Process execution (Biodiversity Sensitive Areas – ESRS E4 B5)
+* Process execution (Biodiversity Sensitive Areas – ESRS E4-5)
 */
 export class BiodiversitySensitiveAreasProcessParams {
     'inputs': BiodiversitySensitiveAreasProcessInputs;

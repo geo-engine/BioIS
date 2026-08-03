@@ -18,16 +18,9 @@ const appRoutes: Routes = [
     loadComponent: () => import('./result/result.component').then((m) => m.ResultComponent),
   },
   {
-    path: 'create',
-    title: 'Create new',
-    loadComponent: () =>
-      import('./create-new/create-new.component').then((m) => m.CreateNewComponent),
-  },
-  {
     path: 'create/:processId',
     title: 'Create new',
-    loadComponent: () =>
-      import('./create-new-auto/create-new-auto.component').then((m) => m.CreateNewAutoComponent),
+    loadComponent: () => import('./create/create.component').then((m) => m.CreateComponent),
   },
   {
     path: 'signout',

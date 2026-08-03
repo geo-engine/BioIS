@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GeoJsonFormFieldComponent } from './geo-json-field';
+import { GeoJsonFormFieldComponent } from './geo-json-field.component';
 import { GeoJsonInputMediaType } from '@geoengine/biois';
 import { vi } from 'vitest';
 

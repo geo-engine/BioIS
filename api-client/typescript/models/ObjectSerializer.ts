@@ -63,6 +63,12 @@ export * from '../models/IntegerField';
 export * from '../models/JobControlOptions';
 export * from '../models/JobList';
 export * from '../models/JobType';
+export * from '../models/JsonInputMediaType';
+export * from '../models/JsonInputPreviousLandUseSummary';
+export * from '../models/JsonInputPreviousLandUseSummaryValue';
+export * from '../models/LandUseSealedAreaProcessInputs';
+export * from '../models/LandUseSealedAreaProcessOutputs';
+export * from '../models/LandUseSealedAreaProcessParams';
 export * from '../models/LandingPage';
 export * from '../models/License';
 export * from '../models/Link';
@@ -173,6 +179,12 @@ import { IntegerField       , IntegerFieldTypeEnum  , IntegerFieldFormatEnum    
 import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
+import { JsonInputMediaType } from '../models/JsonInputMediaType';
+import { JsonInputPreviousLandUseSummary   } from '../models/JsonInputPreviousLandUseSummary';
+import { JsonInputPreviousLandUseSummaryValue      } from '../models/JsonInputPreviousLandUseSummaryValue';
+import { LandUseSealedAreaProcessInputs       } from '../models/LandUseSealedAreaProcessInputs';
+import { LandUseSealedAreaProcessOutputs } from '../models/LandUseSealedAreaProcessOutputs';
+import { LandUseSealedAreaProcessParams    } from '../models/LandUseSealedAreaProcessParams';
 import { LandingPage } from '../models/LandingPage';
 import { License } from '../models/License';
 import { Link } from '../models/Link';
@@ -260,6 +272,7 @@ let enumsMap: Set<string> = new Set<string>([
     "IntegerFieldFormatEnum",
     "JobControlOptions",
     "JobType",
+    "JsonInputMediaType",
     "NumberFieldTypeEnum",
     "NumberFieldFormatEnum",
     "ObjectFieldTypeEnum",
@@ -342,6 +355,11 @@ let typeMap: {[index: string]: any} = {
     "InputValue": InputValueClass,
     "IntegerField": IntegerField,
     "JobList": JobList,
+    "JsonInputPreviousLandUseSummary": JsonInputPreviousLandUseSummary,
+    "JsonInputPreviousLandUseSummaryValue": JsonInputPreviousLandUseSummaryValue,
+    "LandUseSealedAreaProcessInputs": LandUseSealedAreaProcessInputs,
+    "LandUseSealedAreaProcessOutputs": LandUseSealedAreaProcessOutputs,
+    "LandUseSealedAreaProcessParams": LandUseSealedAreaProcessParams,
     "LandingPage": LandingPage,
     "License": License,
     "Link": Link,

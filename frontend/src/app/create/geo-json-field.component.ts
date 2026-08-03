@@ -25,6 +25,7 @@ import {
   GeoJsonInputMediaType,
 } from '@geoengine/biois';
 import { Ajv } from 'ajv';
+import { JSONSchema } from 'ya-json-schema-types';
 
 @Component({
   selector: 'app-geo-json-field',
@@ -106,7 +107,7 @@ export class GeoJsonFormFieldComponent implements FormValueControl<
   FeatureCollectionGeoJsonInput | Error
 > {
   readonly title = input.required<string>();
-  readonly geoJsonSchema = input.required<Record<string, unknown>>();
+  readonly geoJsonSchema = input.required<JSONSchema>();
   // readonly geoJsonSchema = input.required<z.ZodTypeAny>();
 
   readonly value = model.required<FeatureCollectionGeoJsonInput | Error>();
@@ -121,7 +122,7 @@ export class GeoJsonFormFieldComponent implements FormValueControl<
       allErrors: true,
       verbose: true,
       loadSchema: loadSchema,
-    }).compileAsync(this.geoJsonSchema()),
+    }).compileAsync(this.geoJsonSchema() as Record<string, unknown>),
   );
 
   async onFileDropped(files: FileList): Promise<void> {

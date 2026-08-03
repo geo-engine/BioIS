@@ -67,6 +67,12 @@ import { IntegerField } from '../models/IntegerField';
 import { JobControlOptions } from '../models/JobControlOptions';
 import { JobList } from '../models/JobList';
 import { JobType } from '../models/JobType';
+import { JsonInputMediaType } from '../models/JsonInputMediaType';
+import { JsonInputPreviousLandUseSummary } from '../models/JsonInputPreviousLandUseSummary';
+import { JsonInputPreviousLandUseSummaryValue } from '../models/JsonInputPreviousLandUseSummaryValue';
+import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
+import { LandUseSealedAreaProcessOutputs } from '../models/LandUseSealedAreaProcessOutputs';
+import { LandUseSealedAreaProcessParams } from '../models/LandUseSealedAreaProcessParams';
 import { LandingPage } from '../models/LandingPage';
 import { License } from '../models/License';
 import { Link } from '../models/Link';
@@ -292,6 +298,24 @@ export class PromiseProcessesApi {
     public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executeHabitatDistance(habitatDistanceProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param landUseSealedAreaProcessParams
+     */
+    public executeLandUseSealedAreaWithHttpInfo(landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<LandUseSealedAreaProcessOutputs>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeLandUseSealedAreaWithHttpInfo(landUseSealedAreaProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param landUseSealedAreaProcessParams
+     */
+    public executeLandUseSealedArea(landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams, _options?: PromiseConfigurationOptions): Promise<LandUseSealedAreaProcessOutputs> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeLandUseSealedArea(landUseSealedAreaProcessParams, observableOptions);
         return result.toPromise();
     }
 

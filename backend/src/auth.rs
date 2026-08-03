@@ -3,7 +3,10 @@ use std::convert::Infallible;
 use crate::{
     config::CONFIG,
     const_concat,
-    processes::{BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, NDVIProcess},
+    processes::{
+        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, LandUseSealedAreaProcess,
+        NDVIProcess,
+    },
     state::USER,
     util::{Secret, error_response},
 };
@@ -135,6 +138,7 @@ impl<S> GeoEngineAuthMiddleware<S> {
                     const_concat!("/processes/", NDVIProcess::ID),
                     const_concat!("/processes/", BiodiversitySensitiveAreasProcess::ID),
                     const_concat!("/processes/", HabitatDistanceProcess::ID),
+                    const_concat!("/processes/", LandUseSealedAreaProcess::ID),
                 ],
                 prefix: vec!["/api", "/swagger", "/auth/"],
             },
@@ -169,22 +173,23 @@ where
     }
 
     fn call(&mut self, request: Request) -> Self::Future {
-        if self.path_is_whitelisted(request.uri().path()) {
-            return Box::pin(self.inner.call(request));
-        }
+        let auth_header = match bearer_token_from_header(request.headers()) {
+            Ok(auth_header) => auth_header,
+            Err(_) if self.path_is_whitelisted(request.uri().path()) => {
+                return Box::pin(self.inner.call(request));
+            }
+            Err(error) => {
+                let status = StatusCode::UNAUTHORIZED;
+                let exception = Exception::new_from_status(status.as_u16()).detail(error);
+                return Box::pin(
+                    async move { Ok((status, exception.to_string()).into_response()) },
+                );
+            }
+        };
 
         let mut inner = self.inner.clone();
         let mut configuration = self.configuration.clone();
         Box::pin(async move {
-            let auth_header = match bearer_token_from_header(request.headers()) {
-                Ok(auth_header) => auth_header,
-                Err(error) => {
-                    let status = StatusCode::UNAUTHORIZED;
-                    let exception = Exception::new_from_status(status.as_u16()).detail(error);
-                    return Ok((status, exception.to_string()).into_response());
-                }
-            };
-
             configuration.bearer_access_token = Some(auth_header.into());
 
             let session = match session_handler(&configuration).await {
@@ -368,7 +373,7 @@ mod tests {
         );
 
         let mut configuration = configuration::Configuration::new();
-        configuration.base_path = server.url_str("");
+        configuration.base_path = server.url_str("/");
         let mut middleware =
             GeoEngineAuthMiddleware::from_configuration(mock_inner_outputs_user(), configuration);
 
@@ -428,7 +433,7 @@ mod tests {
         );
 
         let mut configuration = configuration::Configuration::new();
-        configuration.base_path = server.url_str("");
+        configuration.base_path = server.url_str("/");
         let mut middleware =
             GeoEngineAuthMiddleware::from_configuration(mock_inner_outputs_user(), configuration);
 
