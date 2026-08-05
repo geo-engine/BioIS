@@ -31,8 +31,8 @@ use geoengine_api_client::{
     models::{
         AddDataset, ClassificationMeasurement, ColumnNames, ContinuousMeasurement, CreateDataset,
         DataPath, DataPathUpload, DatasetDefinition, DeriveOutRasterSpecsSource, Expression,
-        ExpressionParameters, FeatureAggregationMethod, FeatureDataType, GdalSource,
-        GdalSourceParameters, GeoJson, Measurement, MetaDataDefinition, Names, NewOutputColumn,
+        ExpressionParameters, FeatureAggregationMethod, FeatureDataType, GdalSourceParameters,
+        GeoJson, Measurement, MetaDataDefinition, MultiBandGdalSource, Names, NewOutputColumn,
         OgrMetaData, OgrSource, OgrSourceColumnSpec, OgrSourceDataset, OgrSourceErrorSpec,
         OgrSourceParameters, OutputColumn, RasterBandDescriptor, RasterDataType, RasterOperator,
         RasterVectorJoin, RasterVectorJoinParameters, Reprojection, ReprojectionParameters,
@@ -497,7 +497,7 @@ fn projected_locations_operator(upload_data_id: String) -> VectorOperator {
 }
 
 fn imperviousness_raster_operator() -> RasterOperator {
-    RasterOperator::GdalSource(Box::new(GdalSource {
+    RasterOperator::MultiBandGdalSource(Box::new(MultiBandGdalSource {
         r#type: Default::default(),
         params: GdalSourceParameters {
             data: CONFIG.data_ids.land_use_imperviousness_builtup.clone(),
@@ -511,8 +511,8 @@ fn imperviousness_raster_operator() -> RasterOperator {
 ///
 /// The pipeline combines vector data from the given upload with imperviousness raster data.
 /// It applies the following stages:
-/// 1. Load imperviousness raster via `GdalSource`
-/// 2. Join with vector data via `RasterVectorJoin`
+/// 1. Load imperviousness raster
+/// 2. Join with vector data
 #[instrument(skip_all)]
 fn build_sealed_area_vector_operator(upload_data_id: String) -> ComputeOperators {
     let locations_projected = projected_locations_operator(upload_data_id);
