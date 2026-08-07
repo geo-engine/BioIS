@@ -40,15 +40,20 @@ pub struct Database {
     pub database: String,
     pub schema: String,
     pub user: String,
-    pub password: String,
+    pub password: Secret<String>,
     pub clear_database_on_start: bool,
 }
 
 impl Database {
     pub fn connection_string(&self) -> String {
         format!(
-            "postgresql://{}:{}@{}:{}/{}",
-            self.user, self.password, self.host, self.port, self.database
+            "postgresql://{user}:{password}@{host}:{port}/{database}?options=-c%20search_path%3D{schema}",
+            user = self.user,
+            password = self.password.expose(),
+            host = self.host,
+            port = self.port,
+            database = self.database,
+            schema = self.schema
         )
     }
 }

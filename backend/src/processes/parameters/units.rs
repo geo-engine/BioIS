@@ -299,33 +299,6 @@ impl HasTableSchemaType for Percentage {
     }
 }
 
-mod db {
-    use super::*;
-    use diesel::{
-        deserialize::{self, FromSql},
-        pg::{Pg, PgValue},
-        sql_types::Double,
-    };
-
-    impl FromSql<Double, Pg> for Hectare {
-        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-            f64::from_sql(value).map(Hectare)
-        }
-    }
-
-    impl FromSql<Double, Pg> for SquareMeter {
-        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-            f64::from_sql(value).map(SquareMeter)
-        }
-    }
-
-    impl FromSql<Double, Pg> for Kilometers {
-        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-            f64::from_sql(value).map(Kilometers)
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

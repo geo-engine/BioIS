@@ -52,19 +52,8 @@ anyhow = "1.0"
 approx = { version = "0.6.0-rc2", features = ["derive", "vec_impl"] }
 async-trait = "0.1"
 axum = { version = "0.8", features = ["multipart"] }
-bb8 = "0.9" # wrt. `diesel-async`
 chrono = { version = "0.4", features = ["serde"] }
 config = "0.15"
-diesel = { version = "2.3", features = [
-    "postgres",
-    "chrono",
-    "uuid",
-    "r2d2",
-    "serde_json",
-] }
-diesel_migrations = "2.3"
-diesel-async = { version = "0.9", features = ["migrations", "postgres", "bb8"] }
-diesel-derive-enum = { version = "3.0.0-beta.1", features = ["postgres"] }
 futures = "0.3"
 geo-types = "0.7"
 geoengine-api-client = "0.9.3"
@@ -85,6 +74,7 @@ schemars = "1.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 tempfile = "3.27"
+toasty = { version = "0.9", features = ["postgresql", "serde"] }
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
 tower = "0.5"
 tracing = "0.1"
@@ -97,3 +87,4 @@ wkt = "0.14"
 
 [dev-dependencies]
 httptest = "0.16"
+toasty-cli = "0.9"

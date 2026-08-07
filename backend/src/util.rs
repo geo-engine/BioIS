@@ -2,6 +2,7 @@ use geoengine_api_client::models::{
     RasterOperator, TypedOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
     Workflow, typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
 };
+use serde::Deserialize;
 use std::ops::Deref;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -70,6 +71,13 @@ pub(crate) fn write_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockWr
 /// A wrapper type to hide sensitive information in Debug implementations.
 pub struct Secret<T>(pub T);
 
+impl Secret<String> {
+    /// Returns the inner string.
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
 impl<T> std::fmt::Debug for Secret<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "********")
@@ -99,6 +107,16 @@ impl<T: Clone> Clone for Secret<T> {
 impl<T> From<T> for Secret<T> {
     fn from(value: T) -> Self {
         Secret(value)
+    }
+}
+
+impl<'de> Deserialize<'de> for Secret<String> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Secret(s))
     }
 }
 
@@ -140,6 +158,12 @@ pub fn setup_tracing(log_level: Directive) {
         )
         .with(tracing_subscriber::fmt::layer().pretty())
         .init();
+}
+
+#[cfg(test)]
+#[allow(dead_code, reason = "Used in tests to setup tracing")]
+pub fn setup_tracing_for_tests() {
+    setup_tracing("info".parse().unwrap());
 }
 
 /// A macro to concatenate two static strings (`&'static str`) at compile time.

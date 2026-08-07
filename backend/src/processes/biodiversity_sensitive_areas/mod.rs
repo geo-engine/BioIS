@@ -1,6 +1,13 @@
 use crate::{
-    db::{DbPool, PooledConnection},
+    db::{
+        DbHandle,
+        util::{
+            get_bool, get_number, get_number_option, get_string, get_string_list,
+            get_string_list_option,
+        },
+    },
     processes::{
+        habitat_distance::natura2000_exists,
         parameters::{
             Area, DataResource, DataResourceSchema, DocumentationSource,
             FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
@@ -12,8 +19,6 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use approx::AbsDiffEq;
-use diesel::{deserialize::QueryableByName, sql_query, sql_types};
-use diesel_async::RunQueryDsl;
 use indoc::formatdoc;
 use ogcapi::{
     processes::Processor,
@@ -26,6 +31,7 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
+use toasty::stmt::Type as StmtType;
 use tracing::instrument;
 use utoipa::ToSchema;
 use wkt::ToWkt;
@@ -87,7 +93,7 @@ impl FromStr for SiteSpecification {
 #[doc = include_str!("description.md")]
 #[derive(Debug, Clone)]
 pub struct BiodiversitySensitiveAreasProcess {
-    connection: DbPool,
+    connection: DbHandle,
     natura2000_schema: &'static str,
 }
 
@@ -372,7 +378,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             || execute.outputs.contains_key(output_keys::ERRORS)
         {
             let (site_table, errors) = compute_biodiversity_sensitive_areas(
-                self.connection().await?,
+                &mut self.connection.clone(),
                 self.natura2000_schema,
                 inputs.sites,
                 inputs.location_name_field.as_ref(),
@@ -399,49 +405,16 @@ impl Processor for BiodiversitySensitiveAreasProcess {
 impl BiodiversitySensitiveAreasProcess {
     pub const ID: &'static str = "biodiversity-sensitive-areas";
 
-    pub async fn new(connection: DbPool, natura2000_schema: &'static str) -> Result<Self> {
-        let this = Self {
-            connection,
-            natura2000_schema,
-        };
-
-        let mut conn = this.connection().await?;
-        let table: Natura2000Exists = sql_query(formatdoc! {"
-            SELECT EXISTS (
-                SELECT 1
-                  FROM information_schema.tables
-                 WHERE table_schema = '{natura2000_schema}'
-                   AND table_name = 'naturasite_polygon'
-            ) as exists
-        "})
-        .get_result(&mut *conn)
-        .await
-        .context(format!(
-            "Failed to check if {natura2000_schema}.naturasite_polygon exists"
-        ))?;
-
-        if !table.exists {
+    pub async fn new(mut db: DbHandle, natura2000_schema: &'static str) -> Result<Self> {
+        if !natura2000_exists(&mut db, natura2000_schema).await? {
             anyhow::bail!("Table {natura2000_schema}.naturasite_polygon does not exist");
         }
 
-        // drop the pooled connection before moving `this` out
-        drop(conn);
-
-        Ok(this)
+        Ok(Self {
+            connection: db,
+            natura2000_schema,
+        })
     }
-
-    async fn connection(&self) -> anyhow::Result<PooledConnection<'_>> {
-        self.connection
-            .get()
-            .await
-            .context("could not get db connection from pool")
-    }
-}
-
-#[derive(QueryableByName)]
-struct Natura2000Exists {
-    #[diesel(sql_type = sql_types::Bool)]
-    exists: bool,
 }
 
 fn json_format() -> Format {
@@ -665,35 +638,79 @@ fn was_point(feature: &geojson::Feature) -> bool {
     )
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, QueryableByName)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SiteRow {
-    #[diesel(sql_type = sql_types::Text)]
     pub location: String,
-
-    #[diesel(sql_type = sql_types::Nullable<sql_types::Double>)]
     pub area_m2: Option<SquareMeter>,
-
-    #[diesel(sql_type = sql_types::Bool)]
     pub site_in_biodiversity_sensitive_area: bool,
-
-    #[diesel(sql_type = sql_types::Bool)]
     pub site_near_biodiversity_sensitive_area: bool,
-
-    #[diesel(sql_type = sql_types::Double)]
     pub biodiversity_sensitive_area_m2: SquareMeter,
-
-    #[diesel(sql_type = sql_types::Nullable<sql_types::Array<sql_types::Text>>)]
     pub intersecting_biodiversity_sensitive_areas: Option<Vec<String>>,
-
-    #[diesel(sql_type = sql_types::Array<sql_types::Text>)]
     pub nearby_biodiversity_sensitive_areas: Vec<String>,
-
-    #[diesel(sql_type = sql_types::Text)]
     pub site_type: String,
-
-    #[diesel(sql_type = sql_types::Double)]
     pub buffer_distance_km: Kilometers,
+}
+
+impl TryFrom<toasty::stmt::Value> for SiteRow {
+    type Error = anyhow::Error;
+
+    fn try_from(value: toasty::stmt::Value) -> Result<Self, Self::Error> {
+        //0 r.location,
+        //1 r.buffer_distance_km as buffer_distance_km,
+        //2 r.specification AS site_type,
+        //3 NULLIF(r.area_m2, 0) AS area_m2,
+        //4 COALESCE(ST_AREA(ST_INTERSECTION(s_in.geom, r.geom)), 0) > 0 AS site_in_biodiversity_sensitive_area,
+        //5 ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) > 0 AS site_near_biodiversity_sensitive_area,
+        //6 ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) AS biodiversity_sensitive_area_m2,
+        //7 s_in.site_list AS intersecting_biodiversity_sensitive_areas,
+        //8 s_out.site_list AS nearby_biodiversity_sensitive_areas
+        const LOCATION_IDX: usize = 0;
+        const BUFFER_DISTANCE_KM_IDX: usize = 1;
+        const SITE_TYPE_IDX: usize = 2;
+        const AREA_M2_IDX: usize = 3;
+        const SITE_IN_BIODIVERSITY_SENSITIVE_AREA_IDX: usize = 4;
+        const SITE_NEAR_BIODIVERSITY_SENSITIVE_AREA_IDX: usize = 5;
+        const BIODIVERSITY_SENSITIVE_AREA_M2_IDX: usize = 6;
+        const INTERSECTING_BIODIVERSITY_SENSITIVE_AREAS_IDX: usize = 7;
+        const NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX: usize = 8;
+
+        Ok(SiteRow {
+            location: get_string(&value, LOCATION_IDX).context("Invalid location type")?,
+            area_m2: get_number_option(&value, AREA_M2_IDX)
+                .context("Invalid area_m2 type")?
+                .map(SquareMeter),
+            site_in_biodiversity_sensitive_area: get_bool(
+                &value,
+                SITE_IN_BIODIVERSITY_SENSITIVE_AREA_IDX,
+            )
+            .context("Invalid site_in_biodiversity_sensitive_area type")?,
+            site_near_biodiversity_sensitive_area: get_bool(
+                &value,
+                SITE_NEAR_BIODIVERSITY_SENSITIVE_AREA_IDX,
+            )
+            .context("Invalid site_near_biodiversity_sensitive_area type")?,
+            biodiversity_sensitive_area_m2: SquareMeter(
+                get_number(&value, BIODIVERSITY_SENSITIVE_AREA_M2_IDX)
+                    .context("Invalid biodiversity_sensitive_area_m2 type")?,
+            ),
+            intersecting_biodiversity_sensitive_areas: get_string_list_option(
+                &value,
+                INTERSECTING_BIODIVERSITY_SENSITIVE_AREAS_IDX,
+            )
+            .context("Invalid intersecting_biodiversity_sensitive_areas type")?,
+            nearby_biodiversity_sensitive_areas: get_string_list(
+                &value,
+                NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX,
+            )
+            .context("Invalid nearby_biodiversity_sensitive_areas type")?,
+            site_type: get_string(&value, SITE_TYPE_IDX).context("Invalid site_type type")?,
+            buffer_distance_km: Kilometers(
+                get_number(&value, BUFFER_DISTANCE_KM_IDX)
+                    .context("Invalid buffer_distance_km type")?,
+            ),
+        })
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
@@ -814,10 +831,10 @@ fn site_row_into_output(
 /// to any provided `workflow_refs` (if they are HTTP URLs) and includes their responses
 /// in the `sources` output for auditing. The spatial computations are placeholders and
 /// should be replaced by Geo Engine workflow calls in future.
-#[instrument(skip(connection), err(Debug))]
+#[instrument(skip(db), err(Debug))]
 pub async fn compute_biodiversity_sensitive_areas(
-    mut connection: PooledConnection<'_>,
-    natura2000_schema: &'static str,
+    db: &mut DbHandle,
+    natura2000_schema: &str,
     sites: FeatureCollectionGeoJsonInput,
     location_property: &str,
     site_type_property: &str,
@@ -859,7 +876,7 @@ pub async fn compute_biodiversity_sensitive_areas(
         });
     }
 
-    let site_table: Vec<SiteRow> = sql_query(formatdoc! {r#"
+    let site_table: Vec<SiteRow> = toasty::sql::query(&formatdoc!(r#"
         WITH reference AS (
             SELECT
                 v.location,
@@ -902,11 +919,28 @@ pub async fn compute_biodiversity_sensitive_areas(
             GROUP BY r.location
         ) as s_out USING (location)
         ORDER BY biodiversity_sensitive_area_m2 DESC;
-    "#})
-    .bind::<sql_types::Json, _>(serde_json::to_value(&site_inputs)?)
-    .get_results(&mut *connection)
+    "#))
+    .bind(serde_json::to_string(&site_inputs)?)
+    .column_types([
+        StmtType::String,
+        StmtType::F64,
+        StmtType::String,
+        StmtType::F64,
+        StmtType::Bool,
+        StmtType::F64,
+        StmtType::F64,
+        StmtType::list(StmtType::String),
+        StmtType::list(StmtType::String),
+    ])
+    .exec(db.as_mut())
     .await
-    .context(format!("Failed to query {natura2000_schema}.naturasite_polygon"))?;
+    .context(format!(
+        "Failed to query {natura2000_schema}.naturasite_polygon"
+    ))?
+    .into_iter()
+    .map(SiteRow::try_from)
+    .collect::<Result<Vec<_>, _>>()
+    .context("Failed to parse site row results")?;
 
     Ok((site_table, errors))
 }
@@ -915,49 +949,53 @@ pub async fn compute_biodiversity_sensitive_areas(
 mod tests {
     use super::*;
     use crate::{
-        CONFIG,
-        db::setup_db,
+        db::tests::with_temp_db,
         processes::parameters::{GeoJsonInputMediaType, Hectare},
     };
     use approx::abs_diff_ne;
-    use diesel_async::SimpleAsyncConnection;
     use geojson::FeatureCollection;
     use ogcapi::types::processes::Input;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+    use toasty::schema::db::Type as DbType;
 
-    async fn mock_db_pool() -> DbPool {
-        setup_db(&CONFIG.database).await.unwrap()
-    }
+    async fn create_schema_and_insert_test_site(db: &mut DbHandle) {
+        let schema = db.schema_name().to_string();
 
-    async fn create_schema_and_insert_test_site(
-        connection: &mut impl SimpleAsyncConnection,
-        schema: &str,
-    ) {
-        connection
-            .batch_execute(&formatdoc! {r#"
+        toasty::sql::statement(formatdoc! {r#"
             CREATE TABLE "{schema}".naturasite_polygon (
                 sitecode TEXT,
                 sitename TEXT,
                 geom geometry
             );
+        "#})
+        .exec(db.as_mut())
+        .await
+        .unwrap();
 
+        toasty::sql::statement(formatdoc! {r#"
             INSERT INTO "{schema}".naturasite_polygon (sitecode, sitename, geom)
             VALUES (
                 'DE5118301',
                 'Dammelsberg und Köhlersgrund',
-                ST_GeomFromText('{wkt1}', 3035)
+                ST_GeomFromText($1, 3035)
             ), (
                 'DE5317307',
                 'Fohnbach und Gleibach',
-                ST_GeomFromText('{wkt2}', 3035)
+                ST_GeomFromText($2, 3035)
             );
-            "#,
-                wkt1 = include_str!("../../../test-data/DE5118301.wkt"),
-                wkt2 = include_str!("../../../test-data/DE5317307.wkt"),
-            })
-            .await
-            .unwrap();
+        "#})
+        .bind_typed(
+            include_str!("../../../test-data/DE5118301.wkt"),
+            DbType::Text,
+        )
+        .bind_typed(
+            include_str!("../../../test-data/DE5317307.wkt"),
+            DbType::Text,
+        )
+        .exec(db.as_mut())
+        .await
+        .unwrap();
     }
 
     #[test]
@@ -1027,55 +1065,57 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn process_summary_has_expected_inputs_and_outputs() {
-        let pool = mock_db_pool().await;
-        create_schema_and_insert_test_site(&mut pool.get().await.unwrap(), &CONFIG.database.schema)
-            .await;
+        with_temp_db(|mut db| async move {
+            create_schema_and_insert_test_site(&mut db).await;
 
-        let p = BiodiversitySensitiveAreasProcess::new(pool, &CONFIG.database.schema)
-            .await
-            .unwrap();
-        let process = p.process().expect("to produce process description");
+            let schema = db.schema_name().to_string();
+            let p = BiodiversitySensitiveAreasProcess::new(db, schema.leak())
+                .await
+                .unwrap();
+            let process = p.process().expect("to produce process description");
 
-        // summary id / version
-        assert_eq!(process.summary.id, "biodiversity-sensitive-areas");
-        assert_eq!(process.summary.version, "0.1.0");
+            // summary id / version
+            assert_eq!(process.summary.id, "biodiversity-sensitive-areas");
+            assert_eq!(process.summary.version, "0.1.0");
 
-        // job control options contain sync and async execute
-        let mut has_sync = false;
-        let mut has_async = false;
-        for opt in &process.summary.job_control_options {
-            match opt {
-                JobControlOptions::SyncExecute => has_sync = true,
-                JobControlOptions::AsyncExecute => has_async = true,
-                JobControlOptions::Dismiss => todo!(),
+            // job control options contain sync and async execute
+            let mut has_sync = false;
+            let mut has_async = false;
+            for opt in &process.summary.job_control_options {
+                match opt {
+                    JobControlOptions::SyncExecute => has_sync = true,
+                    JobControlOptions::AsyncExecute => has_async = true,
+                    JobControlOptions::Dismiss => todo!(),
+                }
             }
-        }
-        assert!(has_sync, "expected SyncExecute in job_control_options");
-        assert!(has_async, "expected AsyncExecute in job_control_options");
+            assert!(has_sync, "expected SyncExecute in job_control_options");
+            assert!(has_async, "expected AsyncExecute in job_control_options");
 
-        for key in [
-            input_keys::SITES,
-            input_keys::LOCATION_NAME_FIELD,
-            input_keys::SITE_TYPE_FIELD,
-            input_keys::UNIT_FOR_AREA,
-        ] {
-            assert!(
-                process.inputs.contains_key(key),
-                "expected input key `{key}` in process inputs"
-            );
-        }
+            for key in [
+                input_keys::SITES,
+                input_keys::LOCATION_NAME_FIELD,
+                input_keys::SITE_TYPE_FIELD,
+                input_keys::UNIT_FOR_AREA,
+            ] {
+                assert!(
+                    process.inputs.contains_key(key),
+                    "expected input key `{key}` in process inputs"
+                );
+            }
 
-        for key in [
-            output_keys::BIODIVERSITY_SENSITIVE_AREAS,
-            output_keys::INPUTS,
-            output_keys::ERRORS,
-            output_keys::DOCUMENTATION_SOURCES,
-        ] {
-            assert!(
-                process.outputs.contains_key(key),
-                "expected output key `{key}` in process outputs"
-            );
-        }
+            for key in [
+                output_keys::BIODIVERSITY_SENSITIVE_AREAS,
+                output_keys::INPUTS,
+                output_keys::ERRORS,
+                output_keys::DOCUMENTATION_SOURCES,
+            ] {
+                assert!(
+                    process.outputs.contains_key(key),
+                    "expected output key `{key}` in process outputs"
+                );
+            }
+        })
+        .await
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -1084,157 +1124,163 @@ mod tests {
         reason = "This test is verbose due to the detailed assertions on the process outputs."
     )]
     async fn it_computes_biodiversity_sensitive_areas() {
-        let pool = mock_db_pool().await;
-        let mut connection = pool.get().await.unwrap();
-        create_schema_and_insert_test_site(&mut connection, &CONFIG.database.schema).await;
+        with_temp_db(|mut db| async move {
+            create_schema_and_insert_test_site(&mut db).await;
 
-        // crate::util::setup_tracing(
-        //     crate::config::Logging {
-        //         level: crate::config::LogLevel::Debug,
-        //     }
-        //     .into(),
-        // );
+            // crate::util::setup_tracing(
+            //         level: crate::config::LogLevel::Debug,
+            //     }
+            //     .into(),
+            // );
 
-        let inputs = BiodiversitySensitiveAreasProcessInputs {
-            sites: FeatureCollectionGeoJsonInput {
-                value: json!({
-                  "type": "FeatureCollection",
-                  "features": [
-                    {
-                      "type": "Feature",
-                      "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [
-                            [
-                                [8.773_665_480_497_84, 50.803_270_291_022_386],
-                                [8.773_649_409_958_182, 50.802_437_463_615_604],
-                                [8.774_613_642_351_255, 50.802_412_072_303_04],
-                                [8.774_597_571_811_597, 50.803_255_056_507_936],
-                                [8.773_665_480_497_84, 50.803_270_291_022_386]
+            let inputs = BiodiversitySensitiveAreasProcessInputs {
+                sites: FeatureCollectionGeoJsonInput {
+                    value: json!({
+                      "type": "FeatureCollection",
+                      "features": [
+                        {
+                          "type": "Feature",
+                          "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [8.773_665_480_497_84, 50.803_270_291_022_386],
+                                    [8.773_649_409_958_182, 50.802_437_463_615_604],
+                                    [8.774_613_642_351_255, 50.802_412_072_303_04],
+                                    [8.774_597_571_811_597, 50.803_255_056_507_936],
+                                    [8.773_665_480_497_84, 50.803_270_291_022_386]
+                                ]
                             ]
-                        ]
-                      },
-                      "properties": {
-                        "location": "Marburger Unistadion",
-                        "siteType": "office"
-                      }
-                    },
-                    {
-                      "type": "Feature",
-                      "geometry": {
-                        "type": "Point",
-                        "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
-                      },
-                      "properties": {
-                        "location": "Garten des Gedenkens",
-                        "siteType": "other"
-                      }
-                    },
-                    {
-                      "type": "Feature",
-                      "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [
-                          [
-                            [8.754_139_485_384, 50.809_101_655_468],
-                            [8.754_266_459_025, 50.808_497_270_648],
-                            [8.755_374_371_521, 50.809_035_957_506],
-                            [8.754_139_485_384, 50.809_101_655_468]
-                          ]
-                        ]
-                      },
-                      "properties": {
-                        "location": "Auf dem Dammelsberg",
-                        "siteType": "office"
-                      }
-                    },
-                    {
-                      "type": "Feature",
-                      "geometry": {
-                        "type": "Point",
-                        "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
-                      },
-                      "id": "the-error-feature",
-                      "properties": {
-                        "siteType": "other"
-                      }
-                    }
-                  ]
-                })
-                .to_string()
-                .as_str()
-                .parse::<FeatureCollection>()
-                .unwrap()
-                .into(),
-                media_type: GeoJsonInputMediaType::GeoJson,
-            },
-            location_name_field: "location".into(),
-            site_type_field: "siteType".into(),
-            unit_for_area: UnitForArea::Hectare,
-        };
+                          },
+                          "properties": {
+                            "location": "Marburger Unistadion",
+                            "siteType": "office"
+                          }
+                        },
+                        {
+                          "type": "Feature",
+                          "geometry": {
+                            "type": "Point",
+                            "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
+                          },
+                          "properties": {
+                            "location": "Garten des Gedenkens",
+                            "siteType": "other"
+                          }
+                        },
+                        {
+                          "type": "Feature",
+                          "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                              [
+                                [8.754_139_485_384, 50.809_101_655_468],
+                                [8.754_266_459_025, 50.808_497_270_648],
+                                [8.755_374_371_521, 50.809_035_957_506],
+                                [8.754_139_485_384, 50.809_101_655_468]
+                              ]
+                            ]
+                          },
+                          "properties": {
+                            "location": "Auf dem Dammelsberg",
+                            "siteType": "office"
+                          }
+                        },
+                        {
+                          "type": "Feature",
+                          "geometry": {
+                            "type": "Point",
+                            "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
+                          },
+                          "id": "the-error-feature",
+                          "properties": {
+                            "siteType": "other"
+                          }
+                        }
+                      ]
+                    })
+                    .to_string()
+                    .as_str()
+                    .parse::<FeatureCollection>()
+                    .unwrap()
+                    .into(),
+                    media_type: GeoJsonInputMediaType::GeoJson,
+                },
+                location_name_field: "location".into(),
+                site_type_field: "siteType".into(),
+                unit_for_area: UnitForArea::Hectare,
+            };
 
-        let (site_rows, errors) = compute_biodiversity_sensitive_areas(
-            connection,
-            CONFIG.database.schema.as_str(),
-            inputs.sites,
-            inputs.location_name_field.as_ref(),
-            inputs.site_type_field.as_ref(),
-            inputs.unit_for_area,
-        )
-        .await
-        .unwrap();
+            let schema = db.schema_name().to_string();
+            let (site_rows, errors) = compute_biodiversity_sensitive_areas(
+                &mut db,
+                &schema,
+                inputs.sites,
+                inputs.location_name_field.as_ref(),
+                inputs.site_type_field.as_ref(),
+                inputs.unit_for_area,
+            )
+            .await
+            .unwrap();
 
-        let site_row_outputs = site_row_into_output(site_rows, inputs.unit_for_area);
+            let site_row_outputs = site_row_into_output(site_rows, inputs.unit_for_area);
 
-        let expected = vec![
-            SiteRowOutput {
-                location: "Garten des Gedenkens".into(),
-                area: None,
-                site_in_biodiversity_sensitive_area: false,
-                site_near_biodiversity_sensitive_area: true,
-                biodiversity_sensitive_area: Area::Hectare(Hectare(36.307_653_383_984_075)),
-                specification: "Type \"Other\" with buffer distance of 20 km".into(),
-                intersecting_biodiversity_sensitive_areas: vec![],
-                nearby_biodiversity_sensitive_areas: vec![
-                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
-                    "Fohnbach und Gleibach (DE5317307)".into(),
-                ],
-            },
-            SiteRowOutput {
-                location: "Auf dem Dammelsberg".into(),
-                area: Some(Area::Hectare(Hectare(0.289_339_552_615_731_47))),
-                site_in_biodiversity_sensitive_area: true,
-                site_near_biodiversity_sensitive_area: true,
-                biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
-                specification: "Type \"Office\" (was point) with buffer distance of 5 km".into(),
-                intersecting_biodiversity_sensitive_areas: vec![
-                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
-                ],
-                nearby_biodiversity_sensitive_areas: vec![
-                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
-                ],
-            },
-            SiteRowOutput {
-                location: "Marburger Unistadion".into(),
-                area: Some(Area::Hectare(Hectare(0.623_035_886_691_041_7))),
-                site_in_biodiversity_sensitive_area: false,
-                site_near_biodiversity_sensitive_area: true,
-                biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
-                specification: "Type \"Office\" (was point) with buffer distance of 5 km".into(),
-                intersecting_biodiversity_sensitive_areas: vec![],
-                nearby_biodiversity_sensitive_areas: vec![
-                    "Dammelsberg und Köhlersgrund (DE5118301)".into(),
-                ],
-            },
-        ];
+            let expected = vec![
+                SiteRowOutput {
+                    location: "Garten des Gedenkens".into(),
+                    area: None,
+                    site_in_biodiversity_sensitive_area: false,
+                    site_near_biodiversity_sensitive_area: true,
+                    biodiversity_sensitive_area: Area::Hectare(Hectare(36.307_653_383_984_075)),
+                    specification: "Type \"Other\" with buffer distance of 20 km".into(),
+                    intersecting_biodiversity_sensitive_areas: vec![],
+                    nearby_biodiversity_sensitive_areas: vec![
+                        "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                        "Fohnbach und Gleibach (DE5317307)".into(),
+                    ],
+                },
+                SiteRowOutput {
+                    location: "Auf dem Dammelsberg".into(),
+                    area: Some(Area::Hectare(Hectare(0.289_339_552_615_731_47))),
+                    site_in_biodiversity_sensitive_area: true,
+                    site_near_biodiversity_sensitive_area: true,
+                    biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
+                    specification: "Type \"Office\" (was point) with buffer distance of 5 km"
+                        .into(),
+                    intersecting_biodiversity_sensitive_areas: vec![
+                        "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                    ],
+                    nearby_biodiversity_sensitive_areas: vec![
+                        "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                    ],
+                },
+                SiteRowOutput {
+                    location: "Marburger Unistadion".into(),
+                    area: Some(Area::Hectare(Hectare(0.623_035_886_691_041_7))),
+                    site_in_biodiversity_sensitive_area: false,
+                    site_near_biodiversity_sensitive_area: true,
+                    biodiversity_sensitive_area: Area::Hectare(Hectare(21.794_987_588_368_837)),
+                    specification: "Type \"Office\" (was point) with buffer distance of 5 km"
+                        .into(),
+                    intersecting_biodiversity_sensitive_areas: vec![],
+                    nearby_biodiversity_sensitive_areas: vec![
+                        "Dammelsberg und Köhlersgrund (DE5118301)".into(),
+                    ],
+                },
+            ];
 
-        if abs_diff_ne!(site_row_outputs.data, expected, epsilon = 1e-6,) {
-            assert_eq!(site_row_outputs.data, expected); // pretty assertions
-        }
+            if abs_diff_ne!(site_row_outputs.data, expected, epsilon = 1e-6,) {
+                assert_eq!(site_row_outputs.data, expected); // pretty assertions
+            }
 
-        assert_eq!(
-            errors,
-            vec!["Feature `the-error-feature` is missing location property `location`".to_string(),]
-        );
+            assert_eq!(
+                errors,
+                vec![
+                    "Feature `the-error-feature` is missing location property `location`"
+                        .to_string(),
+                ]
+            );
+        })
+        .await;
     }
 }

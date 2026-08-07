@@ -125,7 +125,7 @@ impl Modify for ResultsSchemaModifier {
 
 async fn add_habitat_distance_process(
     processors: &mut Vec<Box<dyn Processor>>,
-    db_pool: crate::db::DbPool,
+    db_pool: crate::db::DbHandle,
 ) {
     match HabitatDistanceProcess::new(db_pool, "Natura2000").await {
         Ok(habitat_distance_process) => {
@@ -145,7 +145,7 @@ async fn add_habitat_distance_process(
 
 async fn add_biodiversity_sensitive_areas_process(
     processors: &mut Vec<Box<dyn Processor>>,
-    db_pool: crate::db::DbPool,
+    db_pool: crate::db::DbHandle,
 ) {
     match BiodiversitySensitiveAreasProcess::new(db_pool, "Natura2000").await {
         Ok(biodiversity_sensitive_areas_process) => {

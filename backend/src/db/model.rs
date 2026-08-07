@@ -1,105 +1,11 @@
-use super::schema::{jobs, sql_types};
 use chrono::{DateTime, Utc};
-use diesel::{
-    deserialize::{FromSql, FromSqlRow},
-    expression::AsExpression,
-    pg::{Pg, PgValue},
-    prelude::*,
-    serialize::{Output, ToSql, WriteTuple},
-    sql_types::{BigInt, Nullable, SqlType, Text},
-};
-use diesel_derive_enum::DbEnum;
 use o2o::o2o;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Insertable)]
-#[diesel(table_name = jobs)]
-pub struct NewJob<'a> {
-    pub job_id: &'a str,
-    pub process_id: Option<&'a str>,
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub job_type: JobType,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
-    pub progress: Option<i16>,
-    pub links: Vec<Link>,
-    pub response: Response,
-    pub user_id: uuid::Uuid,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct UpdateJob<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-    pub progress: Option<i16>,
-    pub links: Vec<Link>,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct UpdateJobStatus<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct FinishJob<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-    pub finished: DateTime<Utc>,
-    pub progress: Option<i16>,
-    pub links: Vec<Link>,
-    pub results: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct DismissJob<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-}
-
-#[derive(Debug, Deserialize, HasQuery, o2o)]
-#[owned_into(ogcapi::types::processes::StatusInfo)]
-#[diesel(table_name = jobs)]
-pub struct StatusInfo {
-    pub job_id: String,
-    pub process_id: Option<String>,
-    #[map(~.into())]
-    pub status: StatusCode,
-    pub message: Option<String>,
-    #[map(r#type, ~.into())]
-    pub job_type: JobType,
-    #[map(~.into())]
-    pub created: DateTime<Utc>,
-    #[map(~.into())]
-    pub updated: DateTime<Utc>,
-    pub finished: Option<DateTime<Utc>>,
-    #[map(~.map(|p| p as u8))]
-    pub progress: Option<i16>,
-    #[map(~.into_iter().filter_map(|l| l.map(Into::into)).collect())]
-    pub links: Vec<Option<Link>>,
-}
-
-#[derive(Debug, Deserialize, DbEnum, SqlType, o2o)]
-#[from_owned(ogcapi::types::processes::JobType)]
-#[owned_into(ogcapi::types::processes::JobType)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::JobType")]
-pub enum JobType {
-    Process,
-}
-
-#[derive(Debug, Deserialize, DbEnum, SqlType, o2o)]
-#[from_owned(ogcapi::types::processes::StatusCode)]
-#[owned_into(ogcapi::types::processes::StatusCode)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::StatusCode")]
+/// Job status code enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed)]
+#[serde(rename_all = "PascalCase")]
 pub enum StatusCode {
     Accepted,
     Running,
@@ -108,91 +14,225 @@ pub enum StatusCode {
     Dismissed,
 }
 
-#[derive(Debug, Deserialize, AsExpression, FromSqlRow, o2o)]
-#[from_owned(ogcapi::types::common::Link)]
-#[owned_into(ogcapi::types::common::Link)]
-#[ghosts(templated: None, var_base: None)]
-#[diesel(sql_type = sql_types::Link, postgres_type(name = "Link"))]
-pub struct Link {
-    pub href: String,
-    pub rel: String,
-    pub r#type: Option<String>,
-    pub hreflang: Option<String>,
-    pub title: Option<String>,
-    pub length: Option<i64>,
-}
-
-impl ToSql<sql_types::Link, Pg> for Link {
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
-        // Write the fields in the order: href TEXT, rel TEXT, type TEXT, hreflang TEXT, title TEXT, length BIGINT
-        WriteTuple::<(
-            Text,
-            Text,
-            Nullable<Text>,
-            Nullable<Text>,
-            Nullable<Text>,
-            Nullable<BigInt>,
-        )>::write_tuple(
-            &(
-                &self.href,
-                &self.rel,
-                self.r#type.as_ref(),
-                self.hreflang.as_ref(),
-                self.title.as_ref(),
-                self.length.as_ref(),
-            ),
-            &mut out.reborrow(),
-        )
+impl From<StatusCode> for ogcapi::types::processes::StatusCode {
+    fn from(val: StatusCode) -> Self {
+        match val {
+            StatusCode::Accepted => ogcapi::types::processes::StatusCode::Accepted,
+            StatusCode::Running => ogcapi::types::processes::StatusCode::Running,
+            StatusCode::Successful => ogcapi::types::processes::StatusCode::Successful,
+            StatusCode::Failed => ogcapi::types::processes::StatusCode::Failed,
+            StatusCode::Dismissed => ogcapi::types::processes::StatusCode::Dismissed,
+        }
     }
 }
 
-impl FromSql<sql_types::Link, Pg> for Link {
-    fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
-        // Use the tuple implementation to extract the fields
-        let (href, rel, r#type, hreflang, title, length): (
-            String,
-            String,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<i64>,
-        ) = <(
-            String,
-            String,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<i64>,
-        ) as FromSql<
-            diesel::sql_types::Record<(
-                Text,
-                Text,
-                Nullable<Text>,
-                Nullable<Text>,
-                Nullable<Text>,
-                Nullable<BigInt>,
-            )>,
-            Pg,
-        >>::from_sql(bytes)?;
-
-        Ok(Link {
-            href,
-            rel,
-            r#type,
-            hreflang,
-            title,
-            length,
-        })
+impl From<ogcapi::types::processes::StatusCode> for StatusCode {
+    fn from(val: ogcapi::types::processes::StatusCode) -> Self {
+        match val {
+            ogcapi::types::processes::StatusCode::Accepted => StatusCode::Accepted,
+            ogcapi::types::processes::StatusCode::Running => StatusCode::Running,
+            ogcapi::types::processes::StatusCode::Successful => StatusCode::Successful,
+            ogcapi::types::processes::StatusCode::Failed => StatusCode::Failed,
+            ogcapi::types::processes::StatusCode::Dismissed => StatusCode::Dismissed,
+        }
     }
 }
 
-#[derive(Debug, Deserialize, SqlType, DbEnum, o2o)]
-#[from_owned(ogcapi::types::processes::Response)]
-#[owned_into(ogcapi::types::processes::Response)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::Response")]
+/// Job type enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed)]
+#[serde(rename_all = "PascalCase")]
+pub enum JobType {
+    Process,
+}
+
+impl From<JobType> for ogcapi::types::processes::JobType {
+    fn from(val: JobType) -> Self {
+        match val {
+            JobType::Process => ogcapi::types::processes::JobType::Process,
+        }
+    }
+}
+
+impl From<ogcapi::types::processes::JobType> for JobType {
+    fn from(val: ogcapi::types::processes::JobType) -> Self {
+        match val {
+            ogcapi::types::processes::JobType::Process => JobType::Process,
+        }
+    }
+}
+
+/// Response type enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed)]
+#[serde(rename_all = "PascalCase")]
 pub enum Response {
     Raw,
     Document,
+}
+
+impl From<Response> for ogcapi::types::processes::Response {
+    fn from(val: Response) -> Self {
+        match val {
+            Response::Raw => ogcapi::types::processes::Response::Raw,
+            Response::Document => ogcapi::types::processes::Response::Document,
+        }
+    }
+}
+
+impl From<ogcapi::types::processes::Response> for Response {
+    fn from(val: ogcapi::types::processes::Response) -> Self {
+        match val {
+            ogcapi::types::processes::Response::Raw => Response::Raw,
+            ogcapi::types::processes::Response::Document => Response::Document,
+        }
+    }
+}
+
+/// Link reference (stored as JSONB)
+#[derive(Debug, Clone, Serialize, Deserialize, o2o, toasty::Embed)]
+#[from_owned(ogcapi::types::common::Link)]
+#[owned_into(ogcapi::types::common::Link)]
+#[ghosts(templated: None, var_base: None)]
+pub struct Link {
+    pub href: String,
+    pub rel: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hreflang: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub length: Option<i64>,
+}
+
+/// Job database model
+#[derive(Debug, Clone, Serialize, Deserialize, toasty::Model)]
+pub struct Job {
+    /// Primary key: job ID
+    #[key]
+    #[auto(uuid(v7))]
+    pub job_id: uuid::Uuid,
+
+    /// Referenced process ID
+    pub process_id: Option<String>,
+
+    /// Job type
+    pub job_type: JobType,
+
+    /// Current status
+    pub status: StatusCode,
+
+    /// Status message
+    pub message: Option<String>,
+
+    /// Job creation timestamp (stored as Unix timestamp in milliseconds)
+    pub created: i64,
+
+    /// Job completion timestamp (stored as Unix timestamp in milliseconds)
+    pub finished: Option<i64>,
+
+    /// Last update timestamp (stored as Unix timestamp in milliseconds)
+    pub updated: i64,
+
+    /// Progress percentage (0-100)
+    pub progress: Option<i16>,
+
+    /// Links associated with the job (stored as JSONB)
+    pub links: Vec<Link>,
+
+    /// Response type
+    pub response: Response,
+
+    /// Job results (JSONB)
+    #[column(type = "jsonb")]
+    pub results: Option<serde_json::Value>,
+
+    /// User ID who created the job
+    pub user_id: uuid::Uuid,
+
+    #[has_many]
+    pub credits: toasty::Deferred<Vec<Credits>>,
+}
+
+impl Job {
+    /// Convert created timestamp to DateTime<Utc>
+    pub fn created_at(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_timestamp_millis(self.created).unwrap_or_else(|| Utc::now())
+    }
+
+    /// Convert finished timestamp to DateTime<Utc>
+    pub fn finished_at(&self) -> Option<DateTime<Utc>> {
+        self.finished
+            .and_then(|ts| DateTime::<Utc>::from_timestamp_millis(ts))
+    }
+
+    /// Convert updated timestamp to DateTime<Utc>
+    pub fn updated_at(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_timestamp_millis(self.updated).unwrap_or_else(|| Utc::now())
+    }
+
+    /// Set created from DateTime<Utc>
+    pub fn with_created(mut self, dt: DateTime<Utc>) -> Self {
+        self.created = dt.timestamp_millis();
+        self
+    }
+
+    /// Set finished from DateTime<Utc>
+    pub fn with_finished(mut self, dt: Option<DateTime<Utc>>) -> Self {
+        self.finished = dt.map(|d| d.timestamp_millis());
+        self
+    }
+
+    /// Set updated from DateTime<Utc>
+    pub fn with_updated(mut self, dt: DateTime<Utc>) -> Self {
+        self.updated = dt.timestamp_millis();
+        self
+    }
+}
+
+/// Credits database model
+#[derive(Debug, Clone, Serialize, Deserialize, toasty::Model)]
+#[key(job_id, compute_id)] // Note: `toasty` requires a primary key, but we would omit this normally.
+pub struct Credits {
+    pub timestamp: i64,
+
+    /// Referenced job ID
+    #[index]
+    pub job_id: uuid::Uuid,
+
+    /// Referenced job
+    #[belongs_to(key = job_id, references = job_id)]
+    pub job: toasty::Deferred<Job>,
+
+    /// Geo Engine compute ID (if applicable)
+    ///
+    /// Note: Not stored as nullable because `toasty` requires a primary key.
+    pub compute_id: ComputeId,
+
+    /// Credits used; empty if not yet determined (e.g., job still running)
+    pub credits: Option<u64>,
+}
+
+/// An optional compute ID for Geo Engine jobs, stored as a string.
+/// This is used to track the compute resources used by a job in the Geo Engine system.
+#[derive(Debug, Clone, Serialize, Deserialize, toasty::Embed)]
+pub struct ComputeId(Uuid);
+
+impl ComputeId {
+    pub fn some(id: Uuid) -> Self {
+        Self(id)
+    }
+
+    pub fn none() -> Self {
+        Self(Uuid::nil())
+    }
+
+    pub fn get(&self) -> Option<Uuid> {
+        if self.0.is_nil() {
+            return None;
+        }
+        Some(self.0)
+    }
 }
 
 #[cfg(test)]
