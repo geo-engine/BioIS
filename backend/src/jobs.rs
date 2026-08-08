@@ -30,14 +30,6 @@ impl JobHandler {
     #[instrument(skip(self), level = "debug")]
     async fn clean_running_jobs_from_previous_sessions(&mut self) -> anyhow::Result<()> {
         let now_ms = Utc::now().timestamp_millis();
-        let schema = self.db.schema_name().to_string();
-
-        let mut tx = self.db.as_mut().transaction().await?;
-
-        toasty::sql::statement(format!("SET LOCAL search_path TO {schema}, public;"))
-            .exec(&mut tx)
-            .await
-            .context("Failed to set search path")?;
 
         toasty::update!(model::Job::filter(
             model::Job::fields().status().eq(model::StatusCode::Running)
@@ -46,11 +38,9 @@ impl JobHandler {
             message: Some("Server restarted during job execution".to_string()),
             updated: now_ms,
         })
-        .exec(&mut tx)
+        .exec(&mut self.db.db())
         .await
-        .context("Failed to clean up running jobs")?;
-
-        tx.commit().await.context("Failed to commit transaction")
+        .context("Failed to clean up running jobs")
     }
 }
 
@@ -59,19 +49,13 @@ impl ogcapi::drivers::JobHandler for JobHandler {
     async fn register(&self, job: &StatusInfo, response_mode: Response) -> anyhow::Result<String> {
         let user = USER.try_get().context("missing authenticated user")?;
 
-        if !dbg!(&job.job_id).is_empty() {
+        if job.job_id.is_empty() {
             anyhow::bail!("Job ID must be empty when registering a new job");
-        };
+        }
 
         let now_ms = Utc::now().timestamp_millis();
-        let created_ms = job
-            .created
-            .map(|dt| dt.timestamp_millis())
-            .unwrap_or(now_ms);
-        let updated_ms = job
-            .updated
-            .map(|dt| dt.timestamp_millis())
-            .unwrap_or(now_ms);
+        let created_ms = job.created.map_or(now_ms, |dt| dt.timestamp_millis());
+        let updated_ms = job.updated.map_or(now_ms, |dt| dt.timestamp_millis());
 
         let job = toasty::create!(model::Job {
             process_id: job.process_id.clone(),
@@ -103,13 +87,10 @@ impl ogcapi::drivers::JobHandler for JobHandler {
     async fn update(&self, job: &StatusInfo) -> anyhow::Result<()> {
         let job_id = Uuid::parse_str(&job.job_id).context("Invalid job ID format")?;
         let now_ms = Utc::now().timestamp_millis();
-        let updated_ms = job
-            .updated
-            .map(|dt| dt.timestamp_millis())
-            .unwrap_or(now_ms);
-        let progress = job.progress.map(|p| p as i16).unwrap_or(0);
+        let updated_ms = job.updated.map_or(now_ms, |dt| dt.timestamp_millis());
+        let progress = job.progress.map_or(0, i16::from);
 
-        toasty::update!(model::Job::filter_by_job_id(&job_id) {
+        toasty::update!(model::Job::filter_by_job_id(job_id) {
             status: model::StatusCode::from(job.status.clone()),
             message: job.message.clone(),
             updated: updated_ms,
@@ -166,7 +147,7 @@ impl ogcapi::drivers::JobHandler for JobHandler {
         let job_id = Uuid::parse_str(job_id).context("Invalid job ID format")?;
         let results_json = results.map(serde_json::to_value).transpose()?;
 
-        toasty::update!(model::Job::filter_by_job_id(&job_id) {
+        toasty::update!(model::Job::filter_by_job_id(job_id) {
             status: model::StatusCode::from(status.clone()),
             message,
             updated: now_ms,
@@ -189,7 +170,7 @@ impl ogcapi::drivers::JobHandler for JobHandler {
         let id = Uuid::parse_str(id).context("Invalid job ID format")?;
 
         // First, get the current job to return
-        let current_job: Option<model::Job> = model::Job::filter_by_job_id(&id)
+        let current_job: Option<model::Job> = model::Job::filter_by_job_id(id)
             .filter(model::Job::fields().user_id().eq(user.id))
             .first()
             .exec(&mut self.db.db())
@@ -248,12 +229,11 @@ impl ogcapi::drivers::JobHandler for JobHandler {
     }
 }
 
-/// Convert a Job model to StatusInfo for OGC API responses
+/// Convert a Job model to `StatusInfo` for OGC API responses
 fn job_to_status_info(job: model::Job) -> StatusInfo {
     let created = job.created_at();
     let updated = job.updated_at();
     let finished = job.finished_at();
-    // let links: Vec<Link> = serde_json::from_value(job.links).unwrap_or_default();
 
     StatusInfo {
         job_id: job.job_id.to_string(),

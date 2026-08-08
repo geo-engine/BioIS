@@ -1,11 +1,5 @@
 use crate::{
-    db::{
-        DbHandle,
-        util::{
-            get_bool, get_number, get_number_option, get_string, get_string_list,
-            get_string_list_option,
-        },
-    },
+    db::{DbHandle, util::RecordValueExt},
     processes::{
         habitat_distance::natura2000_exists,
         parameters::{
@@ -676,37 +670,36 @@ impl TryFrom<toasty::stmt::Value> for SiteRow {
         const NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX: usize = 8;
 
         Ok(SiteRow {
-            location: get_string(&value, LOCATION_IDX).context("Invalid location type")?,
-            area_m2: get_number_option(&value, AREA_M2_IDX)
+            location: value
+                .get_string(LOCATION_IDX)
+                .context("Invalid location type")?,
+            area_m2: value
+                .get_number_option(AREA_M2_IDX)
                 .context("Invalid area_m2 type")?
                 .map(SquareMeter),
-            site_in_biodiversity_sensitive_area: get_bool(
-                &value,
-                SITE_IN_BIODIVERSITY_SENSITIVE_AREA_IDX,
-            )
-            .context("Invalid site_in_biodiversity_sensitive_area type")?,
-            site_near_biodiversity_sensitive_area: get_bool(
-                &value,
-                SITE_NEAR_BIODIVERSITY_SENSITIVE_AREA_IDX,
-            )
-            .context("Invalid site_near_biodiversity_sensitive_area type")?,
+            site_in_biodiversity_sensitive_area: value
+                .get_bool(SITE_IN_BIODIVERSITY_SENSITIVE_AREA_IDX)
+                .context("Invalid site_in_biodiversity_sensitive_area type")?,
+            site_near_biodiversity_sensitive_area: value
+                .get_bool(SITE_NEAR_BIODIVERSITY_SENSITIVE_AREA_IDX)
+                .context("Invalid site_near_biodiversity_sensitive_area type")?,
             biodiversity_sensitive_area_m2: SquareMeter(
-                get_number(&value, BIODIVERSITY_SENSITIVE_AREA_M2_IDX)
+                value
+                    .get_number(BIODIVERSITY_SENSITIVE_AREA_M2_IDX)
                     .context("Invalid biodiversity_sensitive_area_m2 type")?,
             ),
-            intersecting_biodiversity_sensitive_areas: get_string_list_option(
-                &value,
-                INTERSECTING_BIODIVERSITY_SENSITIVE_AREAS_IDX,
-            )
-            .context("Invalid intersecting_biodiversity_sensitive_areas type")?,
-            nearby_biodiversity_sensitive_areas: get_string_list(
-                &value,
-                NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX,
-            )
-            .context("Invalid nearby_biodiversity_sensitive_areas type")?,
-            site_type: get_string(&value, SITE_TYPE_IDX).context("Invalid site_type type")?,
+            intersecting_biodiversity_sensitive_areas: value
+                .get_string_list_option(INTERSECTING_BIODIVERSITY_SENSITIVE_AREAS_IDX)
+                .context("Invalid intersecting_biodiversity_sensitive_areas type")?,
+            nearby_biodiversity_sensitive_areas: value
+                .get_string_list(NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX)
+                .context("Invalid nearby_biodiversity_sensitive_areas type")?,
+            site_type: value
+                .get_string(SITE_TYPE_IDX)
+                .context("Invalid site_type type")?,
             buffer_distance_km: Kilometers(
-                get_number(&value, BUFFER_DISTANCE_KM_IDX)
+                value
+                    .get_number(BUFFER_DISTANCE_KM_IDX)
                     .context("Invalid buffer_distance_km type")?,
             ),
         })
@@ -876,7 +869,7 @@ pub async fn compute_biodiversity_sensitive_areas(
         });
     }
 
-    let site_table: Vec<SiteRow> = toasty::sql::query(&formatdoc!(r#"
+    let site_table: Vec<SiteRow> = toasty::sql::query(formatdoc!(r#"
         WITH reference AS (
             SELECT
                 v.location,
@@ -1115,7 +1108,7 @@ mod tests {
                 );
             }
         })
-        .await
+        .await;
     }
 
     #[tokio::test(flavor = "multi_thread")]

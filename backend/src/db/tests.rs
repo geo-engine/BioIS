@@ -86,19 +86,14 @@ fn test_schema() -> String {
     format!("geoengine_test_{}", Uuid::now_v7().as_simple())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_generates_test_schema_names() {
-        let test_schema_name = test_schema();
-        assert!(test_schema_name.starts_with("geoengine_test_"));
-        assert!(
-            test_schema_name
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '_'),
-            "{test_schema_name} contains invalid characters"
-        );
-    }
+#[test]
+fn it_generates_test_schema_names() {
+    let test_schema_name = test_schema();
+    assert!(test_schema_name.starts_with("geoengine_test_"));
+    assert!(
+        test_schema_name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_'),
+        "{test_schema_name} contains invalid characters"
+    );
 }

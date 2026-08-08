@@ -5,10 +5,11 @@
 )]
 
 use anyhow::Context;
-use biois::server;
+use biois::{CONFIG, server, setup_tracing};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let _tracing_guard = setup_tracing(CONFIG.logging.clone().into());
     println!("{}", openapi_json().await?);
 
     Ok(())

@@ -4,8 +4,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Job status code enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed, o2o)]
 #[serde(rename_all = "PascalCase")]
+#[from_owned(ogcapi::types::processes::StatusCode)]
+#[owned_into(ogcapi::types::processes::StatusCode)]
+#[column(type = text)]
 pub enum StatusCode {
     Accepted,
     Running,
@@ -14,77 +17,23 @@ pub enum StatusCode {
     Dismissed,
 }
 
-impl From<StatusCode> for ogcapi::types::processes::StatusCode {
-    fn from(val: StatusCode) -> Self {
-        match val {
-            StatusCode::Accepted => ogcapi::types::processes::StatusCode::Accepted,
-            StatusCode::Running => ogcapi::types::processes::StatusCode::Running,
-            StatusCode::Successful => ogcapi::types::processes::StatusCode::Successful,
-            StatusCode::Failed => ogcapi::types::processes::StatusCode::Failed,
-            StatusCode::Dismissed => ogcapi::types::processes::StatusCode::Dismissed,
-        }
-    }
-}
-
-impl From<ogcapi::types::processes::StatusCode> for StatusCode {
-    fn from(val: ogcapi::types::processes::StatusCode) -> Self {
-        match val {
-            ogcapi::types::processes::StatusCode::Accepted => StatusCode::Accepted,
-            ogcapi::types::processes::StatusCode::Running => StatusCode::Running,
-            ogcapi::types::processes::StatusCode::Successful => StatusCode::Successful,
-            ogcapi::types::processes::StatusCode::Failed => StatusCode::Failed,
-            ogcapi::types::processes::StatusCode::Dismissed => StatusCode::Dismissed,
-        }
-    }
-}
-
 /// Job type enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed, o2o)]
 #[serde(rename_all = "PascalCase")]
+#[from_owned(ogcapi::types::processes::JobType)]
+#[owned_into(ogcapi::types::processes::JobType)]
 pub enum JobType {
     Process,
 }
 
-impl From<JobType> for ogcapi::types::processes::JobType {
-    fn from(val: JobType) -> Self {
-        match val {
-            JobType::Process => ogcapi::types::processes::JobType::Process,
-        }
-    }
-}
-
-impl From<ogcapi::types::processes::JobType> for JobType {
-    fn from(val: ogcapi::types::processes::JobType) -> Self {
-        match val {
-            ogcapi::types::processes::JobType::Process => JobType::Process,
-        }
-    }
-}
-
 /// Response type enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed, o2o)]
 #[serde(rename_all = "PascalCase")]
+#[from_owned(ogcapi::types::processes::Response)]
+#[owned_into(ogcapi::types::processes::Response)]
 pub enum Response {
     Raw,
     Document,
-}
-
-impl From<Response> for ogcapi::types::processes::Response {
-    fn from(val: Response) -> Self {
-        match val {
-            Response::Raw => ogcapi::types::processes::Response::Raw,
-            Response::Document => ogcapi::types::processes::Response::Document,
-        }
-    }
-}
-
-impl From<ogcapi::types::processes::Response> for Response {
-    fn from(val: ogcapi::types::processes::Response) -> Self {
-        match val {
-            ogcapi::types::processes::Response::Raw => Response::Raw,
-            ogcapi::types::processes::Response::Document => Response::Document,
-        }
-    }
 }
 
 /// Link reference (stored as JSONB)
@@ -111,12 +60,14 @@ pub struct Job {
     /// Primary key: job ID
     #[key]
     #[auto(uuid(v7))]
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
     pub job_id: uuid::Uuid,
 
     /// Referenced process ID
     pub process_id: Option<String>,
 
     /// Job type
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
     pub job_type: JobType,
 
     /// Current status
@@ -155,35 +106,35 @@ pub struct Job {
 }
 
 impl Job {
-    /// Convert created timestamp to DateTime<Utc>
+    /// Convert created timestamp to `DateTime<Utc>`
     pub fn created_at(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_timestamp_millis(self.created).unwrap_or_else(|| Utc::now())
+        DateTime::<Utc>::from_timestamp_millis(self.created).unwrap_or_else(Utc::now)
     }
 
-    /// Convert finished timestamp to DateTime<Utc>
+    /// Convert finished timestamp to `DateTime<Utc>`
     pub fn finished_at(&self) -> Option<DateTime<Utc>> {
         self.finished
-            .and_then(|ts| DateTime::<Utc>::from_timestamp_millis(ts))
+            .and_then(DateTime::<Utc>::from_timestamp_millis)
     }
 
-    /// Convert updated timestamp to DateTime<Utc>
+    /// Convert updated timestamp to `DateTime<Utc>`
     pub fn updated_at(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_timestamp_millis(self.updated).unwrap_or_else(|| Utc::now())
+        DateTime::<Utc>::from_timestamp_millis(self.updated).unwrap_or_else(Utc::now)
     }
 
-    /// Set created from DateTime<Utc>
+    /// Set created from `DateTime<Utc>`
     pub fn with_created(mut self, dt: DateTime<Utc>) -> Self {
         self.created = dt.timestamp_millis();
         self
     }
 
-    /// Set finished from DateTime<Utc>
+    /// Set finished from `DateTime<Utc>`
     pub fn with_finished(mut self, dt: Option<DateTime<Utc>>) -> Self {
         self.finished = dt.map(|d| d.timestamp_millis());
         self
     }
 
-    /// Set updated from DateTime<Utc>
+    /// Set updated from `DateTime<Utc>`
     pub fn with_updated(mut self, dt: DateTime<Utc>) -> Self {
         self.updated = dt.timestamp_millis();
         self
@@ -210,6 +161,7 @@ pub struct Credits {
     pub compute_id: ComputeId,
 
     /// Credits used; empty if not yet determined (e.g., job still running)
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
     pub credits: Option<u64>,
 }
 

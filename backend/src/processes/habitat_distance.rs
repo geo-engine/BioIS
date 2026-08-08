@@ -1,6 +1,7 @@
-use crate::db::util::{get_bool, get_number};
-use crate::db::{DbHandle, util::get_string};
-use crate::processes::parameters::PointGeoJsonInput;
+use crate::{
+    db::{DbHandle, util::RecordValueExt},
+    processes::parameters::PointGeoJsonInput,
+};
 use anyhow::{Context, Result};
 use geojson::PointType;
 use indoc::formatdoc;
@@ -66,7 +67,7 @@ pub async fn natura2000_exists(db: &mut DbHandle, natura2000_schema: &'static st
     .next()
     .context("No result returned from existence check")?;
 
-    get_bool(&result, 0).context("Invalid exists type")
+    result.get_bool(0).context("Invalid exists type")
 }
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
@@ -275,9 +276,9 @@ impl TryFrom<toasty::stmt::Value> for Natura2000NearestHabitat {
 
     fn try_from(value: toasty::stmt::Value) -> Result<Self, Self::Error> {
         Ok(Natura2000NearestHabitat {
-            sitecode: get_string(&value, 0).context("Invalid sitecode type")?,
-            sitename: get_string(&value, 1).context("Invalid sitename type")?,
-            distance_m: get_number(&value, 2).context("Invalid distance type")?,
+            sitecode: value.get_string(0).context("Invalid sitecode type")?,
+            sitename: value.get_string(1).context("Invalid sitename type")?,
+            distance_m: value.get_number(2).context("Invalid distance type")?,
         })
     }
 }
@@ -294,7 +295,7 @@ async fn compute_habitat_distance(
     };
     let point_geometry = format!("SRID=4326;POINT({lon} {lat})");
 
-    let table: Natura2000NearestHabitat = toasty::sql::query(&formatdoc!(
+    let table: Natura2000NearestHabitat = toasty::sql::query(formatdoc!(
         r#"WITH reference AS (
             SELECT ST_Transform($1::geometry, 3035) AS point
         )
@@ -332,7 +333,7 @@ mod tests {
     use ogcapi::types::processes::Input;
 
     async fn create_schema_and_insert_test_site(db: &mut DbHandle) {
-        let schema = dbg!(db.schema_name().to_string());
+        let schema = db.schema_name().to_string();
         let wkt = include_str!("../../test-data/DE5417402.wkt");
 
         toasty::sql::statement(formatdoc! {r#"

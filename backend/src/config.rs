@@ -47,13 +47,13 @@ pub struct Database {
 impl Database {
     pub fn connection_string(&self) -> String {
         format!(
-            "postgresql://{user}:{password}@{host}:{port}/{database}?options=-c%20search_path%3D{schema}",
+            "postgresql://{user}:{password}@{host}:{port}/{database}?options=-c%20search_path%3D{schema},public",
             user = self.user,
             password = self.password.expose(),
             host = self.host,
             port = self.port,
             database = self.database,
-            schema = self.schema
+            schema = self.schema,
         )
     }
 }

@@ -14,6 +14,7 @@ pub mod util;
 #[derive(Clone, Debug)]
 pub struct DbHandle {
     db: toasty::Db,
+    #[allow(unused, reason = "used at least in tests")]
     schema: String,
 }
 
@@ -39,6 +40,7 @@ impl AsMut<toasty::Db> for DbHandle {
 
 impl DbHandle {
     /// Returns the name of the schema used by this database handle.
+    #[cfg(test)]
     pub fn schema_name(&self) -> &str {
         &self.schema
     }
@@ -57,7 +59,7 @@ pub async fn setup_db(config: &crate::config::Database) -> Result<DbHandle> {
         .max_pool_size(if cfg!(test) { 1 } else { 8 })
         .pool_wait_timeout(Some(Duration::from_secs(5)))
         .pool_create_timeout(Some(Duration::from_secs(10)))
-        .pool_health_check_interval(Some(Duration::from_secs(60)))
+        .pool_health_check_interval(Some(Duration::from_mins(1)))
         .connect(&config.connection_string())
         .await
         .context("Failed to connect to database")?;
@@ -75,45 +77,30 @@ async fn on_startup(db: &mut toasty::Db, config: &crate::config::Database) -> Re
     // For production, migrations should be applied separately via CLI
 
     if cfg!(test) || config.clear_database_on_start {
-        if config.clear_database_on_start {
-            info!("Clearing database schema '{}'", config.schema);
-            // Drop and recreate schema
-            toasty::sql::statement(format!("DROP SCHEMA IF EXISTS {} CASCADE;", &config.schema))
-                .exec(db)
-                .await
-                .context("Failed to clear database schema")?;
-        }
+        // TODO: do not do this if `clear_database_on_start` was false before restarting the server.
 
-        info!("Creating database schema '{}'", config.schema);
-        toasty::sql::statement(format!("CREATE SCHEMA IF NOT EXISTS {};", &config.schema))
-            .exec(db)
-            .await
-            .context("Failed to create database schema")?;
-
-        toasty::sql::statement(&format!(
-            r#"SET search_path TO "{schema_name}", public;"#,
-            schema_name = &config.schema
+        info!("Clearing database schema '{}'", config.schema);
+        // Drop and recreate schema
+        toasty::sql::statement(format!(
+            "DROP SCHEMA IF EXISTS {schema} CASCADE;",
+            schema = config.schema
         ))
         .exec(db)
         .await
-        .context("Failed to set search_path for database schema")?;
+        .context("Failed to clear database schema")?;
 
-        if cfg!(test) {
-            let mut connection = db.connection().await?;
+        info!("Creating database schema '{}'", config.schema);
+        toasty::sql::statement(format!(
+            "CREATE SCHEMA IF NOT EXISTS {schema};",
+            schema = config.schema
+        ))
+        .exec(db)
+        .await
+        .context("Failed to create database schema")?;
 
-            toasty::sql::statement(&format!(
-                r#"SET search_path TO "{schema_name}", public;"#,
-                schema_name = &config.schema
-            ))
-            .exec(&mut connection)
+        db.push_schema()
             .await
-            .context("Failed to set search_path for database schema")?;
-
-            connection
-                .push_schema()
-                .await
-                .context("Failed to push schema to database")?;
-        }
+            .context("Failed to push schema to database")?;
     }
 
     // TODO: In production, use proper migrations

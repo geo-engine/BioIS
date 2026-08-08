@@ -149,21 +149,29 @@ pub fn md_content(s: &str) -> &str {
     s[first_content_index..].trim()
 }
 
-pub fn setup_tracing(log_level: Directive) {
+pub fn setup_tracing(log_level: Directive) -> tracing_appender::non_blocking::WorkerGuard {
+    let (non_blocking, guard) = tracing_appender::non_blocking(std::io::stderr());
+
     tracing_subscriber::registry()
         .with(
             EnvFilter::builder()
                 .with_default_directive(log_level)
                 .from_env_lossy(),
         )
-        .with(tracing_subscriber::fmt::layer().pretty())
+        .with(
+            tracing_subscriber::fmt::layer()
+                .pretty()
+                .with_writer(non_blocking),
+        )
         .init();
+
+    guard
 }
 
 #[cfg(test)]
 #[allow(dead_code, reason = "Used in tests to setup tracing")]
-pub fn setup_tracing_for_tests() {
-    setup_tracing("info".parse().unwrap());
+pub fn setup_tracing_for_tests() -> tracing_appender::non_blocking::WorkerGuard {
+    setup_tracing("debug".parse().unwrap())
 }
 
 /// A macro to concatenate two static strings (`&'static str`) at compile time.
@@ -430,7 +438,7 @@ mod tests {
         }
 
         let result = std::panic::catch_unwind(|| {
-            setup_tracing("info".parse().unwrap());
+            let _guard = setup_tracing("info".parse().unwrap());
             tracing::info!("tracing initialized");
         });
 
