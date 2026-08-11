@@ -14,6 +14,7 @@ pub struct Config {
     pub database: Database,
     pub geoengine: GeoEngineInstance,
     pub data_ids: DataIdsConfig,
+    pub credits: CreditsConfig,
     pub logging: Logging,
 }
 
@@ -70,6 +71,7 @@ impl GeoEngineInstance {
 
         if let Some(session_token) = session_token {
             let session_token: Uuid = *session_token;
+
             configuration.bearer_access_token = Some(session_token.to_string());
         }
 
@@ -129,6 +131,18 @@ fn get_config() -> anyhow::Result<Config> {
     // TODO: environment variables
 
     Ok(builder.build()?.try_deserialize()?)
+}
+
+/// Specifies configuration for the credits system
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct CreditsConfig {
+    pub biodiversity_sensitive_areas: BiodiversitySensitiveAreasCreditsConfig,
+}
+
+/// Specifies credits configuration for the biodiversity sensitive areas
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct BiodiversitySensitiveAreasCreditsConfig {
+    pub credits_per_site: u64,
 }
 
 #[cfg(test)]

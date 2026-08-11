@@ -35,20 +35,30 @@ use ogcapi::{
 };
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 use tracing::instrument;
 use utoipa::ToSchema;
 
 use crate::{
     config::CONFIG,
+    credits::add_credits_pending,
+    db::{DbHandle, model::ComputationId},
     processes::parameters::{Month, PointGeoJsonInput, Year},
-    state::USER,
+    state::{CONTEXT, TaskLocalContext},
     util::{error_response, to_api_vector_process},
 };
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
 #[derive(Debug, Clone)]
-pub struct NDVIProcess;
+pub struct NDVIProcess {
+    db: DbHandle,
+}
+
+impl NDVIProcess {
+    pub fn new(db: DbHandle) -> Self {
+        Self { db }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 pub struct NDVIProcessInputs {
@@ -318,10 +328,8 @@ impl Processor for NDVIProcess {
             }
         }
 
-        let mut outputs = compute_ndvi(
-            &CONFIG
-                .geoengine
-                .api_config(USER.try_get().ok().map(|user| user.session_token)),
+        let (mut outputs, computation_id) = compute_ndvi(
+            &CONFIG.geoengine.api_config(CONTEXT.session_token().ok()),
             &inputs.coordinate.value.coordinates,
             inputs.year,
             inputs.month,
@@ -332,6 +340,10 @@ impl Processor for NDVIProcess {
 
         if should_reflect_inputs {
             outputs.inputs = Some(inputs);
+        }
+
+        if computation_id.is_some() {
+            add_credits_pending(self.db.clone(), computation_id).await?;
         }
 
         Ok(outputs.into())
@@ -356,7 +368,7 @@ async fn compute_ndvi(
     Month(month): Month,
     should_compute_ndvi: bool,
     should_compute_k_ndvi: bool,
-) -> Result<NDVIProcessOutputs> {
+) -> Result<(NDVIProcessOutputs, ComputationId)> {
     const NDVI: &str = "NDVI";
     const K_NDVI: &str = "kNDVI";
 
@@ -369,11 +381,14 @@ async fn compute_ndvi(
         (true, false) => vec![ndvi_source()],
         (false, true) => vec![k_ndvi_source()],
         (false, false) => {
-            return Ok(NDVIProcessOutputs {
-                ndvi: None,
-                k_ndvi: None,
-                inputs: None,
-            });
+            return Ok((
+                NDVIProcessOutputs {
+                    ndvi: None,
+                    k_ndvi: None,
+                    inputs: None,
+                },
+                ComputationId::none(),
+            ));
         }
     };
     let workflow = to_api_vector_process(&VectorOperator::RasterVectorJoin(
@@ -437,6 +452,8 @@ async fn compute_ndvi(
     let maxx = 509_760;
     let maxy = 5_700_000;
 
+    let mut computation_id = String::new();
+
     let feature_collection = wfs_handler(
         configuration,
         &workflow_id,
@@ -453,12 +470,14 @@ async fn compute_ndvi(
         Some(&time_str),
         Some(&workflow_id),
         None,
+        Some(&mut computation_id),
     )
     .await?;
 
-    // dbg!(&feature_collection);
-
-    outputs_from_feature_collection(&feature_collection, NDVI, K_NDVI)
+    Ok((
+        outputs_from_feature_collection(&feature_collection, NDVI, K_NDVI)?,
+        ComputationId::from_str(&computation_id)?,
+    ))
 }
 
 #[allow(unused)] // TODO: implement
@@ -750,6 +769,8 @@ fn k_ndvi_expression() -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::db::tests::with_temp_db;
+
     use super::*;
     use geoengine_api_client::apis::configuration::Configuration as ApiConfiguration;
     use httptest::matchers::*;
@@ -793,12 +814,15 @@ mod tests {
 
         // Mock WFS feature handler (GET /wfs/{workflow} -> GeoJSON with NDVI properties)
         server.expect(
-            Expectation::matching(request::method("GET")).respond_with(json_encoded(json!({
-                "type": "FeatureCollection",
-                "features": [
-                    { "type": "Feature", "properties": { "NDVI": 0.123, "kNDVI": 0.456 } }
-                ]
-            }))),
+            Expectation::matching(request::method("GET")).respond_with(
+                json_encoded(json!({
+                    "type": "FeatureCollection",
+                    "features": [
+                        { "type": "Feature", "properties": { "NDVI": 0.123, "kNDVI": 0.456 } }
+                    ]
+                }))
+                .append_header("x-computation-id", "00000000-0000-0000-0000-000000000004"),
+            ),
         );
 
         // Build API configuration pointing to the mock server
@@ -808,9 +832,10 @@ mod tests {
         // Call compute_ndvi with both outputs requested
         let coordinates = PointType::from((12.34, 56.78));
 
-        let outputs = compute_ndvi(&api_config, &coordinates, Year(2014), Month(1), true, true)
-            .await
-            .expect("compute_ndvi should succeed");
+        let (outputs, _computation_id) =
+            compute_ndvi(&api_config, &coordinates, Year(2014), Month(1), true, true)
+                .await
+                .expect("compute_ndvi should succeed");
 
         assert!(outputs.ndvi.is_some());
         assert!(outputs.k_ndvi.is_some());
@@ -820,39 +845,42 @@ mod tests {
         assert!((k_ndvi - 0.456).abs() < 1e-12);
     }
 
-    #[test]
-    fn process_summary_has_expected_inputs_and_outputs() {
-        let p = NDVIProcess;
-        let process = p.process().expect("to produce process description");
+    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+    async fn process_summary_has_expected_inputs_and_outputs() {
+        with_temp_db(async move |db| {
+            let p = NDVIProcess::new(db);
+            let process = p.process().expect("to produce process description");
 
-        // summary id / version
-        assert_eq!(process.summary.id, "ndvi");
-        assert_eq!(process.summary.version, "0.1.0");
+            // summary id / version
+            assert_eq!(process.summary.id, "ndvi");
+            assert_eq!(process.summary.version, "0.1.0");
 
-        // job control options contain sync and async execute
-        let mut has_sync = false;
-        let mut has_async = false;
-        for opt in &process.summary.job_control_options {
-            match opt {
-                JobControlOptions::SyncExecute => has_sync = true,
-                JobControlOptions::AsyncExecute => has_async = true,
-                JobControlOptions::Dismiss => todo!(),
+            // job control options contain sync and async execute
+            let mut has_sync = false;
+            let mut has_async = false;
+            for opt in &process.summary.job_control_options {
+                match opt {
+                    JobControlOptions::SyncExecute => has_sync = true,
+                    JobControlOptions::AsyncExecute => has_async = true,
+                    JobControlOptions::Dismiss => todo!(),
+                }
             }
-        }
-        assert!(has_sync, "expected SyncExecute in job_control_options");
-        assert!(has_async, "expected AsyncExecute in job_control_options");
+            assert!(has_sync, "expected SyncExecute in job_control_options");
+            assert!(has_async, "expected AsyncExecute in job_control_options");
 
-        // inputs contain coordinate, year, month
-        assert!(process.inputs.contains_key("coordinate"));
-        assert!(process.inputs.contains_key("year"));
-        assert!(process.inputs.contains_key("month"));
+            // inputs contain coordinate, year, month
+            assert!(process.inputs.contains_key("coordinate"));
+            assert!(process.inputs.contains_key("year"));
+            assert!(process.inputs.contains_key("month"));
 
-        // outputs contain ndvi and k_ndvi
-        assert!(process.outputs.contains_key("ndvi"));
-        assert!(process.outputs.contains_key("kNdvi"));
+            // outputs contain ndvi and k_ndvi
+            assert!(process.outputs.contains_key("ndvi"));
+            assert!(process.outputs.contains_key("kNdvi"));
 
-        // some basic checks for descriptions and schema presence
-        let ndvi_output = &process.outputs["ndvi"];
-        assert!(ndvi_output.schema.is_object());
+            // some basic checks for descriptions and schema presence
+            let ndvi_output = &process.outputs["ndvi"];
+            assert!(ndvi_output.schema.is_object());
+        })
+        .await;
     }
 }

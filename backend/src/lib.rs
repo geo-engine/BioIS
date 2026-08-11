@@ -1,6 +1,7 @@
 mod auth;
 mod collection_transactions;
 mod config;
+mod credits;
 mod db;
 mod handler;
 mod jobs;

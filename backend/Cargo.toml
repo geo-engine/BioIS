@@ -56,7 +56,8 @@ chrono = { version = "0.4", features = ["serde"] }
 config = "0.15"
 futures = "0.3"
 geo-types = "0.7"
-geoengine-api-client = "0.9.3"
+# geoengine-api-client = "0.9.3"
+geoengine-api-client = { git = "https://github.com/geo-engine/geoengine", branch = "fix/rust-api-wfs-computation-id" }
 geojson = "1.0"
 indoc = "2.0"
 nom = "8.0"

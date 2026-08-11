@@ -2,6 +2,7 @@ use crate::{
     auth::GeoEngineAuthMiddlewareLayer,
     collection_transactions::NoCollectionTransactions,
     config::CONFIG,
+    credits,
     db::setup_db,
     handler,
     jobs::JobHandler,
@@ -11,6 +12,7 @@ use crate::{
     },
     state::spawn_with_user,
 };
+use geoengine_api_client::apis::configuration::Configuration;
 use ogcapi::{
     processes::{Processor, echo::Echo},
     services::{self as ogcapi_services},
@@ -25,6 +27,12 @@ use utoipa::{
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
+#[derive(Clone, Debug)]
+pub struct AppState {
+    pub db: crate::db::DbHandle,
+    pub api_config: Configuration,
+}
+
 /// Create and configure the OGC API service, including routes, state, and OpenAPI documentation.
 pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
     let db_pool = setup_db(&CONFIG.database).await?;
@@ -32,7 +40,11 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
     let mut misc_router = OpenApiRouter::new()
         .routes(routes!(handler::health_handler))
         .nest("/auth", handler::auth_router())
-        .with_state(CONFIG.geoengine.api_config(None));
+        .nest("/credits", credits::router())
+        .with_state(AppState {
+            db: db_pool.clone(),
+            api_config: CONFIG.geoengine.api_config(None),
+        });
 
     misc_router
         .get_openapi_mut()
@@ -40,8 +52,8 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
 
     let mut processors: Vec<Box<dyn Processor>> = vec![
         Box::new(Echo),
-        Box::new(NDVIProcess),
-        Box::new(LandUseSealedAreaProcess),
+        Box::new(NDVIProcess::new(db_pool.clone())),
+        Box::new(LandUseSealedAreaProcess::new(db_pool.clone())),
     ];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
     add_biodiversity_sensitive_areas_process(&mut processors, db_pool.clone()).await;

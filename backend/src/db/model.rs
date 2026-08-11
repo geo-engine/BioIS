@@ -1,6 +1,13 @@
+#![allow(
+    clippy::used_underscore_binding,
+    reason = "For embedded NewTypes, toasty accesses the inner value via `_0`"
+)]
+
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use o2o::o2o;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 /// Job status code enumeration
@@ -77,24 +84,25 @@ pub struct Job {
     pub message: Option<String>,
 
     /// Job creation timestamp (stored as Unix timestamp in milliseconds)
-    pub created: i64,
+    pub created: TimestampMillis,
 
     /// Job completion timestamp (stored as Unix timestamp in milliseconds)
-    pub finished: Option<i64>,
+    pub finished: Option<TimestampMillis>,
 
     /// Last update timestamp (stored as Unix timestamp in milliseconds)
-    pub updated: i64,
+    pub updated: TimestampMillis,
 
     /// Progress percentage (0-100)
     pub progress: Option<i16>,
 
-    /// Links associated with the job (stored as JSONB)
+    /// Links associated with the job
     pub links: Vec<Link>,
 
     /// Response type
     pub response: Response,
 
-    /// Job results (JSONB)
+    /// Job results
+    /// TODO: make enum of all possible result types
     #[column(type = "jsonb")]
     pub results: Option<serde_json::Value>,
 
@@ -105,47 +113,41 @@ pub struct Job {
     pub credits: toasty::Deferred<Vec<Credits>>,
 }
 
-impl Job {
-    /// Convert created timestamp to `DateTime<Utc>`
-    pub fn created_at(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_timestamp_millis(self.created).unwrap_or_else(Utc::now)
-    }
+#[allow(
+    clippy::used_underscore_items,
+    reason = "For embedded NewTypes, toasty accesses the inner value via `_0`"
+)]
+pub fn job_updated_field() -> toasty::stmt::Path<Job, i64> {
+    Job::fields().updated()._0()
+}
 
-    /// Convert finished timestamp to `DateTime<Utc>`
-    pub fn finished_at(&self) -> Option<DateTime<Utc>> {
-        self.finished
-            .and_then(DateTime::<Utc>::from_timestamp_millis)
-    }
+/// A timestamp stored as a Unix timestamp in milliseconds, used for database storage.
+///
+/// TODO: Remove once we can use `jiff` or `DateTime` in `toasty` models
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, toasty::Embed,
+)]
+pub struct TimestampMillis(i64);
 
-    /// Convert updated timestamp to `DateTime<Utc>`
-    pub fn updated_at(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_timestamp_millis(self.updated).unwrap_or_else(Utc::now)
+impl From<DateTime<Utc>> for TimestampMillis {
+    fn from(dt: DateTime<Utc>) -> Self {
+        Self(dt.timestamp_millis())
     }
+}
 
-    /// Set created from `DateTime<Utc>`
-    pub fn with_created(mut self, dt: DateTime<Utc>) -> Self {
-        self.created = dt.timestamp_millis();
-        self
-    }
+impl TryInto<DateTime<Utc>> for TimestampMillis {
+    type Error = anyhow::Error;
 
-    /// Set finished from `DateTime<Utc>`
-    pub fn with_finished(mut self, dt: Option<DateTime<Utc>>) -> Self {
-        self.finished = dt.map(|d| d.timestamp_millis());
-        self
-    }
-
-    /// Set updated from `DateTime<Utc>`
-    pub fn with_updated(mut self, dt: DateTime<Utc>) -> Self {
-        self.updated = dt.timestamp_millis();
-        self
+    fn try_into(self) -> Result<DateTime<Utc>, Self::Error> {
+        DateTime::<Utc>::from_timestamp_millis(self.0).context("invalid timestamp")
     }
 }
 
 /// Credits database model
 #[derive(Debug, Clone, Serialize, Deserialize, toasty::Model)]
-#[key(job_id, compute_id)] // Note: `toasty` requires a primary key, but we would omit this normally.
+#[key(job_id, computation_id)] // Note: `toasty` requires a primary key, but we would omit this normally.
 pub struct Credits {
-    pub timestamp: i64,
+    pub timestamp: TimestampMillis,
 
     /// Referenced job ID
     #[index]
@@ -155,22 +157,22 @@ pub struct Credits {
     #[belongs_to(key = job_id, references = job_id)]
     pub job: toasty::Deferred<Job>,
 
-    /// Geo Engine compute ID (if applicable)
+    /// Geo Engine computation ID (if applicable)
     ///
     /// Note: Not stored as nullable because `toasty` requires a primary key.
-    pub compute_id: ComputeId,
+    pub computation_id: ComputationId,
 
     /// Credits used; empty if not yet determined (e.g., job still running)
     #[allow(clippy::struct_field_names, reason = "Database field name")]
     pub credits: Option<u64>,
 }
 
-/// An optional compute ID for Geo Engine jobs, stored as a string.
+/// An optional computation ID for Geo Engine jobs, stored as a string.
 /// This is used to track the compute resources used by a job in the Geo Engine system.
 #[derive(Debug, Clone, Serialize, Deserialize, toasty::Embed)]
-pub struct ComputeId(Uuid);
+pub struct ComputationId(Uuid);
 
-impl ComputeId {
+impl ComputationId {
     pub fn some(id: Uuid) -> Self {
         Self(id)
     }
@@ -180,10 +182,27 @@ impl ComputeId {
     }
 
     pub fn get(&self) -> Option<Uuid> {
-        if self.0.is_nil() {
+        if self.is_none() {
             return None;
         }
         Some(self.0)
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.0.is_nil()
+    }
+
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+}
+
+impl FromStr for ComputationId {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let id = Uuid::parse_str(s).context("invalid UUID string")?;
+        Ok(Self(id))
     }
 }
 

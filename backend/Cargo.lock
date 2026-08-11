@@ -1433,8 +1433,7 @@ dependencies = [
 [[package]]
 name = "geoengine-api-client"
 version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1042b3cd1f58af298728be1b101fa78b4bf558828fe770c1a8d1fb7740142c9d"
+source = "git+https://github.com/geo-engine/geoengine?branch=fix%2Frust-api-wfs-computation-id#3ffa70e64ac8374435d7b31fba0b095e2f512325"
 dependencies = [
  "reqwest",
  "serde",
@@ -4617,7 +4616,7 @@ dependencies = [
 [[package]]
 name = "toasty"
 version = "0.9.0"
-source = "git+https://github.com/tokio-rs/toasty?branch=main#19c834a127c0a32c87f9958748cba82abc462d20"
+source = "git+https://github.com/tokio-rs/toasty?branch=main#eb220ca08079716a82feeeaafa07e15f9ab864e7"
 dependencies = [
  "async-trait",
  "bit-set",
@@ -4678,7 +4677,7 @@ dependencies = [
 [[package]]
 name = "toasty-core"
 version = "0.9.0"
-source = "git+https://github.com/tokio-rs/toasty?branch=main#19c834a127c0a32c87f9958748cba82abc462d20"
+source = "git+https://github.com/tokio-rs/toasty?branch=main#eb220ca08079716a82feeeaafa07e15f9ab864e7"
 dependencies = [
  "async-trait",
  "bit-set",
@@ -4698,7 +4697,7 @@ dependencies = [
 [[package]]
 name = "toasty-driver-mysql"
 version = "0.9.0"
-source = "git+https://github.com/tokio-rs/toasty?branch=main#19c834a127c0a32c87f9958748cba82abc462d20"
+source = "git+https://github.com/tokio-rs/toasty?branch=main#eb220ca08079716a82feeeaafa07e15f9ab864e7"
 dependencies = [
  "async-trait",
  "sqlx-core 0.9.0",
@@ -4714,7 +4713,7 @@ dependencies = [
 [[package]]
 name = "toasty-driver-postgresql"
 version = "0.9.0"
-source = "git+https://github.com/tokio-rs/toasty?branch=main#19c834a127c0a32c87f9958748cba82abc462d20"
+source = "git+https://github.com/tokio-rs/toasty?branch=main#eb220ca08079716a82feeeaafa07e15f9ab864e7"
 dependencies = [
  "async-trait",
  "fallible-iterator",
@@ -4753,7 +4752,7 @@ dependencies = [
 [[package]]
 name = "toasty-macros"
 version = "0.9.0"
-source = "git+https://github.com/tokio-rs/toasty?branch=main#19c834a127c0a32c87f9958748cba82abc462d20"
+source = "git+https://github.com/tokio-rs/toasty?branch=main#eb220ca08079716a82feeeaafa07e15f9ab864e7"
 dependencies = [
  "hashbrown 0.17.1",
  "heck",
@@ -4767,7 +4766,7 @@ dependencies = [
 [[package]]
 name = "toasty-sql"
 version = "0.9.0"
-source = "git+https://github.com/tokio-rs/toasty?branch=main#19c834a127c0a32c87f9958748cba82abc462d20"
+source = "git+https://github.com/tokio-rs/toasty?branch=main#eb220ca08079716a82feeeaafa07e15f9ab864e7"
 dependencies = [
  "serde",
  "serde_json",

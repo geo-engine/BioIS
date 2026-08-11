@@ -7,7 +7,7 @@ use crate::{
         BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, LandUseSealedAreaProcess,
         NDVIProcess,
     },
-    state::USER,
+    state::{CONTEXT, TaskContext},
     util::{Secret, error_response},
 };
 use anyhow::{Context, Result};
@@ -217,7 +217,9 @@ where
             };
 
             // continue the request, scoped
-            USER.scope(user, inner.call(request)).await
+            CONTEXT
+                .scope(TaskContext::new(user), inner.call(request))
+                .await
         })
     }
 }
@@ -252,6 +254,8 @@ fn uuid_parser(input: &str) -> IResult<&str, Uuid> {
 
 #[cfg(test)]
 mod tests {
+
+    use crate::state::TaskLocalContext;
 
     use super::*;
     use axum::body::Body;
@@ -348,7 +352,7 @@ mod tests {
 
     fn mock_inner_outputs_user() -> BoxCloneService<Request<Body>, Response<Body>, Infallible> {
         let inner = tower::service_fn(|_req: Request<Body>| async {
-            Ok((StatusCode::OK, USER.get().id.to_string()).into_response())
+            Ok((StatusCode::OK, CONTEXT.user_id().unwrap().to_string()).into_response())
         });
         tower::util::BoxCloneService::new(inner)
     }

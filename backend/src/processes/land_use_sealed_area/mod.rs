@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::{
     CONFIG,
+    credits::add_credits_pending,
+    db::DbHandle,
     processes::{
         land_use_sealed_area::{
             compute::{
@@ -20,7 +22,7 @@ use crate::{
         },
         util::{set_min_max_in_schema, to_output_keys},
     },
-    state::USER,
+    state::{CONTEXT, TaskLocalContext},
     util::{md_content, md_heading},
 };
 use anyhow::Result;
@@ -44,7 +46,15 @@ mod types;
 
 #[doc = include_str!("description.md")]
 #[derive(Debug, Clone)]
-pub struct LandUseSealedAreaProcess;
+pub struct LandUseSealedAreaProcess {
+    db: DbHandle,
+}
+
+impl LandUseSealedAreaProcess {
+    pub fn new(db: DbHandle) -> Self {
+        Self { db }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -158,11 +168,10 @@ impl Processor for LandUseSealedAreaProcess {
     }
 
     fn process(&self) -> Result<Process> {
-        let configuration = USER.try_get().ok().map(|user| {
-            CONFIG
-                .geoengine
-                .api_config(Some(user.session_token.clone()))
-        });
+        let configuration = CONTEXT
+            .session_token()
+            .ok()
+            .map(|session_token| CONFIG.geoengine.api_config(Some(session_token)));
 
         // TODO: make `process` async & get `USER` passed to here
         tokio::task::block_in_place(|| {
@@ -176,15 +185,11 @@ impl Processor for LandUseSealedAreaProcess {
 
         let requested_outputs = OutputKeys::from_requested_outputs(&execute.outputs)?;
 
-        let user = USER.try_get()?;
-
         let results = self
             .execute(
                 inputs,
                 requested_outputs,
-                CONFIG
-                    .geoengine
-                    .api_config(Some(user.session_token.clone())),
+                CONFIG.geoengine.api_config(Some(CONTEXT.session_token()?)),
             )
             .await?;
 
@@ -353,7 +358,7 @@ impl LandUseSealedAreaProcess {
             || requested_outputs.errors
         {
             // Compute per-site land-use data
-            let (site_rows, errors) = compute_site_land_use_data(
+            let (site_rows, errors, computation_id) = compute_site_land_use_data(
                 &configuration,
                 inputs.year,
                 &inputs.sites,
@@ -384,6 +389,8 @@ impl LandUseSealedAreaProcess {
             if requested_outputs.errors {
                 outputs.errors = Some(errors);
             }
+
+            add_credits_pending(self.db.clone(), computation_id).await?;
         }
 
         if requested_outputs.documentation_sources {
@@ -517,7 +524,10 @@ impl From<LandUseSealedAreaProcessOutputs> for ExecuteResults {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{auth::User, processes::parameters::GeoJsonInputMediaType, state::USER};
+    use crate::{
+        auth::User, db::tests::with_temp_db, processes::parameters::GeoJsonInputMediaType,
+        state::TaskContext,
+    };
     use geoengine_api_client::models::{
         BoundingBox2D, CollectionType, Coordinate2D, DataId, DatasetNameResponse, FeatureDataType,
         GeoJson, IdResponse, InternalDataId, Measurement, Provenance, ProvenanceEntry,
@@ -653,56 +663,59 @@ mod tests {
         assert!(deserialized.previous_year_data.is_some());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn process_summary_has_expected_inputs_and_outputs() {
-        let process = LandUseSealedAreaProcess
-            .process(None)
-            .await
-            .expect("to produce process description");
+        with_temp_db(async move |db| {
+            let process = LandUseSealedAreaProcess::new(db)
+                .process(None)
+                .await
+                .expect("to produce process description");
 
-        // summary id / version
-        assert_eq!(process.summary.id, "land-use-sealed-area");
-        assert_eq!(process.summary.version, "0.1.0");
+            // summary id / version
+            assert_eq!(process.summary.id, "land-use-sealed-area");
+            assert_eq!(process.summary.version, "0.1.0");
 
-        // job control options contain sync and async execute
-        let mut has_sync = false;
-        let mut has_async = false;
-        for opt in &process.summary.job_control_options {
-            match opt {
-                JobControlOptions::SyncExecute => has_sync = true,
-                JobControlOptions::AsyncExecute => has_async = true,
-                JobControlOptions::Dismiss => {}
+            // job control options contain sync and async execute
+            let mut has_sync = false;
+            let mut has_async = false;
+            for opt in &process.summary.job_control_options {
+                match opt {
+                    JobControlOptions::SyncExecute => has_sync = true,
+                    JobControlOptions::AsyncExecute => has_async = true,
+                    JobControlOptions::Dismiss => {}
+                }
             }
-        }
-        assert!(has_sync, "expected SyncExecute in job_control_options");
-        assert!(has_async, "expected AsyncExecute in job_control_options");
+            assert!(has_sync, "expected SyncExecute in job_control_options");
+            assert!(has_async, "expected AsyncExecute in job_control_options");
 
-        // Check required inputs
-        for key in [
-            input_keys::SITES,
-            input_keys::LOCATION_NAME_FIELD,
-            input_keys::SITE_TYPE_FIELD,
-            input_keys::UNIT_FOR_AREA,
-        ] {
-            assert!(
-                process.inputs.contains_key(key),
-                "expected input key `{key}` in process inputs"
-            );
-        }
+            // Check required inputs
+            for key in [
+                input_keys::SITES,
+                input_keys::LOCATION_NAME_FIELD,
+                input_keys::SITE_TYPE_FIELD,
+                input_keys::UNIT_FOR_AREA,
+            ] {
+                assert!(
+                    process.inputs.contains_key(key),
+                    "expected input key `{key}` in process inputs"
+                );
+            }
 
-        // Check required outputs
-        for key in [
-            OutputKeys::LAND_USE_SUMMARY,
-            OutputKeys::SITE_LAND_USE_TABLE,
-            OutputKeys::INPUTS,
-            OutputKeys::ERRORS,
-            OutputKeys::DOCUMENTATION_SOURCES,
-        ] {
-            assert!(
-                process.outputs.contains_key(key),
-                "expected output key `{key}` in process outputs"
-            );
-        }
+            // Check required outputs
+            for key in [
+                OutputKeys::LAND_USE_SUMMARY,
+                OutputKeys::SITE_LAND_USE_TABLE,
+                OutputKeys::INPUTS,
+                OutputKeys::ERRORS,
+                OutputKeys::DOCUMENTATION_SOURCES,
+            ] {
+                assert!(
+                    process.outputs.contains_key(key),
+                    "expected output key `{key}` in process outputs"
+                );
+            }
+        })
+        .await;
     }
 
     #[test]
@@ -868,11 +881,14 @@ mod tests {
         assert!(results.is_empty());
     }
 
-    #[test]
-    fn it_provides_correct_process_metadata() {
-        let process = LandUseSealedAreaProcess;
-        assert_eq!(process.id(), "land-use-sealed-area");
-        assert_eq!(process.version(), "0.1.0");
+    #[tokio::test(flavor = "multi_thread")]
+    async fn it_provides_correct_process_metadata() {
+        with_temp_db(async move |db| {
+            let process = LandUseSealedAreaProcess::new(db);
+            assert_eq!(process.id(), "land-use-sealed-area");
+            assert_eq!(process.version(), "0.1.0");
+        })
+        .await;
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -886,12 +902,16 @@ mod tests {
         reason = "Ok for coordinates in test data"
     )]
     async fn it_runs_the_process() {
+        with_temp_db(async move |db| {
+
         let user = User {
             id: Uuid::from_u128(42),
             session_token: Uuid::from_u128(42).into(),
         };
 
-        USER.scope(user, async {
+        CONTEXT.scope(TaskContext::new(user), async {
+            CONTEXT.set_job_id(Uuid::from_u128(0x0000_0000_0000_0000_0000)).unwrap();
+
             // Start httptest server and mock the external Geo Engine endpoints
             let server = Server::run();
 
@@ -1001,7 +1021,7 @@ mod tests {
                                 }
                             }),
                         ],
-                    })),
+                    }).append_header("x-computation-id", "00000000-0000-0000-0000-000000000003")),
             );
 
             server.expect(
@@ -1132,12 +1152,13 @@ mod tests {
             .collect();
             let requested_outputs = OutputKeys::from_requested_outputs(&requested_outputs).unwrap();
 
-            let process = LandUseSealedAreaProcess;
-            let result = process
-                .execute(inputs.clone(), requested_outputs, api_config)
-                .await
-                .unwrap();
-
+             
+                let process = LandUseSealedAreaProcess::new(db);
+                let result = process
+                    .execute(inputs.clone(), requested_outputs, api_config)
+                    .await
+                    .unwrap();
+           
 
             assert_eq!(
                 serde_json::to_value(&result).unwrap(),
@@ -1291,5 +1312,7 @@ mod tests {
                 })
             );
         }).await;
+         })
+            .await;
     }
 }

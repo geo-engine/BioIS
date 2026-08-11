@@ -1,5 +1,7 @@
 use crate::{
-    db::{DbHandle, util::RecordValueExt},
+    CONFIG,
+    credits::add_credits_used,
+    db::{DbHandle, model::ComputationId, util::RecordValueExt},
     processes::{
         habitat_distance::natura2000_exists,
         parameters::{
@@ -13,6 +15,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use approx::AbsDiffEq;
+use geojson::Feature;
 use indoc::formatdoc;
 use ogcapi::{
     processes::Processor,
@@ -331,6 +334,8 @@ impl Processor for BiodiversitySensitiveAreasProcess {
         let value = serde_json::to_value(execute.inputs)?;
         let inputs: BiodiversitySensitiveAreasProcessInputs = serde_json::from_value(value)?;
 
+        let number_of_input_features = inputs.sites.value().features.len();
+
         // If no outputs were requested, default to all outputs
         if execute.outputs.is_empty() {
             for key in [
@@ -391,6 +396,14 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                 .contains_key(output_keys::ERRORS)
                 .then_some(errors);
         }
+
+        add_credits_used(
+            self.connection.clone(),
+            ComputationId::none(),
+            number_of_input_features as u64
+                * CONFIG.credits.biodiversity_sensitive_areas.credits_per_site,
+        )
+        .await?;
 
         Ok(outputs.into())
     }
@@ -837,36 +850,10 @@ pub async fn compute_biodiversity_sensitive_areas(
     let mut errors = Vec::new();
 
     for feature in &sites.value().features {
-        let location = match location_from_feature(feature, location_property) {
-            Ok(location) => location,
-            Err(error) => {
-                errors.push(error.to_string());
-                continue;
-            }
-        };
-        let site_specification = match site_specification_from_feature(feature, site_type_property)
-        {
-            Ok(spec) => spec,
-            Err(error) => {
-                errors.push(error.to_string());
-                continue;
-            }
-        };
-        let Some(polygon) = polygon_from_feature(feature) else {
-            errors.push(format!(
-                "Skipping feature `{}` due to missing or invalid geometry (not a point or polygon)",
-                feature_id_str(feature),
-            ));
-            continue;
-        };
-
-        site_inputs.push(SiteInput {
-            location,
-            was_point: was_point(feature),
-            buffer_distance_km: site_specification.buffer_distance(),
-            specification: site_specification,
-            geom: polygon,
-        });
+        match feature_to_site_input(feature, location_property, site_type_property) {
+            Ok(site_input) => site_inputs.push(site_input),
+            Err(error) => errors.push(error.to_string()),
+        }
     }
 
     let site_table: Vec<SiteRow> = toasty::sql::query(formatdoc!(r#"
@@ -936,6 +923,31 @@ pub async fn compute_biodiversity_sensitive_areas(
     .context("Failed to parse site row results")?;
 
     Ok((site_table, errors))
+}
+
+/// Convert a `GeoJSON` feature into a `SiteInput`, extracting the location, site specification, and geometry.
+/// Returns an error if any required property is missing or if the geometry is invalid.
+fn feature_to_site_input(
+    feature: &Feature,
+    location_property: &str,
+    site_type_property: &str,
+) -> Result<SiteInput> {
+    let location = location_from_feature(feature, location_property)?;
+    let site_specification = site_specification_from_feature(feature, site_type_property)?;
+    let Some(polygon) = polygon_from_feature(feature) else {
+        anyhow::bail!(
+            "Skipping feature `{feature_id}` due to missing or invalid geometry (not a point or polygon)",
+            feature_id = feature_id_str(feature),
+        );
+    };
+
+    Ok(SiteInput {
+        location,
+        was_point: was_point(feature),
+        buffer_distance_km: site_specification.buffer_distance(),
+        specification: site_specification,
+        geom: polygon,
+    })
 }
 
 #[cfg(test)]
