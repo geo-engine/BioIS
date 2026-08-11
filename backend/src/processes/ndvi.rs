@@ -328,8 +328,9 @@ impl Processor for NDVIProcess {
             }
         }
 
+        let configuration = CONFIG.geoengine.api_config(CONTEXT.session_token().ok());
         let (mut outputs, computation_id) = compute_ndvi(
-            &CONFIG.geoengine.api_config(CONTEXT.session_token().ok()),
+            &configuration,
             &inputs.coordinate.value.coordinates,
             inputs.year,
             inputs.month,
@@ -343,7 +344,7 @@ impl Processor for NDVIProcess {
         }
 
         if computation_id.is_some() {
-            add_credits_pending(self.db.clone(), computation_id).await?;
+            add_credits_pending(self.db.clone(), configuration, computation_id).await?;
         }
 
         Ok(outputs.into())

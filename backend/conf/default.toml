@@ -25,5 +25,8 @@ level = "info"
 [data_ids]
 land_use_imperviousness_builtup = "land_use_impervious_built_up"
 
+[credits]
+credits_lookup_interval_seconds = 60
+
 [credits.biodiversity_sensitive_areas]
 credits_per_site = 10

@@ -1,6 +1,6 @@
 use crate::util::Secret;
 use geoengine_api_client::apis::configuration::Configuration;
-use std::{path::Path, sync::LazyLock};
+use std::{path::Path, sync::LazyLock, time::Duration};
 use tracing::Level;
 use tracing_subscriber::filter::Directive;
 use url::Url;
@@ -136,7 +136,14 @@ fn get_config() -> anyhow::Result<Config> {
 /// Specifies configuration for the credits system
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct CreditsConfig {
+    pub credits_lookup_interval_seconds: u64,
     pub biodiversity_sensitive_areas: BiodiversitySensitiveAreasCreditsConfig,
+}
+
+impl CreditsConfig {
+    pub fn credits_lookup_interval(&self) -> Duration {
+        Duration::from_secs(self.credits_lookup_interval_seconds)
+    }
 }
 
 /// Specifies credits configuration for the biodiversity sensitive areas

@@ -96,3 +96,95 @@ Content-Type: application/json
 }
 
 ###
+
+POST http://localhost:4040/processes/land-use-sealed-area/execution
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Prefer: respond-async
+
+{
+    "inputs": {
+        "sites": {
+            "value": {
+                "type": "FeatureCollection",
+                "name": "test-data-sealing",
+                "crs": {
+                    "type": "name",
+                    "properties": {
+                        "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+                    }
+                },
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Musizierhaus",
+                            "siteType": "site"
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[8.773084369718358, 50.812878691542942], [8.773108704553691, 50.812363165183598], [8.773636906051513, 50.812368774306606], [8.77363422626267, 50.812881114843449], [8.773084369718358, 50.812878691542942]]]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Im Garten",
+                            "siteType": "site"
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[8.771216247876815, 50.812571907069582], [8.771206911327607, 50.812312207328453], [8.771692263238966, 50.812307122122299], [8.771706722708121, 50.8125771236597], [8.771216247876815, 50.812571907069582]]]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Teil der Zentralbib",
+                            "siteType": "site"
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[8.771008264934009, 50.813509037898953], [8.771036928561866, 50.813239495110878], [8.771494891149727, 50.813251198211937], [8.771508900259988, 50.813538273899908], [8.771008264934009, 50.813509037898953]]]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Garten im Musizierhaus",
+                            "siteType": "natureOnSite"
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[8.773166017675141, 50.812438921387283], [8.773167633417881, 50.812377454260897], [8.773350797293739, 50.812382815303913], [8.773343971472983, 50.812437395514991], [8.773166017675141, 50.812438921387283]]]
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Im Alten Botanischen Garten",
+                            "siteType": "natureOffSite"
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[8.771981787517911, 50.811958373658889], [8.771975230909757, 50.811797761589858], [8.772320354208373, 50.811794598662132], [8.772310652890782, 50.811958453698445], [8.771981787517911, 50.811958373658889]]]
+                        }
+                    }
+                ]
+            },
+            "mediaType": "application/geo+json"
+        },
+        "locationNameField": "name",
+        "siteTypeField": "siteType",
+        "year": 2024,
+        "unitForArea": "m²"
+    },
+    "outputs": {},
+    "response": "document"
+}
+
+###
+
+
+GET http://localhost:4040/credits/2026/08
+Authorization: Bearer {{token}}

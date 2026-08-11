@@ -100,12 +100,13 @@ lint-api-client: _clear
     rm -r node_modules
     rm package-lock.json
 
+[arg('write', long='write', value='', help='Write changes to files instead of checking.')]
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-rustfmt: _clear
+lint-backend-rustfmt write="--check": _clear
     @echo "Running rustfmt…"
-    cargo fmt --all -- --check
+    cargo fmt --all {{ write }}
 
 [arg("relaxed", long="relaxed", value="true", help="Don't fail on warnings, only print them")]
 [group('backend')]

@@ -390,7 +390,7 @@ impl LandUseSealedAreaProcess {
                 outputs.errors = Some(errors);
             }
 
-            add_credits_pending(self.db.clone(), computation_id).await?;
+            add_credits_pending(self.db.clone(), configuration.clone(), computation_id).await?;
         }
 
         if requested_outputs.documentation_sources {
@@ -530,8 +530,9 @@ mod tests {
     };
     use geoengine_api_client::models::{
         BoundingBox2D, CollectionType, Coordinate2D, DataId, DatasetNameResponse, FeatureDataType,
-        GeoJson, IdResponse, InternalDataId, Measurement, Provenance, ProvenanceEntry,
-        TypedResultDescriptor, TypedVectorResultDescriptor, VectorColumnInfo, VectorDataType,
+        GeoJson, IdResponse, InternalDataId, Measurement, OperatorQuota, Provenance,
+        ProvenanceEntry, TypedResultDescriptor, TypedVectorResultDescriptor, VectorColumnInfo,
+        VectorDataType,
     };
     use geojson::FeatureCollection;
     use httptest::{
@@ -1041,6 +1042,15 @@ mod tests {
                     }])),
             );
 
+            server.expect(
+                Expectation::matching(request::method_path("GET", "//quota/computations/00000000-0000-0000-0000-000000000003"))
+                    .respond_with(json_encoded(vec![OperatorQuota::new(
+                        "OPERATOR-NAME".to_string(),
+                        "OPERATOR-PATH".to_string(),
+                        100,
+                    )])),
+            );
+
             // Build API configuration pointing to the mock server
             let mut api_config = Configuration::new();
             api_config.base_path = server.url_str("/");
@@ -1152,13 +1162,13 @@ mod tests {
             .collect();
             let requested_outputs = OutputKeys::from_requested_outputs(&requested_outputs).unwrap();
 
-             
+
                 let process = LandUseSealedAreaProcess::new(db);
                 let result = process
                     .execute(inputs.clone(), requested_outputs, api_config)
                     .await
                     .unwrap();
-           
+
 
             assert_eq!(
                 serde_json::to_value(&result).unwrap(),

@@ -32,6 +32,7 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
 import { DateTimeField } from '../models/DateTimeField';
@@ -56,6 +57,7 @@ import { GeoJSONPoint } from '../models/GeoJSONPoint';
 import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
 import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { GeoPointField } from '../models/GeoPointField';
+import { GetCreditsResponse } from '../models/GetCreditsResponse';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
@@ -527,6 +529,28 @@ export class PromiseUserApi {
     public authRequestUrlHandler(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<string> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.authRequestUrlHandler(redirectUri, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * Returns the user\'s credits.
+     * @param year
+     * @param month
+     */
+    public getCreditsWithHttpInfo(year: number, month: number, _options?: PromiseConfigurationOptions): Promise<HttpInfo<GetCreditsResponse>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.getCreditsWithHttpInfo(year, month, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * Returns the user\'s credits.
+     * @param year
+     * @param month
+     */
+    public getCredits(year: number, month: number, _options?: PromiseConfigurationOptions): Promise<GetCreditsResponse> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.getCredits(year, month, observableOptions);
         return result.toPromise();
     }
 

@@ -28,6 +28,7 @@ export * from '../models/Constraints6';
 export * from '../models/Constraints7';
 export * from '../models/Constraints8';
 export * from '../models/Constraints9';
+export * from '../models/CreditsForJob';
 export * from '../models/DataResource';
 export * from '../models/DateField';
 export * from '../models/DateTimeField';
@@ -52,6 +53,7 @@ export * from '../models/GeoJSONPoint';
 export * from '../models/GeoJSONPolygon';
 export * from '../models/GeoJsonInputMediaType';
 export * from '../models/GeoPointField';
+export * from '../models/GetCreditsResponse';
 export * from '../models/HabitatDistanceProcessInputs';
 export * from '../models/HabitatDistanceProcessOutputs';
 export * from '../models/HabitatDistanceProcessParams';
@@ -144,6 +146,7 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResourceClass } from '../models/DataResource';
 import { DateField     , DateFieldTypeEnum      } from '../models/DateField';
 import { DateTimeField     , DateTimeFieldTypeEnum      } from '../models/DateTimeField';
@@ -168,6 +171,7 @@ import { GeoJSONPoint, GeoJSONPointTypeEnum     } from '../models/GeoJSONPoint';
 import { GeoJSONPolygon, GeoJSONPolygonTypeEnum     } from '../models/GeoJSONPolygon';
 import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { GeoPointField     , GeoPointFieldTypeEnum  , GeoPointFieldFormatEnum     } from '../models/GeoPointField';
+import { GetCreditsResponse } from '../models/GetCreditsResponse';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams    } from '../models/HabitatDistanceProcessParams';
@@ -324,6 +328,7 @@ let typeMap: {[index: string]: any} = {
     "Constraints7": Constraints7,
     "Constraints8": Constraints8,
     "Constraints9": Constraints9,
+    "CreditsForJob": CreditsForJob,
     "DataResource": DataResourceClass,
     "DateField": DateField,
     "DateTimeField": DateTimeField,
@@ -347,6 +352,7 @@ let typeMap: {[index: string]: any} = {
     "GeoJSONPoint": GeoJSONPoint,
     "GeoJSONPolygon": GeoJSONPolygon,
     "GeoPointField": GeoPointField,
+    "GetCreditsResponse": GetCreditsResponse,
     "HabitatDistanceProcessInputs": HabitatDistanceProcessInputs,
     "HabitatDistanceProcessOutputs": HabitatDistanceProcessOutputs,
     "HabitatDistanceProcessParams": HabitatDistanceProcessParams,

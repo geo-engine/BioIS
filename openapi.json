@@ -602,6 +602,63 @@
         }
       }
     },
+    "/credits/{year}/{month}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Returns the user's credits.",
+        "operationId": "get_credits",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user's credits for the specified month.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCreditsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 500,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/processes/ndvi/execution": {
       "post": {
         "tags": [
@@ -928,6 +985,24 @@
           }
         }
       },
+      "CreditsForJob": {
+        "type": "object",
+        "required": [
+          "jobId",
+          "creditsUsed"
+        ],
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "creditsUsed": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
       "DescriptionType": {
         "type": "object",
         "description": "Basic description type",
@@ -1053,6 +1128,38 @@
         "enum": [
           "application/geo+json"
         ]
+      },
+      "GetCreditsResponse": {
+        "type": "object",
+        "required": [
+          "year",
+          "month",
+          "creditsUsed",
+          "details"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "creditsUsed": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditsForJob"
+            }
+          }
+        }
       },
       "HabitatDistanceProcessInputs": {
         "type": "object",

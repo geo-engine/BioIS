@@ -169,7 +169,7 @@ pub struct Credits {
 
 /// An optional computation ID for Geo Engine jobs, stored as a string.
 /// This is used to track the compute resources used by a job in the Geo Engine system.
-#[derive(Debug, Clone, Serialize, Deserialize, toasty::Embed)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, toasty::Embed)]
 pub struct ComputationId(Uuid);
 
 impl ComputationId {
@@ -203,6 +203,16 @@ impl FromStr for ComputationId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let id = Uuid::parse_str(s).context("invalid UUID string")?;
         Ok(Self(id))
+    }
+}
+
+impl std::fmt::Display for ComputationId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(id) = self.get() {
+            write!(f, "{id}")
+        } else {
+            write!(f, "None")
+        }
     }
 }
 
