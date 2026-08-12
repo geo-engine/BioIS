@@ -115,14 +115,12 @@ mod tests {
     use super::*;
     use crate::auth::AuthCodeResponse;
     use crate::config::GeoEngineInstance;
-    use crate::db::tests::with_temp_db;
     use axum::extract::{Query, State};
     use axum::routing::get;
     use axum::{Json, Router};
     use axum::{body::Body, http::Request};
     use httptest::matchers::request::method;
     use httptest::{Expectation, Server, responders::json_encoded};
-    use reqwest::StatusCode;
     use serde_json::json;
     use tower::ServiceExt;
     use url::Url;
@@ -139,10 +137,8 @@ mod tests {
         assert_eq!(response.status(), StatusCode::NO_CONTENT);
     }
 
-    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
-    async fn it_retrieves_user_session_from_auth_handler() {
-        with_temp_db(async move |db| {
-
+    #[crate::test]
+    async fn it_retrieves_user_session_from_auth_handler(db: DbHandle) {
         // start mock server
         let server = Server::run();
 
@@ -184,7 +180,5 @@ mod tests {
         .await;
 
         assert!(res.is_ok(), "expected Ok(UserSession) from auth_handler");
-
-        }).await;
     }
 }

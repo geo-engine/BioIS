@@ -1,6 +1,6 @@
 #![allow(
     clippy::used_underscore_binding,
-    reason = "For embedded NewTypes, toasty accesses the inner value via `_0`"
+    reason = "For embedded NewTypes, toasty accesses the inner value via `_0`, cf. <https://github.com/tokio-rs/toasty/issues/1179>"
 )]
 
 use anyhow::Context;
@@ -111,14 +111,6 @@ pub struct Job {
 
     #[has_many]
     pub credits: toasty::Deferred<Vec<Credits>>,
-}
-
-#[allow(
-    clippy::used_underscore_items,
-    reason = "For embedded NewTypes, toasty accesses the inner value via `_0`"
-)]
-pub fn job_updated_field() -> toasty::stmt::Path<Job, i64> {
-    Job::fields().updated()._0()
 }
 
 /// A timestamp stored as a Unix timestamp in milliseconds, used for database storage.

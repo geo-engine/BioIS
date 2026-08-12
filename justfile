@@ -181,6 +181,13 @@ test-backend-with-coverage-report: _clear
         --all-features \
         --html
 
+# Run the backend tests. Usage: `just test-backend`.
+[group('backend')]
+[group('test')]
+[working-directory('backend')]
+test-backend-macros filter="": _clear
+    cargo test -p biois-macros --locked -- {{ filter }} --nocapture
+
 # Run the frontend tests. Usage: `just test-frontend`.
 [group('frontend')]
 [group('test')]

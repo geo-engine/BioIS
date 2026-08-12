@@ -1,3 +1,9 @@
+[workspace]
+members = ["macros"]
+
+[workspace.dependencies]
+pretty_assertions = "1.4"
+
 [package]
 name = "biois"
 version = "0.1.0"
@@ -52,6 +58,7 @@ anyhow = "1.0"
 approx = { version = "0.6.0-rc2", features = ["derive", "vec_impl"] }
 async-trait = "0.1"
 axum = { version = "0.8", features = ["multipart"] }
+biois-macros = { path = "macros" }
 chrono = { version = "0.4", features = ["serde"] }
 config = "0.15"
 futures = "0.3"
@@ -69,17 +76,11 @@ ogcapi = { git = "https://github.com/georust/ogcapi", branch = "main", default-f
     "types",
 ] }
 o2o = "0.5"
-pretty_assertions = "1.4"
-reqwest = { version = "0.13", features = ["json"] }
 schemars = "1.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 tempfile = "3.27"
-# toasty = { version = "0.9", features = ["postgresql", "serde"] }
-toasty = { git = "https://github.com/tokio-rs/toasty", branch = "main", features = [
-    "postgresql",
-    "serde",
-] }
+toasty = { version = "0.10", features = ["postgresql", "serde"] }
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
 tower = "0.5"
 tracing = "0.1"
@@ -93,4 +94,5 @@ wkt = "0.14"
 
 [dev-dependencies]
 httptest = "0.16"
-toasty-cli = "0.9"
+pretty_assertions = { workspace = true }
+toasty-cli = "0.10"

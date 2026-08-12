@@ -329,7 +329,6 @@ async fn compute_habitat_distance(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::tests::with_temp_db;
     use ogcapi::types::processes::Input;
 
     async fn create_schema_and_insert_test_site(db: &mut DbHandle) {
@@ -380,71 +379,64 @@ mod tests {
         let _inputs: HabitatDistanceProcessInputs = serde_json::from_value(json).unwrap();
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn it_computes_the_nearest_habitat() {
+    #[crate::test]
+    async fn it_computes_the_nearest_habitat(mut db: DbHandle) {
         // crate::util::setup_tracing_for_tests();
-        with_temp_db(|mut db| async move {
-            // create schema / table and insert a test site
-            create_schema_and_insert_test_site(&mut db).await;
+        // create schema / table and insert a test site
+        create_schema_and_insert_test_site(&mut db).await;
 
-            // compute the habitat distance
-            let schema = db.schema_name().to_string();
-            let outputs =
-                compute_habitat_distance(&mut db, &schema, &PointType::from((8.46, 50.49)))
-                    .await
-                    .unwrap();
+        // compute the habitat distance
+        let schema = db.schema_name().to_string();
+        let outputs = compute_habitat_distance(&mut db, &schema, &PointType::from((8.46, 50.49)))
+            .await
+            .unwrap();
 
-            assert_eq!(outputs.habitat_code.unwrap(), "DE5417402");
-            assert_eq!(
-                outputs.habitat_name.unwrap(),
-                "Feldflur bei Hüttenberg und Schöffengrund"
-            );
-            // distance should be very small (point exactly matches)
-            assert_eq!(outputs.distance_m.unwrap(), 1415);
-        })
-        .await;
+        assert_eq!(outputs.habitat_code.unwrap(), "DE5417402");
+        assert_eq!(
+            outputs.habitat_name.unwrap(),
+            "Feldflur bei Hüttenberg und Schöffengrund"
+        );
+        // distance should be very small (point exactly matches)
+        assert_eq!(outputs.distance_m.unwrap(), 1415);
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn process_summary_has_expected_inputs_and_outputs() {
-        with_temp_db(|mut db| async move {
-            create_schema_and_insert_test_site(&mut db).await;
+    #[crate::test]
+    async fn process_summary_has_expected_inputs_and_outputs(mut db: DbHandle) {
+        create_schema_and_insert_test_site(&mut db).await;
 
-            let schema = db.schema_name().to_string();
-            let p = HabitatDistanceProcess::new(db, schema.leak())
-                .await
-                .unwrap();
-            let process = p.process().expect("to produce process description");
+        let schema = db.schema_name().to_string();
+        let p = HabitatDistanceProcess::new(db, schema.leak())
+            .await
+            .unwrap();
+        let process = p.process().expect("to produce process description");
 
-            // summary id / version
-            assert_eq!(process.summary.id, "habitatDistance");
-            assert_eq!(process.summary.version, "0.1.0");
+        // summary id / version
+        assert_eq!(process.summary.id, "habitatDistance");
+        assert_eq!(process.summary.version, "0.1.0");
 
-            // job control options contain sync and async execute
-            let mut has_sync = false;
-            let mut has_async = false;
-            for opt in &process.summary.job_control_options {
-                match opt {
-                    JobControlOptions::SyncExecute => has_sync = true,
-                    JobControlOptions::AsyncExecute => has_async = true,
-                    JobControlOptions::Dismiss => todo!(),
-                }
+        // job control options contain sync and async execute
+        let mut has_sync = false;
+        let mut has_async = false;
+        for opt in &process.summary.job_control_options {
+            match opt {
+                JobControlOptions::SyncExecute => has_sync = true,
+                JobControlOptions::AsyncExecute => has_async = true,
+                JobControlOptions::Dismiss => todo!(),
             }
-            assert!(has_sync, "expected SyncExecute in job_control_options");
-            assert!(has_async, "expected AsyncExecute in job_control_options");
+        }
+        assert!(has_sync, "expected SyncExecute in job_control_options");
+        assert!(has_async, "expected AsyncExecute in job_control_options");
 
-            // inputs contain only coordinate
-            assert!(process.inputs.contains_key("coordinate"));
+        // inputs contain only coordinate
+        assert!(process.inputs.contains_key("coordinate"));
 
-            // outputs contain habitatCode, habitatName and habitatDistance
-            assert!(process.outputs.contains_key("habitatCode"));
-            assert!(process.outputs.contains_key("habitatName"));
-            assert!(process.outputs.contains_key("habitatDistance"));
+        // outputs contain habitatCode, habitatName and habitatDistance
+        assert!(process.outputs.contains_key("habitatCode"));
+        assert!(process.outputs.contains_key("habitatName"));
+        assert!(process.outputs.contains_key("habitatDistance"));
 
-            // some basic checks for descriptions and schema presence
-            let habitat_distance_output = &process.outputs["habitatDistance"];
-            assert!(habitat_distance_output.schema.is_object());
-        })
-        .await;
+        // some basic checks for descriptions and schema presence
+        let habitat_distance_output = &process.outputs["habitatDistance"];
+        assert!(habitat_distance_output.schema.is_object());
     }
 }

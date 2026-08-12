@@ -10,6 +10,7 @@ mod server;
 mod state;
 mod util;
 
+pub use biois_macros::test;
 pub use config::CONFIG;
 pub use server::server;
 pub use util::setup_tracing;

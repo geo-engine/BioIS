@@ -770,8 +770,6 @@ fn k_ndvi_expression() -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::tests::with_temp_db;
-
     use super::*;
     use geoengine_api_client::apis::configuration::Configuration as ApiConfiguration;
     use httptest::matchers::*;
@@ -846,42 +844,39 @@ mod tests {
         assert!((k_ndvi - 0.456).abs() < 1e-12);
     }
 
-    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
-    async fn process_summary_has_expected_inputs_and_outputs() {
-        with_temp_db(async move |db| {
-            let p = NDVIProcess::new(db);
-            let process = p.process().expect("to produce process description");
+    #[crate::test]
+    async fn process_summary_has_expected_inputs_and_outputs(db: DbHandle) {
+        let p = NDVIProcess::new(db);
+        let process = p.process().expect("to produce process description");
 
-            // summary id / version
-            assert_eq!(process.summary.id, "ndvi");
-            assert_eq!(process.summary.version, "0.1.0");
+        // summary id / version
+        assert_eq!(process.summary.id, "ndvi");
+        assert_eq!(process.summary.version, "0.1.0");
 
-            // job control options contain sync and async execute
-            let mut has_sync = false;
-            let mut has_async = false;
-            for opt in &process.summary.job_control_options {
-                match opt {
-                    JobControlOptions::SyncExecute => has_sync = true,
-                    JobControlOptions::AsyncExecute => has_async = true,
-                    JobControlOptions::Dismiss => todo!(),
-                }
+        // job control options contain sync and async execute
+        let mut has_sync = false;
+        let mut has_async = false;
+        for opt in &process.summary.job_control_options {
+            match opt {
+                JobControlOptions::SyncExecute => has_sync = true,
+                JobControlOptions::AsyncExecute => has_async = true,
+                JobControlOptions::Dismiss => todo!(),
             }
-            assert!(has_sync, "expected SyncExecute in job_control_options");
-            assert!(has_async, "expected AsyncExecute in job_control_options");
+        }
+        assert!(has_sync, "expected SyncExecute in job_control_options");
+        assert!(has_async, "expected AsyncExecute in job_control_options");
 
-            // inputs contain coordinate, year, month
-            assert!(process.inputs.contains_key("coordinate"));
-            assert!(process.inputs.contains_key("year"));
-            assert!(process.inputs.contains_key("month"));
+        // inputs contain coordinate, year, month
+        assert!(process.inputs.contains_key("coordinate"));
+        assert!(process.inputs.contains_key("year"));
+        assert!(process.inputs.contains_key("month"));
 
-            // outputs contain ndvi and k_ndvi
-            assert!(process.outputs.contains_key("ndvi"));
-            assert!(process.outputs.contains_key("kNdvi"));
+        // outputs contain ndvi and k_ndvi
+        assert!(process.outputs.contains_key("ndvi"));
+        assert!(process.outputs.contains_key("kNdvi"));
 
-            // some basic checks for descriptions and schema presence
-            let ndvi_output = &process.outputs["ndvi"];
-            assert!(ndvi_output.schema.is_object());
-        })
-        .await;
+        // some basic checks for descriptions and schema presence
+        let ndvi_output = &process.outputs["ndvi"];
+        assert!(ndvi_output.schema.is_object());
     }
 }

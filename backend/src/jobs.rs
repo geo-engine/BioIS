@@ -1,7 +1,7 @@
 use crate::{
     db::{
         DbHandle,
-        model::{Job, JobType, Link, Response, StatusCode, TimestampMillis, job_updated_field},
+        model::{Job, JobType, Link, Response, StatusCode, TimestampMillis},
     },
     state::{CONTEXT, TaskLocalContext},
 };
@@ -121,7 +121,7 @@ impl ogcapi::drivers::JobHandler for JobHandler {
         let user_id = CONTEXT.user_id()?;
 
         let results: Vec<Job> = Job::filter(Job::fields().user_id().eq(user_id))
-            .order_by(job_updated_field().desc())
+            .order_by(Job::fields().updated().desc())
             .limit(limit)
             .offset(offset)
             .exec(&mut self.db.db())
@@ -269,7 +269,7 @@ impl TryInto<StatusInfo> for Job {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{auth::User, db::tests::with_temp_db, state::TaskContext};
+    use crate::{auth::User, state::TaskContext};
     use ogcapi::drivers::JobHandler as _;
 
     fn mock_user() -> User {
@@ -294,153 +294,104 @@ mod tests {
         }
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn it_registers_jobs() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    let status_info = mock_status_info();
-                    let result = handler.register(&status_info, ApiResponse::Raw).await;
-                    assert!(result.is_ok());
-                    let job_id = result.unwrap();
-                    assert!(!job_id.is_empty());
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn it_registers_jobs(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        let status_info = mock_status_info();
+        let result = handler.register(&status_info, ApiResponse::Raw).await;
+        assert!(result.is_ok());
+        let job_id = result.unwrap();
+        assert!(!job_id.is_empty());
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_update() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    let status_info = mock_status_info();
-                    // Register first
-                    let job_id = handler
-                        .register(&status_info, ApiResponse::Raw)
-                        .await
-                        .unwrap();
-                    // Update
-                    let mut updated_info = status_info.clone();
-                    updated_info.job_id = job_id;
-                    updated_info.status = ApiStatusCode::Running;
-                    let result = handler.update(&updated_info).await;
-                    assert!(result.is_ok());
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn test_update(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        let status_info = mock_status_info();
+        // Register first
+        let job_id = handler
+            .register(&status_info, ApiResponse::Raw)
+            .await
+            .unwrap();
+        // Update
+        let mut updated_info = status_info.clone();
+        updated_info.job_id = job_id;
+        updated_info.status = ApiStatusCode::Running;
+        let result = handler.update(&updated_info).await;
+        assert!(result.is_ok());
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_status_list() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    // Register a job
-                    let status_info = mock_status_info();
-                    handler
-                        .register(&status_info, ApiResponse::Raw)
-                        .await
-                        .unwrap();
-                    // List
-                    let result = handler.status_list(0, 10).await;
-                    assert!(result.is_ok());
-                    let list = result.unwrap();
-                    assert!(!list.is_empty());
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn test_status_list(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        // Register a job
+        let status_info = mock_status_info();
+        handler
+            .register(&status_info, ApiResponse::Raw)
+            .await
+            .unwrap();
+        // List
+        let result = handler.status_list(0, 10).await;
+        assert!(result.is_ok());
+        let list = result.unwrap();
+        assert!(!list.is_empty());
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_status() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    let status_info = mock_status_info();
-                    let job_id = handler
-                        .register(&status_info, ApiResponse::Raw)
-                        .await
-                        .unwrap();
-                    let result = handler.status(&job_id).await;
-                    assert!(result.is_ok());
-                    let status = result.unwrap();
-                    assert!(status.is_some());
-                    assert_eq!(status.unwrap().job_id, job_id);
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn test_status(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        let status_info = mock_status_info();
+        let job_id = handler
+            .register(&status_info, ApiResponse::Raw)
+            .await
+            .unwrap();
+        let result = handler.status(&job_id).await;
+        assert!(result.is_ok());
+        let status = result.unwrap();
+        assert!(status.is_some());
+        assert_eq!(status.unwrap().job_id, job_id);
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_finish() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    let status_info = mock_status_info();
-                    let job_id = handler
-                        .register(&status_info, ApiResponse::Raw)
-                        .await
-                        .unwrap();
-                    let result = handler
-                        .finish(
-                            &job_id,
-                            &ApiStatusCode::Successful,
-                            Some("done".to_string()),
-                            vec![],
-                            None,
-                        )
-                        .await;
-                    assert!(result.is_ok());
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn test_finish(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        let status_info = mock_status_info();
+        let job_id = handler
+            .register(&status_info, ApiResponse::Raw)
+            .await
+            .unwrap();
+        let result = handler
+            .finish(
+                &job_id,
+                &ApiStatusCode::Successful,
+                Some("done".to_string()),
+                vec![],
+                None,
+            )
+            .await;
+        assert!(result.is_ok());
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_dismiss() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    let status_info = mock_status_info();
-                    let job_id = handler
-                        .register(&status_info, ApiResponse::Raw)
-                        .await
-                        .unwrap();
-                    let result = handler.dismiss(&job_id).await;
-                    assert!(result.is_ok());
-                    let dismissed = result.unwrap();
-                    assert!(dismissed.is_some());
-                    assert_eq!(dismissed.unwrap().status, ApiStatusCode::Dismissed);
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn test_dismiss(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        let status_info = mock_status_info();
+        let job_id = handler
+            .register(&status_info, ApiResponse::Raw)
+            .await
+            .unwrap();
+        let result = handler.dismiss(&job_id).await;
+        assert!(result.is_ok());
+        let dismissed = result.unwrap();
+        assert!(dismissed.is_some());
+        assert_eq!(dismissed.unwrap().status, ApiStatusCode::Dismissed);
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn test_results_no_job() {
-        with_temp_db(|db_pool| async move {
-            let handler = JobHandler::new(db_pool).await.unwrap();
-            CONTEXT
-                .scope(TaskContext::new(mock_user()), async move {
-                    let non_existent_id = "00000000-0000-0000-0000-000000000000";
-                    let result = handler.results(non_existent_id).await;
-                    assert!(matches!(result.unwrap(), ProcessResult::NoSuchJob));
-                })
-                .await;
-        })
-        .await;
+    #[crate::test(task_context = TaskContext::new(mock_user()))]
+    async fn test_results_no_job(db: DbHandle) {
+        let handler = JobHandler::new(db).await.unwrap();
+        let non_existent_id = "00000000-0000-0000-0000-000000000000";
+        let result = handler.results(non_existent_id).await;
+        assert!(matches!(result.unwrap(), ProcessResult::NoSuchJob));
     }
 }
