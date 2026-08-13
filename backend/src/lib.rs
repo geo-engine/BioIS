@@ -5,6 +5,7 @@ mod db;
 mod handler;
 mod jobs;
 mod processes;
+mod profile;
 mod server;
 mod state;
 mod util;

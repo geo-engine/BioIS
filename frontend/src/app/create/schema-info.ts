@@ -36,8 +36,12 @@ export enum FieldType {
   RelativeJsonPointer = 'relativeJsonPointer',
   String = 'string',
   StringEnum = 'stringEnum',
+  StringArray = 'stringArray',
   NestedJson = 'nestedJson',
 }
+
+// UI-only cutoff: bounded integer inputs with at most 40 choices use a select.
+const SMALL_INTEGER_RANGE = 40;
 
 export function retrieveInputDescription(
   key: string,
@@ -98,6 +102,32 @@ function typeFromSchema(schema: JSONSchema | undefined): FieldType {
     type = type.find((t) => t !== 'null');
   }
 
+  // Resolve nullable primitives like {"anyOf": [{"$ref": ...}, {"type": "null"}]} to their type
+  if (!type && (schema.anyOf || schema.oneOf)) {
+    const branches = (schema.anyOf ?? schema.oneOf) as JSONSchema[];
+    const nonNull = branches.find(
+      (branch) =>
+        typeof branch !== 'object' ||
+        branch === null ||
+        (branch as BaseJSONSchema)['type'] !== 'null',
+    );
+    if (nonNull) {
+      const resolved = resolveSchemaRef(schema, nonNull);
+      const resolvedType =
+        typeof resolved === 'object' && resolved !== null
+          ? (resolved as BaseJSONSchema)['type']
+          : undefined;
+      if (
+        resolvedType === 'string' ||
+        resolvedType === 'number' ||
+        resolvedType === 'integer' ||
+        resolvedType === 'boolean'
+      ) {
+        return typeFromSchema(resolved);
+      }
+    }
+  }
+
   if (type === 'string') {
     if (schema.format === 'relative-json-pointer') return FieldType.RelativeJsonPointer;
     if (schema.enum) return FieldType.StringEnum;
@@ -109,7 +139,7 @@ function typeFromSchema(schema: JSONSchema | undefined): FieldType {
     if (
       typeof schema.maximum === 'number' &&
       typeof schema.minimum === 'number' &&
-      schema.maximum - schema.minimum <= 12
+      schema.maximum - schema.minimum <= SMALL_INTEGER_RANGE
     ) {
       return FieldType.IntegerWithSmallRange;
     }
@@ -122,12 +152,89 @@ function typeFromSchema(schema: JSONSchema | undefined): FieldType {
     if (schema.title === 'FeatureCollectionGeoJsonInput') return FieldType.GeoJson;
   }
 
+  if (resolveArrayEnumSchema(schema)) return FieldType.StringArray;
+
   // nested types (for now)
   if (!type) {
     return FieldType.NestedJson;
   }
 
   return FieldType.String; // fallback to string if type cannot be determined
+}
+
+/**
+ * Resolve the items schema from an array schema, following `$ref` through `$defs`.
+ */
+function resolveItemsSchema(
+  schema: Record<string, unknown>,
+  rootSchema: JSONSchema,
+): Record<string, unknown> | undefined {
+  const items = schema['items'];
+  if (!items || typeof items !== 'object' || Array.isArray(items)) return undefined;
+
+  const itemsObj = items as Record<string, unknown>;
+  if (!('$ref' in itemsObj)) return itemsObj;
+  const refRoot = '$defs' in schema ? (schema as JSONSchema) : rootSchema;
+  return resolveSchemaRef(refRoot, itemsObj) as Record<string, unknown>;
+}
+
+/**
+ * Type guard for an array items schema describing a string enum.
+ */
+function isStringEnumArray(
+  items: Record<string, unknown> | undefined,
+): items is { type: 'string'; enum: unknown[] } {
+  return !!items && items['type'] === 'string' && Array.isArray(items['enum']);
+}
+
+/** Resolves a string-enum array, including nullable and `$ref`-wrapped schemas. */
+export function resolveArrayEnumSchema(
+  schema: JSONSchema | undefined,
+): Record<string, unknown> | undefined {
+  if (!schema || typeof schema === 'boolean') return undefined;
+
+  const schemaRecord = schema as Record<string, unknown>;
+
+  const direct = resolveItemsSchema(schemaRecord, schema);
+  if (isStringEnumArray(direct)) return direct;
+
+  const branches = schemaRecord['anyOf'] ?? schemaRecord['oneOf'];
+  if (Array.isArray(branches)) {
+    for (const branch of branches) {
+      if (typeof branch !== 'object' || branch === null) continue;
+      const items = resolveItemsSchema(branch as Record<string, unknown>, schema);
+      if (isStringEnumArray(items)) return items;
+    }
+  }
+
+  return undefined;
+}
+
+/** Resolves the string enum for one input, including nullable `$ref` branches. */
+export function resolveSingleEnumSchema(schema: JSONSchema | undefined): string[] | undefined {
+  if (!schema || typeof schema === 'boolean') return undefined;
+
+  const schemaRecord = schema as Record<string, unknown>;
+
+  const direct = schemaRecord['enum'];
+  if (Array.isArray(direct))
+    return direct.filter((value): value is string => typeof value === 'string');
+
+  const branches = schemaRecord['anyOf'] ?? schemaRecord['oneOf'];
+  if (Array.isArray(branches)) {
+    for (const branch of branches) {
+      if (typeof branch !== 'object' || branch === null) continue;
+      const resolved = resolveSchemaRef(schema, branch as JSONSchema);
+      if (resolved && typeof resolved === 'object') {
+        const enumValue = (resolved as Record<string, unknown>)['enum'];
+        if (Array.isArray(enumValue)) {
+          return enumValue.filter((value): value is string => typeof value === 'string');
+        }
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function isOptional(schema: JSONSchema | undefined): boolean {
@@ -288,14 +395,24 @@ export function jsonSchemaToZod(jsonSchema: JSONSchema): z.ZodTypeAny {
   throw new Error('Failed to convert JSON Schema to Zod schema.', { cause: errors });
 }
 
+/** Metadata role a process must opt into for an optional input to be enabled by default. */
+const ENABLED_BY_DEFAULT_ROLE = 'enabled-by-default';
+
+/** Creates initial form values, keeping optional inputs disabled unless they opt in via metadata. */
 export function defaultInputs(inputDescriptions: Array<InputDescription>): Record<string, Input> {
   const inputs: Record<string, Input> = {};
   for (const input of inputDescriptions) {
-    // `Input` consists of `any` type
+    // Only optional inputs whose process description carries the `enabled-by-default` role
+    // start enabled; this keeps climate-risk anomaly calculation on while letting every
+    // other process keep its optional inputs off by default.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    inputs[input.key] = defaultInput(input);
+    inputs[input.key] = defaultInput(input, { ignoreOptional: enabledByDefault(input) });
   }
   return inputs;
+}
+
+function enabledByDefault(input: InputDescription): boolean {
+  return !!input.metadata?.some((meta) => meta.role === ENABLED_BY_DEFAULT_ROLE);
 }
 
 export function defaultInput(
@@ -322,6 +439,8 @@ export function defaultInput(
     case FieldType.RelativeJsonPointer:
     case FieldType.StringEnum:
       return defaultString(schema, '');
+    case FieldType.StringArray:
+      return stringArrayValues(schema);
     case FieldType.NestedJson:
       return {
         value: defaultInputs(Object.values(children ?? {})),
@@ -353,13 +472,28 @@ function defaultString(schema: JSONSchema, fallback: string = ''): string {
   const defaultValue = schema.default;
   if (typeof defaultValue === 'string') return defaultValue;
 
-  if (!schema.examples || !Array.isArray(schema.examples)) return fallback;
+  if (!schema.examples || !Array.isArray(schema.examples))
+    return firstEnumOrFallback(schema, fallback);
 
   for (const example of schema.examples ?? []) {
     if (typeof example === 'string') return example;
   }
 
+  return firstEnumOrFallback(schema, fallback);
+}
+
+function firstEnumOrFallback(schema: JSONSchema, fallback: string): string {
+  const firstEnum = resolveSingleEnumSchema(schema)?.[0];
+  if (firstEnum !== undefined) return firstEnum;
   return fallback;
+}
+
+function stringArrayValues(schema: JSONSchema): string[] {
+  const items = resolveArrayEnumSchema(schema);
+  const enumValues = items?.['enum'];
+  if (!Array.isArray(enumValues)) return [];
+
+  return enumValues.filter((value: unknown): value is string => typeof value === 'string');
 }
 
 function defaultCoordinate(schema: JSONSchema, fallback: [number, number] = [0, 0]): GeoJSONPoint {

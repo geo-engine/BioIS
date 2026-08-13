@@ -30,7 +30,7 @@ import {
   jsonSchemaToZod,
   defaultInputs,
 } from './schema-info';
-import { assertNever, isNullOrUndefined } from '../util/assertions';
+import { assertNever } from '../util/assertions';
 import { InfoIconComponent } from '../util/info-icon.component';
 import { MatError } from '@angular/material/form-field';
 
@@ -127,6 +127,7 @@ export class CreateComponent {
       key,
       title: processOutput.title ?? this.fieldName(key),
       description: processOutput.description,
+      defaultEnabled: !processOutput.metadata?.some((meta) => meta.role === 'default-disabled'),
     }));
   });
 
@@ -145,10 +146,14 @@ export class CreateComponent {
       this.formModel.update((current) => ({ ...current, inputs }));
     });
 
-    // initially, set all outputs
+    // initially, set all outputs that are not disabled by default
     effect(() => {
       const outputDescriptions = this.outputs();
-      const outputs = Object.fromEntries(outputDescriptions.map(({ key }) => [key, true]));
+      const outputs = Object.fromEntries(
+        outputDescriptions
+          .filter(({ defaultEnabled }) => defaultEnabled)
+          .map(({ key }) => [key, true]),
+      );
       this.formModel.update((current) => ({ ...current, outputs }));
     });
   }
@@ -203,15 +208,18 @@ function outputsForRequest(outputs: Record<string, boolean>): Record<string, Out
 }
 
 /**
- * Filter out undefined values from the inputs and return a new object with only defined values.
- * This is necessary because the API expects only defined inputs to be sent.
+ * Map the inputs from the form model to the format expected by the API request.
+ * `undefined` and `null` values are omitted: the API cannot transport `null`
+ * (the OGC API `Input` enum has no null variant), and the backend treats an
+ * absent optional input as its default (e.g. unset `region`) or as disabled
+ * (e.g. `referenceYearBegin` omitted means no anomaly reference period).
  *
  * @param inputs - The input object to filter.
  * @returns A new object containing only the defined inputs.
  */
-function inputsForRequest(inputs: Record<string, unknown>): Record<string, Input> {
+export function inputsForRequest(inputs: Record<string, unknown>): Record<string, Input> {
   return Object.fromEntries(
-    Object.entries(inputs).filter(([_, value]) => !isNullOrUndefined(value)),
+    Object.entries(inputs).filter(([_, value]) => value !== undefined && value !== null),
   );
 }
 
@@ -267,6 +275,7 @@ function compareInputDescriptionsForSorting(
       case FieldType.String:
       case FieldType.RelativeJsonPointer:
       case FieldType.StringEnum:
+      case FieldType.StringArray:
         return 0;
       case FieldType.Coordinate:
       case FieldType.GeoJson:

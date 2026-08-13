@@ -806,6 +806,7 @@ fn site_row_into_output(
                 },
             ],
             primary_key: vec!["location".to_string()].into(),
+            ..Default::default()
         },
     }
 }
