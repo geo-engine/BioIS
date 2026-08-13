@@ -143,7 +143,7 @@ lint-backend-toasty: _clear
     expected = tomllib.loads(latest_file.read_text())
 
     generated = subprocess.check_output(
-        ["cargo", "run", "--bin", "database-cli", "--", "migration", "snapshot"],
+        ["cargo", "run", "--bin", "biois-cli", "--", "database", "migration", "snapshot"],
         text=True,
     )
     generated = "\n".join(
@@ -300,7 +300,7 @@ down-pod:
 [group('misc')]
 [working-directory('backend')]
 generate-openapi-spec: _clear
-    cargo run --bin openapi > ../openapi.json
+    cargo run --bin biois-cli -- openapi > ../openapi.json
 
 # Run an arbitrary Angular CLI command in the frontend. Usage: `just ng -- build`.
 [group('frontend')]
@@ -321,6 +321,6 @@ check-no-changes-in-git-repo:
 
 [group('backend')]
 [working-directory('backend')]
-database-cli +ARGS="": _clear
-    cargo run --bin database-cli -- {{ ARGS }}
+biois-cli +ARGS="": _clear
+    cargo run --bin biois-cli -- {{ ARGS }}
     

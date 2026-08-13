@@ -35,13 +35,13 @@ The database schema is managed using [`toasty`](https://tokio-rs.github.io/toast
 To generate or update the schema, use the following commands:
 
 ```bash
-just database-cli migration generate <migration_name>
+just biois-cli database migration generate <migration_name>
 ```
 
 More commands can be found in the help section of the `toasty` CLI:
 
 ```bash
-just database-cli migration
+just biois-cli database migration
 ```
 
 ## Configuration

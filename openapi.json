@@ -8,7 +8,7 @@
       "url": "https://www.geoengine.de/en/",
       "email": "info@geoengine.de"
     },
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "paths": {
     "/": {
@@ -998,7 +998,7 @@
           },
           "creditsUsed": {
             "type": "integer",
-            "format": "int32",
+            "format": "int64",
             "minimum": 0
           }
         }
@@ -1150,7 +1150,7 @@
           },
           "creditsUsed": {
             "type": "integer",
-            "format": "int32",
+            "format": "int64",
             "minimum": 0
           },
           "details": {

@@ -332,6 +332,7 @@ dependencies = [
  "axum",
  "biois-macros",
  "chrono",
+ "clap",
  "config",
  "futures",
  "geo-types",
