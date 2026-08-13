@@ -17,6 +17,8 @@ COPY \
 # create dummy src to allow caching of cargo registry build step
 # This is a best practice so that code changes don't invalidate the entire cargo build cache
 RUN mkdir src && printf "fn main() { println!(\"cargo build cache\"); }\n" > src/main.rs
+RUN mkdir macros && printf "fn main() { println!(\"cargo build cache\"); }\n" > macros/main.rs
+COPY macros/Cargo.toml ./macros/Cargo.toml
 RUN cargo build --release
 RUN rm -rf src
 
@@ -25,6 +27,7 @@ COPY conf ./conf
 COPY database ./database
 COPY macros ./macros
 COPY src ./src
+COPY Toasty.toml ./
 RUN cargo build --release --bin biois-server
 
 # Strip the binary to reduce size if possible

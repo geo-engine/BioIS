@@ -46,7 +46,7 @@ struct DatabaseCommand {
 
 impl DatabaseCommand {
     async fn run(self, toasty_cli: &ToastyCli) -> Result<()> {
-        let args = std::iter::once(OsString::from("toasty")).chain(self.args.into_iter());
+        let args = std::iter::once(OsString::from("toasty")).chain(self.args);
         toasty_cli.parse_from(args).await
     }
 }
@@ -55,8 +55,13 @@ impl DatabaseCommand {
 struct OpenAPICommand;
 
 impl OpenAPICommand {
+    #[allow(
+        clippy::print_stdout,
+        reason = "This is a CLI command, printing to stdout is intended behavior"
+    )]
     async fn run(self) -> Result<()> {
         let _tracing_guard = setup_tracing(CONFIG.logging.clone().into());
+
         println!("{}", openapi_json().await?);
 
         Ok(())
