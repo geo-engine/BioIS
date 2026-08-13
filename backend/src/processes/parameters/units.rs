@@ -273,6 +273,10 @@ impl<'de> Deserialize<'de> for Percentage {
                 Ok(Percentage::from_percent(value))
             }
 
+            #[allow(
+                clippy::cast_precision_loss,
+                reason = "We want to allow deserialization from integers, but some cannot be represented as f64 without loss of precision."
+            )]
             fn visit_i64<E>(self, value: i64) -> Result<Percentage, E>
             where
                 E: serde::de::Error,

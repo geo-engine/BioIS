@@ -90,7 +90,7 @@ pub struct GetCreditsParams {
 pub struct GetCreditsResponse {
     pub year: u16,
     pub month: u8,
-    pub credits_used: u32,
+    pub credits_used: u64,
     pub details: Vec<CreditsForJob>, // Add this field to include the details of credits
 }
 
@@ -98,29 +98,29 @@ pub struct GetCreditsResponse {
 #[serde(rename_all = "camelCase")]
 pub struct CreditsForJob {
     pub job_id: Uuid,
-    pub credits_used: u32,
+    pub credits_used: u64,
 }
 
 /// A trait to sum credits used for a list of credits.
 ///
 /// TODO: Use `toasty`'s aggregate queries (<https://github.com/tokio-rs/toasty/issues/421>) once available.
 trait SumCredits {
-    fn sum(&self) -> u32;
+    fn sum(&self) -> u64;
 
     fn from_credits(credits_list: &[Credits]) -> Self;
 }
 
 impl SumCredits for Vec<CreditsForJob> {
-    fn sum(&self) -> u32 {
+    fn sum(&self) -> u64 {
         self.iter().map(|c| c.credits_used).sum()
     }
 
     fn from_credits(credits_list: &[Credits]) -> Self {
         // Since UUID v7 is time-ordered, we can use a BTreeMap to aggregate credits by job_id.
-        let mut map = BTreeMap::<Uuid, u32>::new();
+        let mut map = BTreeMap::<Uuid, u64>::new();
         for c in credits_list {
             let entry = map.entry(c.job_id).or_insert(0);
-            *entry += c.credits.unwrap_or(0) as u32;
+            *entry += c.credits.unwrap_or(0);
         }
         map.into_iter()
             .map(|(job_id, credits_used)| CreditsForJob {
@@ -160,7 +160,10 @@ mod tests {
 
     fn year_and_month() -> (u16, u8) {
         let current_date = Utc::now();
-        (current_date.year() as u16, current_date.month() as u8)
+        (
+            u16::try_from(current_date.year()).unwrap(),
+            u8::try_from(current_date.month()).unwrap(),
+        )
     }
 
     #[crate::test(task_context = TaskContext::new(mock_user()))]

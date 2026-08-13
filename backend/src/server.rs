@@ -3,7 +3,7 @@ use crate::{
     collection_transactions::NoCollectionTransactions,
     config::CONFIG,
     credits,
-    db::setup_db,
+    db::DbHandle,
     handler,
     jobs::JobHandler,
     processes::{
@@ -35,7 +35,7 @@ pub struct AppState {
 
 /// Create and configure the OGC API service, including routes, state, and OpenAPI documentation.
 pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
-    let db_pool = setup_db(&CONFIG.database).await?;
+    let db_pool = DbHandle::from_config(&CONFIG.database).await?;
 
     let mut misc_router = OpenApiRouter::new()
         .routes(routes!(handler::health_handler))

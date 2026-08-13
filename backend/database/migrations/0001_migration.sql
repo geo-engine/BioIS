@@ -1,0 +1,69 @@
+-- CREATE TYPE "Response" AS ENUM ('raw', 'document');
+-- CREATE TYPE "JobType" AS ENUM ('process');
+-- CREATE TYPE "StatusCode" AS ENUM ('accepted', 'running', 'successful', 'failed', 'dismissed');
+
+CREATE TABLE "credits" (
+    "timestamp" BIGINT NOT NULL,
+    "job_id" UUID NOT NULL,
+    "computation_id" UUID NOT NULL,
+    "credits" BIGINT,
+    PRIMARY KEY ("job_id", "computation_id")
+);
+
+CREATE INDEX "index_credits_by_job_id" ON "credits" ("job_id");
+
+ALTER TABLE "jobs" RENAME TO "jobs_old";
+
+CREATE TABLE "jobs" (
+    "job_id" UUID NOT NULL,
+    "process_id" TEXT,
+    "job_type" "JobType" NOT NULL,
+    "status" "StatusCode" NOT NULL,
+    "message" TEXT,
+    "created" BIGINT NOT NULL,
+    "finished" BIGINT,
+    "updated" BIGINT NOT NULL,
+    "progress" SMALLINT,
+    "links" JSONB NOT NULL,
+    "response" "Response" NOT NULL,
+    "results" JSONB,
+    "user_id" UUID NOT NULL,
+    PRIMARY KEY ("job_id")
+);
+
+INSERT INTO "jobs" (
+    "job_id",
+    "process_id",
+    "job_type",
+    "status",
+    "message",
+    "created",
+    "finished",
+    "updated",
+    "progress",
+    "links",
+    "response",
+    "results",
+    "user_id"
+)
+SELECT
+    "job_id"::UUID,
+    "process_id",
+    "job_type",
+    "status",
+    "message",
+    (EXTRACT(EPOCH FROM "created") * 1000)::BIGINT, -- Unix timestamp in milliseconds
+    CASE
+        WHEN "finished" IS NULL THEN NULL
+        ELSE (EXTRACT(EPOCH FROM "finished") * 1000)::BIGINT -- Unix timestamp in milliseconds
+    END,
+    (EXTRACT(EPOCH FROM "updated") * 1000)::BIGINT, -- Unix timestamp in milliseconds
+    "progress",
+    to_jsonb("links"),
+    "response",
+    "results",
+    "user_id"
+FROM "jobs_old";
+
+-- Drop manually after checking that the migration worked as expected. This is a safety measure to prevent accidental data loss.
+-- DROP TABLE "jobs_old";

@@ -324,7 +324,7 @@ checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
 name = "biois"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "approx 0.6.0-rc2",
@@ -1442,8 +1442,9 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.9.3"
-source = "git+https://github.com/geo-engine/geoengine?branch=fix%2Frust-api-wfs-computation-id#3ffa70e64ac8374435d7b31fba0b095e2f512325"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fa718487ebe0957cfec69a03bbd73342aa97526caebfad6790c70750dc44eee"
 dependencies = [
  "reqwest",
  "serde",

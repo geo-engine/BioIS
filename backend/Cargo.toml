@@ -6,7 +6,7 @@ pretty_assertions = "1.4"
 
 [package]
 name = "biois"
-version = "0.1.0"
+version = "0.2.0"
 publish = false
 authors = [
     "Christian Beilschmidt <christian.beilschmidt@geoengine.de>",
@@ -18,7 +18,7 @@ repository = "https://github.com/geo-engine/BioIS"
 edition = "2024"
 default-run = "biois"
 
-[lints.clippy]
+[workspace.lints.clippy]
 cargo = { level = "warn", priority = 0 }
 complexity = { level = "warn", priority = 0 }
 style = { level = "warn", priority = 0 }
@@ -27,20 +27,12 @@ pedantic = { level = "warn", priority = 0 }
 correctness = "deny"
 
 # disable some pedantic lints
-result_large_err = { level = "allow", priority = 1 }          # TODO: investigate this
-cast_possible_truncation = { level = "allow", priority = 1 }
-cast_possible_wrap = { level = "allow", priority = 1 }
-cast_precision_loss = { level = "allow", priority = 1 }
-cast_sign_loss = { level = "allow", priority = 1 }
 default_trait_access = { level = "allow", priority = 1 }
 missing_errors_doc = { level = "allow", priority = 1 }
 module_name_repetitions = { level = "allow", priority = 1 }
-must_use_candidate = { level = "allow", priority = 1 }
 non_ascii_literal = { level = "allow", priority = 1 }
 option_if_let_else = { level = "allow", priority = 1 }
 similar_names = { level = "allow", priority = 1 }
-single_match_else = { level = "allow", priority = 1 }
-type_repetition_in_bounds = { level = "allow", priority = 1 }
 wildcard_imports = { level = "allow", priority = 1 }
 
 # enable some restriction lints
@@ -53,6 +45,21 @@ unwrap_used = { level = "warn", priority = 1 }
 # disable some cargo lints
 multiple_crate_versions = { level = "allow", priority = 1 }
 
+[[bin]]
+name = "biois"
+path = "src/main.rs"
+bench = false
+
+[[bin]]
+name = "openapi-generator"
+path = "src/bin/openapi.rs"
+bench = false
+
+[[bin]]
+name = "database-cli"
+path = "src/bin/database_cli.rs"
+bench = false
+
 [dependencies]
 anyhow = "1.0"
 approx = { version = "0.6.0-rc2", features = ["derive", "vec_impl"] }
@@ -63,8 +70,7 @@ chrono = { version = "0.4", features = ["serde"] }
 config = "0.15"
 futures = "0.3"
 geo-types = "0.7"
-# geoengine-api-client = "0.9.3"
-geoengine-api-client = { git = "https://github.com/geo-engine/geoengine", branch = "fix/rust-api-wfs-computation-id" }
+geoengine-api-client = "0.9.4"
 geojson = "1.0"
 indoc = "2.0"
 nom = "8.0"
@@ -81,6 +87,8 @@ serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 tempfile = "3.27"
 toasty = { version = "0.10", features = ["postgresql", "serde"] }
+toasty-cli = "0.10"
+
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
 tower = "0.5"
 tracing = "0.1"
@@ -95,4 +103,6 @@ wkt = "0.14"
 [dev-dependencies]
 httptest = "0.16"
 pretty_assertions = { workspace = true }
-toasty-cli = "0.10"
+
+[lints]
+workspace = true

@@ -15,7 +15,7 @@ use uuid::Uuid;
 #[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::StatusCode)]
 #[owned_into(ogcapi::types::processes::StatusCode)]
-#[column(type = text)]
+// #[column(type = enum("StatusCode"))]
 pub enum StatusCode {
     Accepted,
     Running,
@@ -29,6 +29,7 @@ pub enum StatusCode {
 #[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::JobType)]
 #[owned_into(ogcapi::types::processes::JobType)]
+// #[column(type = enum("JobType"))]
 pub enum JobType {
     Process,
 }
@@ -38,6 +39,7 @@ pub enum JobType {
 #[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::Response)]
 #[owned_into(ogcapi::types::processes::Response)]
+// #[column(type = enum("Response"))]
 pub enum Response {
     Raw,
     Document,
@@ -84,12 +86,15 @@ pub struct Job {
     pub message: Option<String>,
 
     /// Job creation timestamp (stored as Unix timestamp in milliseconds)
+    #[default(TimestampMillis::now())]
     pub created: TimestampMillis,
 
     /// Job completion timestamp (stored as Unix timestamp in milliseconds)
+    #[default(None)]
     pub finished: Option<TimestampMillis>,
 
     /// Last update timestamp (stored as Unix timestamp in milliseconds)
+    #[update(TimestampMillis::now())]
     pub updated: TimestampMillis,
 
     /// Progress percentage (0-100)
@@ -120,6 +125,13 @@ pub struct Job {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, toasty::Embed,
 )]
 pub struct TimestampMillis(i64);
+
+impl TimestampMillis {
+    #[must_use]
+    pub fn now() -> Self {
+        Self(Utc::now().timestamp_millis())
+    }
+}
 
 impl From<DateTime<Utc>> for TimestampMillis {
     fn from(dt: DateTime<Utc>) -> Self {
@@ -165,14 +177,17 @@ pub struct Credits {
 pub struct ComputationId(Uuid);
 
 impl ComputationId {
+    #[must_use]
     pub fn some(id: Uuid) -> Self {
         Self(id)
     }
 
+    #[must_use]
     pub fn none() -> Self {
         Self(Uuid::nil())
     }
 
+    #[must_use]
     pub fn get(&self) -> Option<Uuid> {
         if self.is_none() {
             return None;
@@ -180,10 +195,12 @@ impl ComputationId {
         Some(self.0)
     }
 
+    #[must_use]
     pub fn is_none(&self) -> bool {
         self.0.is_nil()
     }
 
+    #[must_use]
     pub fn is_some(&self) -> bool {
         !self.is_none()
     }

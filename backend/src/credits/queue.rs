@@ -208,7 +208,7 @@ impl CreditsLookup {
 
     async fn update_credits(&self) -> Result<()> {
         fn quotas_sum<'q>(quotas: impl IntoIterator<Item = &'q OperatorQuota>) -> u64 {
-            quotas.into_iter().map(|q| q.count as u64).sum()
+            quotas.into_iter().map(|q| q.count.cast_unsigned()).sum()
         }
 
         let credits = self.quotas.as_ref().map(quotas_sum);

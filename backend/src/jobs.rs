@@ -260,7 +260,10 @@ impl TryInto<StatusInfo> for Job {
             created: Some(self.created.try_into()?),
             updated: Some(self.updated.try_into()?),
             finished: self.finished.map(TryInto::try_into).transpose()?,
-            progress: self.progress.map(|p| p as u8),
+            progress: self
+                .progress
+                .map(|p| u8::try_from(p).context("Progress value out of range for u8"))
+                .transpose()?,
             links: self.links.into_iter().map(Into::into).collect(),
         })
     }

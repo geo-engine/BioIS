@@ -1,7 +1,4 @@
-use crate::{
-    CONFIG,
-    db::{DbHandle, setup_db},
-};
+use crate::{CONFIG, db::DbHandle};
 use std::{
     panic::AssertUnwindSafe,
     sync::{Arc, OnceLock},
@@ -67,7 +64,7 @@ pub(crate) async fn setup_test_db() -> (OwnedSemaphorePermit, DbHandle) {
 
     let mut db_config = CONFIG.database.clone();
     db_config.schema = test_schema();
-    let db_pool = setup_db(&db_config).await.unwrap();
+    let db_pool = DbHandle::from_config(&db_config).await.unwrap();
 
     (permit, db_pool)
 }

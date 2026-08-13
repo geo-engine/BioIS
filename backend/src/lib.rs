@@ -2,7 +2,7 @@ mod auth;
 mod collection_transactions;
 mod config;
 mod credits;
-mod db;
+pub mod db;
 mod handler;
 mod jobs;
 mod processes;

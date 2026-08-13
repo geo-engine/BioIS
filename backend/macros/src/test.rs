@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Attribute, Error as SynError, FnArg, ItemFn, parse::Parse};
 
-pub fn test(args: TestArgs, input: ItemFn) -> TokenStream {
+pub fn test(args: &TestArgs, input: &ItemFn) -> TokenStream {
     let fn_attrs = input.attrs.iter().filter(|attr| !is_test_attr(attr));
     let vis = &input.vis;
     let asyncness = &input.sig.asyncness;

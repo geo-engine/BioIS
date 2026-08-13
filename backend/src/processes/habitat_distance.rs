@@ -1,6 +1,6 @@
 use crate::{
     db::{DbHandle, util::RecordValueExt},
-    processes::parameters::PointGeoJsonInput,
+    processes::{parameters::PointGeoJsonInput, util::round_nearest_i64},
 };
 use anyhow::{Context, Result};
 use geojson::PointType;
@@ -322,7 +322,7 @@ async fn compute_habitat_distance(
     Ok(HabitatDistanceProcessOutputs {
         habitat_code: Some(table.sitecode),
         habitat_name: Some(table.sitename),
-        distance_m: Some(table.distance_m.round() as i64),
+        distance_m: Some(round_nearest_i64(table.distance_m)),
     })
 }
 

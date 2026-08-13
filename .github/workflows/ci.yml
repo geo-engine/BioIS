@@ -47,10 +47,8 @@ jobs:
               run: |
                 service postgresql start
                 psql postgres://geoengine:geoengine@localhost -c "CREATE DATABASE biois;"
-            - name: Diesel Check
-              run: |
-                just install-diesel-cli
-                just lint-backend-diesel-cli
+            - name: Check for missing migrations
+              run: just lint-backend-toasty
               env:
                 DATABASE_URL: postgres://geoengine:geoengine@localhost/biois
 

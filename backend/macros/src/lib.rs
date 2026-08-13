@@ -20,6 +20,6 @@ mod test;
 pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as TestArgs);
     let input = parse_macro_input!(item as ItemFn);
-    let expanded = crate::test::test(args, input);
+    let expanded = crate::test::test(&args, &input);
     TokenStream::from(expanded)
 }

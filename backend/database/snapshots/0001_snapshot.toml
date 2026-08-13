@@ -1,0 +1,143 @@
+version = 1
+
+[schema]
+
+[[schema.tables]]
+id = 0
+name = "jobs"
+primary_key = { columns = [{ table = 0, index = 0 }], index = { table = 0, index = 0 } }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 0 }
+name = "job_id"
+ty = "Uuid"
+storage_ty = "Uuid"
+
+[[schema.tables.columns]]
+id = { table = 0, index = 1 }
+name = "process_id"
+ty = "String"
+storage_ty = "Text"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 0, index = 2 }
+name = "job_type"
+ty = "String"
+storage_ty = { Enum = { name = "JobType", variants = [{ name = "process" }] } }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 3 }
+name = "status"
+ty = "String"
+storage_ty = { Enum = { name = "StatusCode", variants = [{ name = "accepted" }, { name = "running" }, { name = "successful" }, { name = "failed" }, { name = "dismissed" }] } }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 4 }
+name = "message"
+ty = "String"
+storage_ty = "Text"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 0, index = 5 }
+name = "created"
+ty = "I64"
+storage_ty = { Integer = 8 }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 6 }
+name = "finished"
+ty = "I64"
+storage_ty = { Integer = 8 }
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 0, index = 7 }
+name = "updated"
+ty = "I64"
+storage_ty = { Integer = 8 }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 8 }
+name = "progress"
+ty = "I16"
+storage_ty = { Integer = 2 }
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 0, index = 9 }
+name = "links"
+ty = { List = "Object" }
+storage_ty = { Document = { binary = true } }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 10 }
+name = "response"
+ty = "String"
+storage_ty = { Enum = { name = "Response", variants = [{ name = "raw" }, { name = "document" }] } }
+
+[[schema.tables.columns]]
+id = { table = 0, index = 11 }
+name = "results"
+ty = "String"
+storage_ty = "Jsonb"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 0, index = 12 }
+name = "user_id"
+ty = "Uuid"
+storage_ty = "Uuid"
+
+[[schema.tables.indices]]
+id = { table = 0, index = 0 }
+name = "index_jobs_by_job_id"
+on = 0
+columns = [{ column = { table = 0, index = 0 }, op = "Eq", scope = "Partition" }]
+unique = true
+primary_key = true
+
+[[schema.tables]]
+id = 1
+name = "credits"
+primary_key = { columns = [{ table = 1, index = 1 }, { table = 1, index = 2 }], index = { table = 1, index = 0 } }
+
+[[schema.tables.columns]]
+id = { table = 1, index = 0 }
+name = "timestamp"
+ty = "I64"
+storage_ty = { Integer = 8 }
+
+[[schema.tables.columns]]
+id = { table = 1, index = 1 }
+name = "job_id"
+ty = "Uuid"
+storage_ty = "Uuid"
+
+[[schema.tables.columns]]
+id = { table = 1, index = 2 }
+name = "computation_id"
+ty = "Uuid"
+storage_ty = "Uuid"
+
+[[schema.tables.columns]]
+id = { table = 1, index = 3 }
+name = "credits"
+ty = "U64"
+storage_ty = { UnsignedInteger = 8 }
+nullable = true
+
+[[schema.tables.indices]]
+id = { table = 1, index = 0 }
+name = "index_credits_by_job_id_and_computation_id"
+on = 1
+columns = [{ column = { table = 1, index = 1 }, op = "Eq", scope = "Partition" }, { column = { table = 1, index = 2 }, op = "Eq", scope = "Local" }]
+unique = true
+primary_key = true
+
+[[schema.tables.indices]]
+id = { table = 1, index = 1 }
+name = "index_credits_by_job_id"
+on = 1
+columns = [{ column = { table = 1, index = 1 }, op = "Eq", scope = "Partition" }]

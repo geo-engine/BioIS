@@ -31,18 +31,17 @@ It provides APIs and processing capabilities for computing biodiversity indicato
 
 ## Schema generation
 
-The database schema is managed using Diesel migrations.
+The database schema is managed using [`toasty`](https://tokio-rs.github.io/toasty/) migrations.
 To generate or update the schema, use the following commands:
 
 ```bash
-diesel migration generate <migration_name>
-diesel migration run
+just database-cli migration generate <migration_name>
 ```
 
-This reverts all migrations and reapplies them, updating the `schema.rs` file accordingly:
+More commands can be found in the help section of the `toasty` CLI:
 
 ```bash
-diesel migration redo --all
+just database-cli migration
 ```
 
 ## Configuration
