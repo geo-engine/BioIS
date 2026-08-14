@@ -635,13 +635,8 @@ pub(crate) async fn compute_climate(
     )
     .await?;
 
-    let reference_results = Some(query_workflows(
-        configuration,
-        &workflow_ids,
-        &bbox_string,
-        &reference_time,
-    )
-    .await?);
+    let reference_results =
+        Some(query_workflows(configuration, &workflow_ids, &bbox_string, &reference_time).await?);
 
     for (i, analysis) in analysis_results.iter().enumerate() {
         for (j, feature) in analysis.features.iter().enumerate() {

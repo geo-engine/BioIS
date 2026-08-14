@@ -85,7 +85,8 @@ impl Processor for ClimateRiskProcess {
         let mut generator = settings.into_generator();
 
         let mut reference_year_begin_schema = generator.root_schema_for::<Year>().to_value();
-        reference_year_begin_schema["default"] = serde_json::json!(default_reference_year_begin().0);
+        reference_year_begin_schema["default"] =
+            serde_json::json!(default_reference_year_begin().0);
 
         let inputs = HashMap::from([
             (
