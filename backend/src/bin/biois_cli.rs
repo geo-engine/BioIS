@@ -62,20 +62,20 @@ impl OpenAPICommand {
     async fn run(self) -> Result<()> {
         let _tracing_guard = setup_tracing(CONFIG.logging.clone().into());
 
-        println!("{}", openapi_json().await?);
+        println!("{}", Self::openapi_json().await?);
 
         Ok(())
     }
-}
 
-async fn openapi_json() -> Result<String> {
-    let mut service = server().await?;
+    async fn openapi_json() -> Result<String> {
+        let mut service = server().await?;
 
-    service
-        .get_router_mut()
-        .get_openapi_mut()
-        .to_pretty_json()
-        .context("Failed to serialize OpenAPI spec as JSON")
+        service
+            .get_router_mut()
+            .get_openapi_mut()
+            .to_pretty_json()
+            .context("Failed to serialize OpenAPI spec as JSON")
+    }
 }
 
 #[cfg(test)]
@@ -85,7 +85,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn it_fetches_openapi_spec_successfully() {
         let openapi_json: serde_json::Value =
-            serde_json::from_str(&openapi_json().await.unwrap()).unwrap();
+            serde_json::from_str(&OpenAPICommand::openapi_json().await.unwrap()).unwrap();
 
         assert_eq!(openapi_json["openapi"], "3.1.0");
         assert_eq!(openapi_json["info"]["title"], "BioIS API");
