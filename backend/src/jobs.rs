@@ -160,7 +160,6 @@ impl ogcapi::drivers::JobHandler for JobHandler {
     ) -> anyhow::Result<()> {
         let now_ms: TimestampMillis = Utc::now().into();
         let job_id = Uuid::parse_str(job_id).context("Invalid job ID format")?;
-        let results_json = results.map(serde_json::to_value).transpose()?;
 
         toasty::update!(Job::filter_by_job_id(job_id) {
             status: StatusCode::from(status.clone()),
@@ -169,7 +168,7 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             finished: Some(now_ms),
             progress: Some(100i16),
             links: links.iter().cloned().map(Into::into).collect::<Vec<Link>>(),
-            results: results_json,
+            results: results.map(toasty::Json),
         })
         .exec(&mut self.db.db())
         .await
@@ -233,16 +232,13 @@ impl ogcapi::drivers::JobHandler for JobHandler {
             return Ok(ProcessResult::NoSuchJob);
         };
 
-        let Some(results_json) = job.results else {
+        let Some(toasty::Json(results)) = job.results else {
             return Ok(ProcessResult::NotReady);
         };
 
-        let results: ExecuteResults = serde_json::from_value(results_json)?;
-        let response_mode = job.response;
-
         Ok(ProcessResult::Results {
             results,
-            response_mode: response_mode.into(),
+            response_mode: job.response.into(),
         })
     }
 }

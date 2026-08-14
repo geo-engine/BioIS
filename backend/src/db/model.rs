@@ -6,6 +6,7 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use o2o::o2o;
+use ogcapi::types::processes::ExecuteResults;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use uuid::Uuid;
@@ -15,7 +16,7 @@ use uuid::Uuid;
 #[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::StatusCode)]
 #[owned_into(ogcapi::types::processes::StatusCode)]
-// #[column(type = enum("StatusCode"))]
+#[column(type = enum("StatusCode"))]
 pub enum StatusCode {
     Accepted,
     Running,
@@ -29,7 +30,7 @@ pub enum StatusCode {
 #[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::JobType)]
 #[owned_into(ogcapi::types::processes::JobType)]
-// #[column(type = enum("JobType"))]
+#[column(type = enum("JobType"))]
 pub enum JobType {
     Process,
 }
@@ -39,7 +40,7 @@ pub enum JobType {
 #[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::Response)]
 #[owned_into(ogcapi::types::processes::Response)]
-// #[column(type = enum("Response"))]
+#[column(type = enum("Response"))]
 pub enum Response {
     Raw,
     Document,
@@ -109,7 +110,7 @@ pub struct Job {
     /// Job results
     /// TODO: make enum of all possible result types
     #[column(type = "jsonb")]
-    pub results: Option<serde_json::Value>,
+    pub results: Option<toasty::Json<ExecuteResults>>,
 
     /// User ID who created the job
     pub user_id: uuid::Uuid,

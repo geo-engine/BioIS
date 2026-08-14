@@ -82,9 +82,14 @@ schemars = "1.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 tempfile = "3.27"
-toasty = { version = "0.10", features = ["postgresql", "serde"] }
-toasty-cli = "0.10"
-
+# toasty = { version = "0.10", features = ["postgresql", "serde"] }
+toasty = { git = "https://github.com/tokio-rs/toasty", branch = "main", features = [
+    "migration",
+    "postgresql",
+    "serde",
+] }
+# toasty-cli = "0.10"
+toasty-cli = { git = "https://github.com/tokio-rs/toasty", branch = "main" }
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
 tower = "0.5"
 tracing = "0.1"
