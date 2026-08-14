@@ -594,7 +594,7 @@ pub(crate) async fn compute_climate(
     coordinate: &PointType,
     Year(start_year): Year,
     YearRange(range): YearRange,
-    reference_year: Option<Year>,
+    Year(reference_year): Year,
     requests: &[(ClimateVariableRequest, ClimateScenarioProperties)],
     models: &[CordexModelProperties],
     region: &CordexRegionProperties,
@@ -608,12 +608,10 @@ pub(crate) async fn compute_climate(
     let time_str_analysis =
         format!("{start_year:04}-01-01T00:00:00Z/{end_analysis:04}-01-01T00:00:00Z");
     let analysis_period = format!("{start_year:04}–{:04}", end_analysis - 1);
-    let reference_time = reference_year.map(|Year(reference_year)| {
-        let end_reference = reference_year + range;
-        format!("{reference_year:04}-01-01T00:00:00Z/{end_reference:04}-01-01T00:00:00Z")
-    });
-    let reference_period = reference_year
-        .map(|Year(reference_year)| format!("{reference_year:04}–{}", reference_year + range - 1));
+    let end_reference = reference_year + range;
+    let reference_time =
+        format!("{reference_year:04}-01-01T00:00:00Z/{end_reference:04}-01-01T00:00:00Z");
+    let reference_period = format!("{reference_year:04}–{}", reference_year + range - 1);
     let bbox = BoundingBox::around_point(coordinate, POINT_BBOX_HALF_SPAN);
     let bbox_string = bbox.wfs_string();
 
@@ -637,12 +635,13 @@ pub(crate) async fn compute_climate(
     )
     .await?;
 
-    let reference_results = match &reference_time {
-        Some(reference_time) => {
-            Some(query_workflows(configuration, &workflow_ids, &bbox_string, reference_time).await?)
-        }
-        None => None,
-    };
+    let reference_results = Some(query_workflows(
+        configuration,
+        &workflow_ids,
+        &bbox_string,
+        &reference_time,
+    )
+    .await?);
 
     for (i, analysis) in analysis_results.iter().enumerate() {
         for (j, feature) in analysis.features.iter().enumerate() {
@@ -668,12 +667,11 @@ pub(crate) async fn compute_climate(
     let climate_risk = Some(climate_risk_data_resource(
         rows,
         &analysis_period,
-        reference_period.as_deref(),
+        Some(reference_period.as_str()),
     ));
-
     Ok(ClimateRiskOutputs {
         analysis_period: Some(analysis_period),
-        reference_period,
+        reference_period: Some(reference_period),
         climate_risk,
         raw_ensemble_data: if raw_rows.is_empty() {
             None

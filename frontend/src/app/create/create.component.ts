@@ -211,8 +211,7 @@ function outputsForRequest(outputs: Record<string, boolean>): Record<string, Out
  * Map the inputs from the form model to the format expected by the API request.
  * `undefined` and `null` values are omitted: the API cannot transport `null`
  * (the OGC API `Input` enum has no null variant), and the backend treats an
- * absent optional input as its default (e.g. unset `region`) or as disabled
- * (e.g. `referenceYearBegin` omitted means no anomaly reference period).
+ * absent optional input as its default (e.g. unset `region`).
  *
  * @param inputs - The input object to filter.
  * @returns A new object containing only the defined inputs.

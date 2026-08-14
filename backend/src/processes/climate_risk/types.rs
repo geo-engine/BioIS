@@ -243,9 +243,8 @@ pub(crate) const DATA_START_YEAR: u16 = 2006;
 // Climate values are aggregated using a Julian year.
 pub(crate) const DAYS_PER_JULIAN_YEAR: f64 = 365.25;
 
-#[allow(clippy::unnecessary_wraps)]
-fn default_reference_year_begin() -> Option<Year> {
-    Some(Year(DATA_START_YEAR))
+pub(crate) fn default_reference_year_begin() -> Year {
+    Year(2020)
 }
 
 fn default_year_range() -> YearRange {
@@ -270,9 +269,9 @@ pub struct ClimateRiskInputs {
     #[serde(default = "default_year_range")]
     #[schemars(default = "default_year_range")]
     pub year_range: YearRange,
-    #[serde(default)]
     #[schemars(default = "default_reference_year_begin")]
-    pub reference_year_begin: Option<Year>,
+    #[schema(minimum = 2006, maximum = 2100)]
+    pub reference_year_begin: Year,
     #[serde(default = "default_variables")]
     pub variables: Vec<ClimateVariable>,
     #[serde(default = "default_models")]

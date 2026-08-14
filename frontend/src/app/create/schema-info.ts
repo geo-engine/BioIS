@@ -395,24 +395,14 @@ export function jsonSchemaToZod(jsonSchema: JSONSchema): z.ZodTypeAny {
   throw new Error('Failed to convert JSON Schema to Zod schema.', { cause: errors });
 }
 
-/** Metadata role a process must opt into for an optional input to be enabled by default. */
-const ENABLED_BY_DEFAULT_ROLE = 'enabled-by-default';
-
-/** Creates initial form values, keeping optional inputs disabled unless they opt in via metadata. */
+/** Creates initial form values, keeping optional inputs disabled unless they are enabled in the UI. */
 export function defaultInputs(inputDescriptions: Array<InputDescription>): Record<string, Input> {
   const inputs: Record<string, Input> = {};
   for (const input of inputDescriptions) {
-    // Only optional inputs whose process description carries the `enabled-by-default` role
-    // start enabled; this keeps climate-risk anomaly calculation on while letting every
-    // other process keep its optional inputs off by default.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    inputs[input.key] = defaultInput(input, { ignoreOptional: enabledByDefault(input) });
+    inputs[input.key] = defaultInput(input);
   }
   return inputs;
-}
-
-function enabledByDefault(input: InputDescription): boolean {
-  return !!input.metadata?.some((meta) => meta.role === ENABLED_BY_DEFAULT_ROLE);
 }
 
 export function defaultInput(

@@ -32,7 +32,7 @@ fn it_deserializes_the_input() {
         inputs.variables,
         vec![ClimateVariable::HeatDays, ClimateVariable::IceDays]
     );
-    assert_eq!(inputs.reference_year_begin, Some(Year(2020)));
+    assert_eq!(inputs.reference_year_begin, Year(2020));
     assert_eq!(inputs.region, Some(CordexRegion::Eur));
 }
 
@@ -45,13 +45,32 @@ fn it_deserializes_omitted_optional_inputs_as_their_defaults() {
                 "coordinates": [12.34, 56.78]
             },
             "mediaType": "application/geo+json"
-        }
+        },
+        "referenceYearBegin": 2020
     });
 
     let inputs: HashMap<String, Input> = serde_json::from_value(payload).unwrap();
     let inputs = parse_inputs(&inputs).unwrap();
-    assert_eq!(inputs.reference_year_begin, None);
+    assert_eq!(inputs.reference_year_begin, Year(2020));
     assert_eq!(inputs.region, None);
+}
+
+#[test]
+fn it_rejects_missing_reference_year_begin() {
+    let payload = json!({
+        "coordinate": {
+            "value": {
+                "type": "Point",
+                "coordinates": [12.34, 56.78]
+            },
+            "mediaType": "application/geo+json"
+        }
+    });
+
+    let inputs: HashMap<String, Input> = serde_json::from_value(payload).unwrap();
+    let error = format!("{:#}", parse_inputs(&inputs).unwrap_err());
+
+    assert!(error.contains("referenceYearBegin"), "{error}");
 }
 
 #[test]
@@ -73,7 +92,7 @@ fn it_process_summary_has_expected_inputs_and_outputs() {
     let process = ClimateRiskProcess.process().unwrap();
 
     assert_eq!(process.summary.id, "climate-risk");
-    assert_eq!(process.summary.version, "0.1.0");
+    assert_eq!(process.summary.version, "0.2.0");
 
     assert!(!process.inputs.contains_key("scenarios"));
     assert!(!process.inputs.contains_key("yearEnd"));
@@ -101,59 +120,57 @@ fn it_process_summary_has_expected_inputs_and_outputs() {
 }
 
 #[test]
-fn it_reference_year_begin_schema_is_nullable_with_default() {
+fn it_reference_year_begin_schema_is_required_with_default() {
     let process = ClimateRiskProcess.process().unwrap();
     let input = &process.inputs["referenceYearBegin"];
 
-    assert_eq!(input.schema["anyOf"][0]["$ref"], json!("#/$defs/Year"));
-    assert_eq!(input.schema["anyOf"][1]["type"], json!("null"));
-    assert_eq!(input.schema["default"], json!(DATA_START_YEAR));
+    assert_eq!(input.schema["type"], json!("integer"));
+    assert!(input.schema.get("anyOf").is_none());
+    assert_eq!(input.schema["default"], json!(2020));
     assert_eq!(
-        input
-            .description_type
-            .metadata
-            .first()
-            .and_then(|m| m.role.as_deref()),
-        Some("enabled-by-default")
+        input.description_type.metadata.len(),
+        0,
+        "no metadata should be present: {:#?}",
+        input.description_type.metadata
     );
+    assert_eq!(input.min_occurs.unwrap_or(1), 1);
 }
 
 #[test]
 fn it_validate_inputs_rejects_range_below_min() {
-    assert!(validate_inputs(Year(2014), YearRange(4), Some(Year(2020))).is_err());
+    assert!(validate_inputs(Year(2014), YearRange(4), Year(2020)).is_err());
 }
 
 #[test]
 fn it_validate_inputs_rejects_range_above_max() {
-    assert!(validate_inputs(Year(2014), YearRange(31), Some(Year(2020))).is_err());
+    assert!(validate_inputs(Year(2014), YearRange(31), Year(2020)).is_err());
 }
 
 #[test]
 fn it_validate_inputs_rejects_range_beyond_2100() {
-    assert!(validate_inputs(Year(2080), YearRange(30), Some(Year(2020))).is_err());
+    assert!(validate_inputs(Year(2080), YearRange(30), Year(2020)).is_err());
 }
 
 #[test]
 fn it_validate_inputs_rejects_reference_before_data_start() {
-    assert!(validate_inputs(Year(2014), YearRange(20), Some(Year(2005))).is_err());
+    assert!(validate_inputs(Year(2014), YearRange(20), Year(2005)).is_err());
 }
 
 #[test]
 fn it_validate_inputs_rejects_start_year_before_data_start() {
-    assert!(validate_inputs(Year(2005), YearRange(20), Some(Year(2020))).is_err());
-    assert!(validate_inputs(Year(2006), YearRange(20), Some(Year(2020))).is_ok());
+    assert!(validate_inputs(Year(2005), YearRange(20), Year(2020)).is_err());
+    assert!(validate_inputs(Year(2006), YearRange(20), Year(2020)).is_ok());
 }
 
 #[test]
 fn it_validate_inputs_rejects_reference_beyond_2100() {
-    assert!(validate_inputs(Year(2014), YearRange(20), Some(Year(2090))).is_err());
+    assert!(validate_inputs(Year(2014), YearRange(20), Year(2090)).is_err());
 }
 
 #[test]
 fn it_validate_inputs_accepts_valid_range() {
-    assert!(validate_inputs(Year(2014), YearRange(5), Some(Year(2020))).is_ok());
-    assert!(validate_inputs(Year(2014), YearRange(30), Some(Year(2020))).is_ok());
-    assert!(validate_inputs(Year(2014), YearRange(30), None).is_ok());
+    assert!(validate_inputs(Year(2014), YearRange(5), Year(2020)).is_ok());
+    assert!(validate_inputs(Year(2014), YearRange(30), Year(2020)).is_ok());
 }
 
 #[test]

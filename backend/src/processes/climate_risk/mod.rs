@@ -75,7 +75,7 @@ impl Processor for ClimateRiskProcess {
     }
 
     fn version(&self) -> &'static str {
-        "0.1.0"
+        "0.2.0"
     }
 
     #[allow(clippy::too_many_lines)]
@@ -84,9 +84,8 @@ impl Processor for ClimateRiskProcess {
         settings.meta_schema = None;
         let mut generator = settings.into_generator();
 
-        let mut reference_year_begin_schema =
-            generator.root_schema_for::<Option<Year>>().to_value();
-        reference_year_begin_schema["default"] = serde_json::json!(DATA_START_YEAR);
+        let mut reference_year_begin_schema = generator.root_schema_for::<Year>().to_value();
+        reference_year_begin_schema["default"] = serde_json::json!(default_reference_year_begin().0);
 
         let inputs = HashMap::from([
             (
@@ -133,17 +132,11 @@ impl Processor for ClimateRiskProcess {
                     description_type: DescriptionType {
                         title: Some("Reference period start".to_string()),
                         description: Some(
-                            "First year of the reference period used to compute anomalies. Uses the same range as the analysis window. Disable the input to turn off anomaly computation.".to_string(),
+                            "First year of the reference period used to compute anomalies. Uses the same range as the analysis window.".to_string(),
                         ),
-                        metadata: vec![Metadata {
-                            title: None,
-                            role: Some("enabled-by-default".to_string()),
-                            href: None,
-                        }],
                         ..Default::default()
                     },
                     schema: reference_year_begin_schema,
-                    min_occurs: Some(0),
                     ..Default::default()
                 },
             ),
@@ -380,7 +373,7 @@ fn parse_inputs(
 fn validate_inputs(
     Year(start_year): Year,
     YearRange(range): YearRange,
-    reference_year: Option<Year>,
+    Year(reference_year): Year,
 ) -> Result<()> {
     if !(5..=30).contains(&range) {
         anyhow::bail!("Year range must be between 5 and 30 years");
@@ -391,13 +384,11 @@ fn validate_inputs(
     if start_year + range > 2100 {
         anyhow::bail!("Start year plus range must not exceed 2100");
     }
-    if let Some(Year(reference_year)) = reference_year {
-        if reference_year < DATA_START_YEAR {
-            anyhow::bail!("Reference period start year must be at least {DATA_START_YEAR}");
-        }
-        if reference_year + range > 2100 {
-            anyhow::bail!("Reference period start year plus range must not exceed 2100");
-        }
+    if reference_year < DATA_START_YEAR {
+        anyhow::bail!("Reference period start year must be at least {DATA_START_YEAR}");
+    }
+    if reference_year + range > 2100 {
+        anyhow::bail!("Reference period start year plus range must not exceed 2100");
     }
     Ok(())
 }

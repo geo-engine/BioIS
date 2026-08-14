@@ -230,37 +230,16 @@ const testInputs: {
   referenceYearBegin: {
     title: 'Reference period start',
     description:
-      'First year of the reference period used to compute anomalies. Uses the same range as the analysis window. Set to null to disable anomaly computation.',
+      'First year of the reference period used to compute anomalies. Uses the same range as the analysis window.',
     schema: {
-      $defs: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        'GeoJSON FeatureCollection': {
-          $ref: 'https://geojson.org/schema/FeatureCollection.json',
-        },
-        GeoJsonInputMediaType: {
-          enum: ['application/geo+json'],
-          type: 'string',
-        },
-        Year: {
-          description: 'Year of reporting or change (e.g., 2023, 2024, etc.)',
-          examples: [2020],
-          format: 'uint16',
-          maximum: 2100,
-          minimum: 2000,
-          title: 'Year',
-          type: 'integer',
-        },
-      },
-      anyOf: [
-        {
-          $ref: '#/$defs/Year',
-        },
-        {
-          type: 'null',
-        },
-      ],
-      default: 2006,
-      title: 'Nullable_Year',
+      description: 'Year of reporting or change (e.g., 2023, 2024, etc.)',
+      examples: [2020],
+      format: 'uint16',
+      maximum: 2100,
+      minimum: 2000,
+      title: 'Year',
+      type: 'integer',
+      default: 2020,
     },
   },
   siteTypeField: {
@@ -376,18 +355,17 @@ describe('retrieveInputDescription', () => {
     });
   });
 
-  it('should process nullable Integer input with default (referenceYearBegin)', () => {
+  it('should process non-nullable Integer input with a default (referenceYearBegin)', () => {
     const result = retrieveInputDescription('referenceYearBegin', testInputs.referenceYearBegin);
 
     expect(result).toMatchObject({
       key: 'referenceYearBegin',
       title: 'Reference period start',
       type: FieldType.Integer,
-      optional: true,
+      optional: false,
     });
 
-    expect(defaultInput(result)).toBeNull();
-    expect(defaultInput(result, { ignoreOptional: true })).toBe(2006);
+    expect(defaultInput(result)).toBe(2020);
   });
 
   it('should process nullable StringEnum input (region) with a usable default', () => {
@@ -442,19 +420,16 @@ describe('retrieveInputDescription', () => {
 });
 
 describe('defaultInputs', () => {
-  it('enables an optional input with a default only when it opts in via metadata', () => {
-    const input = retrieveInputDescription('referenceYearBegin', {
-      ...testInputs.referenceYearBegin,
-      metadata: [{ title: '', role: 'enabled-by-default', href: '' }],
-    });
+  it('keeps optional inputs disabled by default', () => {
+    const input = retrieveInputDescription('region', testInputs.region);
     const result = defaultInputs([input]);
-    expect(result['referenceYearBegin']).toBe(2006);
+    expect(result['region']).toBeNull();
   });
 
-  it('keeps an optional input with a schema default disabled without the metadata role', () => {
+  it('enables required inputs with their schema default', () => {
     const input = retrieveInputDescription('referenceYearBegin', testInputs.referenceYearBegin);
     const result = defaultInputs([input]);
-    expect(result['referenceYearBegin']).toBeNull();
+    expect(result['referenceYearBegin']).toBe(2020);
   });
 });
 
