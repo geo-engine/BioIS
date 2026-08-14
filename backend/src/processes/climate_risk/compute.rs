@@ -324,7 +324,7 @@ impl From<ClimateRiskOutputs> for ExecuteResults {
                     );
                 }
                 Err(error) => {
-                    tracing::warn!("Failed to serialize the raw ensemble data output: {error}")
+                    tracing::warn!("Failed to serialize the raw ensemble data output: {error}");
                 }
             }
         }
