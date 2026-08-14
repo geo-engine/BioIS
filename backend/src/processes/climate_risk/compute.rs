@@ -156,8 +156,11 @@ fn risk_fields(rows: &[ClimateRiskRow], reference_period: Option<&str>) -> Vec<T
 }
 
 pub(crate) fn raw_ensemble_data_resource(
-    rows: Vec<ClimateRiskRawRow>,
+    mut rows: Vec<ClimateRiskRawRow>,
 ) -> DataResource<Vec<ClimateRiskRawRow>> {
+    rows.sort_by(|a, b| {
+        (&a.variable, &a.scenario, &a.model).cmp(&(&b.variable, &b.scenario, &b.model))
+    });
     DataResource {
         name: "Raw Ensemble Data".to_string(),
         data: rows,
@@ -454,14 +457,16 @@ fn build_workflows(
 // request can register ~18 workflows and run ~36 WFS queries.
 const MAX_CONCURRENT_GEOENGINE_REQUESTS: usize = 8;
 
-/// Runs async jobs with bounded concurrency, preserving input order.
+/// Runs async jobs with bounded concurrency, yielding results in input order.
 async fn run_limited<F, Fut, T, E>(jobs: Vec<F>) -> Result<Vec<T>, E>
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<T, E>>,
 {
+    // `buffered`: results must stay aligned with the input requests,
+    // otherwise a workflow's data is attributed to the wrong (variable, scenario) pair.
     futures::stream::iter(jobs.into_iter().map(|job| job()))
-        .buffer_unordered(MAX_CONCURRENT_GEOENGINE_REQUESTS)
+        .buffered(MAX_CONCURRENT_GEOENGINE_REQUESTS)
         .try_collect()
         .await
 }
@@ -699,7 +704,7 @@ async fn wfs_query(
         None,
         Some("EPSG:4326"),
         Some(time),
-        None,
+        Some(workflow_id),
         None,
     )
     .await
