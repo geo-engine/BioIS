@@ -127,7 +127,6 @@ export class CreateComponent {
       key,
       title: processOutput.title ?? this.fieldName(key),
       description: processOutput.description,
-      defaultEnabled: !processOutput.metadata?.some((meta) => meta.role === 'default-disabled'),
     }));
   });
 
@@ -146,14 +145,10 @@ export class CreateComponent {
       this.formModel.update((current) => ({ ...current, inputs }));
     });
 
-    // initially, set all outputs that are not disabled by default
+    // initially, enable all outputs
     effect(() => {
       const outputDescriptions = this.outputs();
-      const outputs = Object.fromEntries(
-        outputDescriptions
-          .filter(({ defaultEnabled }) => defaultEnabled)
-          .map(({ key }) => [key, true]),
-      );
+      const outputs = Object.fromEntries(outputDescriptions.map(({ key }) => [key, true]));
       this.formModel.update((current) => ({ ...current, outputs }));
     });
   }

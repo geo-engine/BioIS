@@ -109,14 +109,6 @@ fn it_process_summary_has_expected_inputs_and_outputs() {
         process.outputs["rcp45"].description_type.title.as_deref(),
         Some("RCP 4.5 (Intermediate emissions)")
     );
-    assert_eq!(
-        process.outputs["rawEnsembleData"]
-            .description_type
-            .metadata
-            .first()
-            .and_then(|m| m.role.as_deref()),
-        Some("default-disabled")
-    );
 }
 
 #[test]

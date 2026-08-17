@@ -11,7 +11,7 @@ use ogcapi::{
         common::Link,
         processes::{
             Execute, ExecuteResults, JobControlOptions, Process, ProcessSummary, TransmissionMode,
-            description::{DescriptionType, InputDescription, Metadata, OutputDescription},
+            description::{DescriptionType, InputDescription, OutputDescription},
         },
     },
 };
@@ -206,11 +206,6 @@ impl Processor for ClimateRiskProcess {
                             "Per-model raw values for each variable × scenario combination."
                                 .to_string(),
                         ),
-                        metadata: vec![Metadata {
-                            title: None,
-                            role: Some("default-disabled".to_string()),
-                            href: None,
-                        }],
                         ..Default::default()
                     },
                     schema: generator

@@ -53,9 +53,9 @@ describe('CreateComponent', () => {
     expect(inputs['year']).toBe(2020);
   });
 
-  it('enables outputs that are not disabled by default', () => {
+  it('enables all outputs by default', () => {
     expect(component.formModel().outputs['ndvi']).toBe(true);
-    expect(component.formModel().outputs['kNdvi']).toBeUndefined();
+    expect(component.formModel().outputs['kNdvi']).toBe(true);
   });
 
   it('toggleOutput adds and removes outputs', () => {
@@ -260,7 +260,6 @@ function ndviProcess(): Process {
     kNdvi: {
       title: 'kNDVI',
       description: 'The calculated kNDVI value',
-      metadata: [{ title: '', role: 'default-disabled', href: '' }],
       schema: null,
     },
   };
