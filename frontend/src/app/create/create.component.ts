@@ -30,7 +30,7 @@ import {
   jsonSchemaToZod,
   defaultInputs,
 } from './schema-info';
-import { assertNever } from '../util/assertions';
+import { assertNever, isNullOrUndefined } from '../util/assertions';
 import { InfoIconComponent } from '../util/info-icon.component';
 import { MatError } from '@angular/material/form-field';
 
@@ -218,7 +218,7 @@ function outputsForRequest(outputs: Record<string, boolean>): Record<string, Out
  */
 export function inputsForRequest(inputs: Record<string, unknown>): Record<string, Input> {
   return Object.fromEntries(
-    Object.entries(inputs).filter(([_, value]) => value !== undefined && value !== null),
+    Object.entries(inputs).filter(([_, value]) => !isNullOrUndefined(value)),
   );
 }
 
