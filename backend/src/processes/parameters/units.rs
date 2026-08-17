@@ -100,6 +100,12 @@ impl std::fmt::Display for Year {
     }
 }
 
+/// Length of a time window in years (e.g., 5 years).
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq)]
+#[serde(transparent)]
+#[schemars(example = YearRange(20))]
+pub struct YearRange(#[schemars(range(min = 5, max = 30))] pub u16);
+
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
 #[serde(transparent)]
 #[schemars(example = Month(1))]

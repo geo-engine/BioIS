@@ -94,10 +94,11 @@ export class ResultComponent {
       .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)) // TODO: get order from process description when available
       .map(([key, rawValue]) => {
         const value = fixDataValue(rawValue) as unknown;
+        const innerValue = value instanceof QualifiedInputValue ? (value.value as unknown) : value;
         return {
           key,
-          title: this.fieldName(key),
-          value: value instanceof QualifiedInputValue ? (value.value as unknown) : value,
+          title: dataResourceTitle(innerValue) ?? this.fieldName(key),
+          value: innerValue,
           type: this.typeOfValue(value),
         };
       });
@@ -219,6 +220,12 @@ export class ResultComponent {
       this.asJsonTableRows(value),
     );
   }
+}
+
+/** Returns the Data Resource name when a result value contains one. */
+function dataResourceTitle(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || !('name' in value)) return undefined;
+  return typeof value.name === 'string' ? value.name : undefined;
 }
 
 enum ResultType {

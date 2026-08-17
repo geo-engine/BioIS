@@ -16,43 +16,50 @@ import { FieldType } from './schema-info';
 @Component({
   selector: 'app-simple-form-field',
   template: `
-    <mat-form-field>
-      <mat-label>{{ title() }}</mat-label>
+    <!-- mat-checkbox is not a mat-form-field control, so booleans stay separate. -->
+    @if (type() === FieldType.Boolean) {
+      <mat-checkbox [checked]="value()" (change)="value.set($event.checked)"
+        >True/False</mat-checkbox
+      >
+    } @else {
+      <mat-form-field>
+        <mat-label>{{ title() }}</mat-label>
 
-      @switch (type()) {
-        @case (FieldType.String)
-        @default {
-          <input matInput type="text" [value]="value()" (input)="value.set($event.target.value)" />
+        @switch (type()) {
+          @case (FieldType.Integer) {
+            <input
+              matInput
+              type="number"
+              step="1"
+              [value]="value()"
+              (input)="value.set($event.target.valueAsNumber)"
+            />
+          }
+          @case (FieldType.Number) {
+            <input
+              matInput
+              type="number"
+              step="any"
+              [value]="value()"
+              (input)="value.set($event.target.valueAsNumber)"
+            />
+          }
+          @case (FieldType.String)
+          @default {
+            <input
+              matInput
+              type="text"
+              [value]="value()"
+              (input)="value.set($event.target.value)"
+            />
+          }
         }
-        @case (FieldType.Integer) {
-          <input
-            matInput
-            type="number"
-            step="1"
-            [value]="value()"
-            (input)="value.set($event.target.valueAsNumber)"
-          />
-        }
-        @case (FieldType.Number) {
-          <input
-            matInput
-            type="number"
-            step="any"
-            [value]="value()"
-            (input)="value.set($event.target.valueAsNumber)"
-          />
-        }
-        @case (FieldType.Boolean) {
-          <mat-checkbox [checked]="value()" (change)="value.set($event.checked)"
-            >True/False</mat-checkbox
-          >
-        }
-      }
 
-      @for (error of errors(); track error) {
-        <mat-error>{{ error.message }}</mat-error>
-      }
-    </mat-form-field>
+        @for (error of errors(); track error) {
+          <mat-error>{{ error.message }}</mat-error>
+        }
+      </mat-form-field>
+    }
   `,
   styles: ``,
   changeDetection: ChangeDetectionStrategy.OnPush,
