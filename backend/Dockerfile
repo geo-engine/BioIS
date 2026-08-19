@@ -16,8 +16,9 @@ COPY \
     ./
 # create dummy src to allow caching of cargo registry build step
 # This is a best practice so that code changes don't invalidate the entire cargo build cache
-RUN mkdir src && printf "fn main() { eprintln!(\"cargo build cache\"); }\n" > src/main.rs
-RUN mkdir -p src/bin && printf "fn main() { eprintln!(\"cargo build cache\"); }\n" > src/bin/biois_cli.rs
+RUN mkdir -p src/bin && \
+    printf "fn main() { eprintln!(\"cargo build cache\"); }\n" > src/bin/server.rs && \
+    printf "fn main() { eprintln!(\"cargo build cache\"); }\n" > src/bin/cli.rs
 RUN mkdir -p macros/src && touch macros/src/lib.rs
 COPY macros/Cargo.toml macros/Cargo.toml
 RUN cargo build --release
