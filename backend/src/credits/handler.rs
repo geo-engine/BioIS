@@ -118,9 +118,9 @@ impl SumCredits for Vec<CreditsForJob> {
     fn from_credits(credits_list: &[Credits]) -> Self {
         // Since UUID v7 is time-ordered, we can use a BTreeMap to aggregate credits by job_id.
         let mut map = BTreeMap::<Uuid, u64>::new();
-        for c in credits_list {
-            let entry = map.entry(c.job_id).or_insert(0);
-            *entry += c.credits.unwrap_or(0);
+        for credits in credits_list {
+            let entry = map.entry(credits.job_id).or_insert(0);
+            *entry += credits.credits();
         }
         map.into_iter()
             .map(|(job_id, credits_used)| CreditsForJob {

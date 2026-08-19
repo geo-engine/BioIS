@@ -2,7 +2,7 @@ use crate::{
     auth::GeoEngineAuthMiddlewareLayer,
     collection_transactions::NoCollectionTransactions,
     config::CONFIG,
-    credits,
+    credits::{self, start_lookup_task},
     db::DbHandle,
     handler,
     jobs::JobHandler,
@@ -59,7 +59,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
     add_biodiversity_sensitive_areas_process(&mut processors, db_pool.clone()).await;
 
     let drivers = ogcapi_services::Drivers {
-        jobs: Box::new(JobHandler::new(db_pool).await?),
+        jobs: Box::new(JobHandler::new(db_pool.clone()).await?),
         collections: Box::new(NoCollectionTransactions),
     };
 
@@ -83,6 +83,8 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .merge(misc_router)
         .layer(GeoEngineAuthMiddlewareLayer);
     add_openapi_info(router.get_openapi_mut());
+
+    let _lookup_join_handle = start_lookup_task(db_pool.clone());
 
     Ok(service)
 }

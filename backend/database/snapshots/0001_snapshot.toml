@@ -5,7 +5,9 @@ version = 1
 [[schema.tables]]
 id = 0
 name = "jobs"
-primary_key = { columns = [{ table = 0, index = 0 }], index = { table = 0, index = 0 } }
+primary_key = { columns = [
+    { table = 0, index = 0 },
+], index = { table = 0, index = 0 } }
 
 [[schema.tables.columns]]
 id = { table = 0, index = 0 }
@@ -30,7 +32,13 @@ storage_ty = { Enum = { name = "JobType", variants = [{ name = "process" }] } }
 id = { table = 0, index = 3 }
 name = "status"
 ty = "String"
-storage_ty = { Enum = { name = "StatusCode", variants = [{ name = "accepted" }, { name = "running" }, { name = "successful" }, { name = "failed" }, { name = "dismissed" }] } }
+storage_ty = { Enum = { name = "StatusCode", variants = [
+    { name = "accepted" },
+    { name = "running" },
+    { name = "successful" },
+    { name = "failed" },
+    { name = "dismissed" },
+] } }
 
 [[schema.tables.columns]]
 id = { table = 0, index = 4 }
@@ -75,7 +83,10 @@ storage_ty = { Document = { binary = true } }
 id = { table = 0, index = 10 }
 name = "response"
 ty = "String"
-storage_ty = { Enum = { name = "Response", variants = [{ name = "raw" }, { name = "document" }] } }
+storage_ty = { Enum = { name = "Response", variants = [
+    { name = "raw" },
+    { name = "document" },
+] } }
 
 [[schema.tables.columns]]
 id = { table = 0, index = 11 }
@@ -94,14 +105,19 @@ storage_ty = "Uuid"
 id = { table = 0, index = 0 }
 name = "index_jobs_by_job_id"
 on = 0
-columns = [{ column = { table = 0, index = 0 }, op = "Eq", scope = "Partition" }]
+columns = [
+    { column = { table = 0, index = 0 }, op = "Eq", scope = "Partition" },
+]
 unique = true
 primary_key = true
 
 [[schema.tables]]
 id = 1
 name = "credits"
-primary_key = { columns = [{ table = 1, index = 1 }, { table = 1, index = 2 }], index = { table = 1, index = 0 } }
+primary_key = { columns = [
+    { table = 1, index = 1 },
+    { table = 1, index = 2 },
+], index = { table = 1, index = 0 } }
 
 [[schema.tables.columns]]
 id = { table = 1, index = 0 }
@@ -123,16 +139,65 @@ storage_ty = "Uuid"
 
 [[schema.tables.columns]]
 id = { table = 1, index = 3 }
-name = "credits"
+name = "biois_credits"
+ty = "U64"
+storage_ty = { UnsignedInteger = 8 }
+
+[[schema.tables.columns]]
+id = { table = 1, index = 4 }
+name = "geoengine_credits"
 ty = "U64"
 storage_ty = { UnsignedInteger = 8 }
 nullable = true
+
+[[schema.tables.columns]]
+id = { table = 1, index = 5 }
+name = "pending"
+ty = "Bool"
+storage_ty = "Boolean"
+
+[[schema.tables.columns]]
+id = { table = 1, index = 6 }
+name = "configuration"
+ty = "Bool"
+storage_ty = "Boolean"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 1, index = 7 }
+name = "configuration_base_path"
+ty = "String"
+storage_ty = "Text"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 1, index = 8 }
+name = "configuration_user_agent"
+ty = "String"
+storage_ty = "Text"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 1, index = 10 }
+name = "configuration_bearer_access_token"
+ty = "String"
+storage_ty = "Text"
+nullable = true
+
+[[schema.tables.columns]]
+id = { table = 1, index = 11 }
+name = "errors"
+ty = { List = "String" }
+storage_ty = { List = "Text" }
 
 [[schema.tables.indices]]
 id = { table = 1, index = 0 }
 name = "index_credits_by_job_id_and_computation_id"
 on = 1
-columns = [{ column = { table = 1, index = 1 }, op = "Eq", scope = "Partition" }, { column = { table = 1, index = 2 }, op = "Eq", scope = "Local" }]
+columns = [
+    { column = { table = 1, index = 1 }, op = "Eq", scope = "Partition" },
+    { column = { table = 1, index = 2 }, op = "Eq", scope = "Local" },
+]
 unique = true
 primary_key = true
 
@@ -140,4 +205,6 @@ primary_key = true
 id = { table = 1, index = 1 }
 name = "index_credits_by_job_id"
 on = 1
-columns = [{ column = { table = 1, index = 1 }, op = "Eq", scope = "Partition" }]
+columns = [
+    { column = { table = 1, index = 1 }, op = "Eq", scope = "Partition" },
+]

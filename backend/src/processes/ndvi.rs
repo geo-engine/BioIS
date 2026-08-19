@@ -41,7 +41,7 @@ use utoipa::ToSchema;
 
 use crate::{
     config::CONFIG,
-    credits::add_credits_pending,
+    credits::add_credits_used_pending,
     db::{DbHandle, model::ComputationId},
     processes::parameters::{Month, PointGeoJsonInput, Year},
     state::{CONTEXT, TaskLocalContext},
@@ -344,7 +344,7 @@ impl Processor for NDVIProcess {
         }
 
         if computation_id.is_some() {
-            add_credits_pending(self.db.clone(), configuration, computation_id).await?;
+            add_credits_used_pending(self.db.clone(), configuration, computation_id).await?;
         }
 
         Ok(outputs.into())

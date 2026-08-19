@@ -12,54 +12,11 @@ use geoengine_api_client::{
     apis::{configuration::Configuration, user_api::computation_quota_handler},
     models::OperatorQuota,
 };
-use std::sync::LazyLock;
-use tokio::{sync::mpsc, time::sleep};
+use tokio::{task::JoinHandle, time::sleep};
 use tracing::{error, instrument, warn};
 use uuid::Uuid;
 
-/// A queue for processing credits lookups in the background.
-///
-/// TODO: Load pending credits lookups from the database on startup and enqueue them for processing.
-static CREDITS_LOOKUP_QUEUE: LazyLock<mpsc::UnboundedSender<CreditsLookup>> = LazyLock::new(|| {
-    let (tx, mut rx) = mpsc::unbounded_channel::<CreditsLookup>();
-    let reentry_tx = tx.clone();
-    tokio::spawn(async move {
-        let mut pending_lookups = Vec::new();
-        loop {
-            // Process all available items
-            while let Ok(mut lookup) = rx.try_recv() {
-                // stop if the queue is empty
-                match lookup.process().await {
-                    Ok(CreditsLookupStatus::Finished) => {
-                        // Credits lookup finished successfully, nothing to do
-                    }
-                    Ok(CreditsLookupStatus::Pending) => {
-                        // Credits lookup is still pending, requeue the lookup for later processing
-                        pending_lookups.push(lookup);
-                    }
-                    Err(e) => {
-                        error!(
-                            "Failed to process credits lookup for job {job_id} and computation ID {computation_id}: {e:?}",
-                            job_id = &lookup.job_id,
-                            computation_id = &lookup.computation_id
-                        );
-                        // TODO: Decide whether to requeue the lookup or not.
-                        //       For now, we will not requeue it to avoid infinite error loops.
-                    }
-                }
-            }
-
-            // Move pending lookups back into the queue
-            for lookup in pending_lookups.drain(..) {
-                enqueue_credits_lookup_inner(&reentry_tx, lookup);
-            }
-
-            // Queue is empty, wait 1 minute before processing next batch
-            sleep(CONFIG.credits.credits_lookup_interval()).await;
-        }
-    });
-    tx
-});
+const LOOKUP_RETRY_THRESHOLD: i64 = 5;
 
 /// Add credits used for a specific job to the database.
 ///
@@ -69,25 +26,26 @@ pub async fn add_credits_used(
     computation_id: ComputationId,
     credits: u64,
 ) -> anyhow::Result<()> {
-    add_credits_opt(db, None, computation_id, Some(credits)).await
+    add_credits_used_opt(db, None, computation_id, None, credits).await
 }
 
 /// Add credits used for a specific job to the database.
 ///
 /// The job ID is retrieved from the task-local context, which must be set before calling this function.
-pub async fn add_credits_pending(
+pub async fn add_credits_used_pending(
     db: DbHandle,
     configuration: Configuration,
     computation_id: ComputationId,
 ) -> anyhow::Result<()> {
-    add_credits_opt(db, Some(configuration), computation_id, None).await
+    add_credits_used_opt(db, Some(configuration), computation_id, None, 0).await
 }
 
-async fn add_credits_opt(
+async fn add_credits_used_opt(
     mut db: DbHandle,
     configuration: Option<Configuration>,
     computation_id: ComputationId,
-    credits: Option<u64>,
+    geoengine_credits: Option<u64>,
+    biois_credits: u64,
 ) -> anyhow::Result<()> {
     let Some(job_id) = CONTEXT.job_id()? else {
         // anyhow::bail!("No job ID set in the task context"); // TODO: enforce this always
@@ -101,123 +59,176 @@ async fn add_credits_opt(
     toasty::create!(Credits {
         job_id,
         computation_id,
-        credits,
         timestamp: TimestampMillis::from(Utc::now()),
+        geoengine_credits,
+        biois_credits,
+        pending: configuration.is_some() && computation_id.is_some(),
+        configuration: configuration.map(Into::into),
     })
     .exec(db.as_mut())
     .await
     .context("failed to insert credits into database")?;
 
-    if let Some(configuration) = configuration
-        && computation_id.is_some()
-    {
-        enqueue_credits_lookup(configuration, db.clone(), job_id, computation_id);
-    }
-
     Ok(())
 }
 
-fn enqueue_credits_lookup_inner(tx: &mpsc::UnboundedSender<CreditsLookup>, lookup: CreditsLookup) {
-    if let Err(e) = tx.send(lookup) {
-        error!(
-            "Failed to enqueue credits lookup for job {job_id} and computation ID {computation_id}: {e:?}",
-            job_id = &e.0.job_id,
-            computation_id = &e.0.computation_id
-        );
-    }
-}
-
-#[instrument(skip(configuration, db), level = "debug")]
-fn enqueue_credits_lookup(
-    configuration: Configuration,
-    db: DbHandle,
-    job_id: Uuid,
-    computation_id: ComputationId,
-) {
-    let lookup = CreditsLookup::new(configuration, db, job_id, computation_id);
-    enqueue_credits_lookup_inner(&CREDITS_LOOKUP_QUEUE, lookup);
-}
-
-/// Data for looking up credits for a specific job and computation ID.
-///
-/// Geo Engine batches computation logging, so we need to store the computation ID to be able to look up the credits
-/// used for a specific job, later.
-#[derive(Debug)]
-struct CreditsLookup {
-    configuration: Configuration,
-    db: DbHandle,
-
-    job_id: Uuid,
-    computation_id: ComputationId,
-
-    quotas: Option<Vec<geoengine_api_client::models::OperatorQuota>>,
-}
-
-#[derive(Debug)]
-enum CreditsLookupStatus {
-    Pending,
-    Finished,
-}
-
-impl CreditsLookup {
-    fn new(
-        configuration: Configuration,
-        db: DbHandle,
-        job_id: Uuid,
-        computation_id: ComputationId,
-    ) -> Self {
-        Self {
-            configuration,
-            db,
-            job_id,
-            computation_id,
-            quotas: None,
+/// Starts a task for looking up processing credits repeatedly in the background
+pub fn start_lookup_task(mut db: DbHandle) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            process_batch(&mut db).await;
+            wait_for_next_lookup_interval().await;
         }
-    }
+    })
+}
 
-    /// Process the credits lookup by querying the Geo Engine API and storing the result in the database.
-    #[instrument(skip(self), level = "debug", fields(job_id = %self.job_id, computation_id = %self.computation_id), ret)]
-    async fn process(&mut self) -> Result<CreditsLookupStatus> {
-        let quotas =
-            computation_quota_handler(&self.configuration, &self.computation_id.to_string())
-                .await?;
+/// Test version of the lookup task that only runs once and then exits, for use in unit tests.
+#[cfg(test)]
+pub fn run_lookup_task_once(mut db: DbHandle) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        process_batch(&mut db).await;
+    })
+}
 
-        if quotas.is_empty() {
-            // Quotas are empty, the computation credits are still missing, so we need to wait for the next batch
-            return Ok(CreditsLookupStatus::Pending);
-        }
-
-        // Quotas are available, we can store them in the database
-        self.update_credits().await?;
-
-        let Some(stored_quotas) = &self.quotas else {
-            // We got quotas, but we need to make sure that the result is consistent
-            // so we store the quotas and wait for the next batch to make sure that the result is consistent
-            self.quotas = Some(quotas);
-            return Ok(CreditsLookupStatus::Pending);
+/// Process a batch of credits that are pending lookup from the Geo Engine API.
+async fn process_batch(db: &mut DbHandle) {
+    for credits in credits_to_lookup(db).await.unwrap_or_default() {
+        let Err(error) = process_credit(db, &credits).await else {
+            // Successfully processed the credits, continue to the next one
+            continue;
         };
 
-        if stored_quotas != &quotas {
-            // Quotas have changed, we need to wait for the next batch
-            self.quotas = Some(quotas);
-            return Ok(CreditsLookupStatus::Pending);
-        }
+        error!(
+            "Failed to process credits for job_id={job_id} computation_id={computation_id}: {error}",
+            job_id = credits.job_id,
+            computation_id = credits.computation_id,
+        );
 
-        Ok(CreditsLookupStatus::Finished)
-    }
-
-    async fn update_credits(&self) -> Result<()> {
-        fn quotas_sum<'q>(quotas: impl IntoIterator<Item = &'q OperatorQuota>) -> u64 {
-            quotas.into_iter().map(|q| q.count.cast_unsigned()).sum()
-        }
-
-        let credits = self.quotas.as_ref().map(quotas_sum);
-
-        toasty::update!(Credits:: filter_by_job_id(self.job_id) {
-            credits,
-        })
-        .exec(&mut self.db.db())
+        if let Err(error) = update_credits_with_error(
+            db,
+            credits.job_id,
+            credits.computation_id,
+            credits.errors,
+            error.to_string(),
+        )
         .await
-        .context("Failed to update credits in database")
+        {
+            error!(
+                "Failed to update credits with error for job_id={job_id} computation_id={computation_id}: {error}",
+                job_id = credits.job_id,
+                computation_id = credits.computation_id,
+            );
+        }
     }
+}
+
+/// Processing was done, wait <INTERVAL> before processing next batch
+async fn wait_for_next_lookup_interval() {
+    sleep(CONFIG.credits.credits_lookup_interval()).await;
+}
+
+async fn credits_to_lookup(db: &mut DbHandle) -> Result<Vec<Credits>> {
+    let fields = Credits::fields();
+    let is_pending = fields.pending().eq(true);
+    let is_retryable = fields.errors().len().le(LOOKUP_RETRY_THRESHOLD);
+    let credits_list = Credits::filter(is_pending.and(is_retryable))
+        .exec(db.as_mut())
+        .await?;
+
+    Ok(credits_list)
+}
+
+// impl CreditsLookup {
+//     fn new(
+//         configuration: Configuration,
+//         db: DbHandle,
+//         job_id: Uuid,
+//         computation_id: ComputationId,
+//     ) -> Self {
+//         Self {
+//             configuration,
+//             db,
+//             job_id,
+//             computation_id,
+//             quotas: None,
+//         }
+//     }
+
+/// Process the credits lookup by querying the Geo Engine API and storing the result in the database.
+#[instrument(skip(db), level = "debug", fields(job_id = %credits.job_id, computation_id = %credits.computation_id), ret)]
+async fn process_credit(db: &mut DbHandle, credits: &Credits) -> Result<()> {
+    let quotas = computation_quota_handler(
+        &credits
+            .configuration
+            .clone()
+            .context("Missing API configuration for credits")?
+            .into(),
+        &credits.computation_id.to_string(),
+    )
+    .await?;
+
+    if quotas.is_empty() {
+        // Quotas are empty, the computation credits are still missing, so we need to wait for the next batch
+        return Ok(());
+    }
+    let quotas_sum = quotas_sum(&quotas);
+
+    let Some(stored_quota_sum) = credits.geoengine_credits else {
+        // We got quotas, but we need to make sure that the result is consistent
+        // so we store the quotas and wait for the next batch to make sure that the result is consistent
+        return update_credits(db, credits.job_id, credits.computation_id, quotas_sum, true).await;
+    };
+
+    // If the results are not stable, the state is still pending, so we need to wait for the next batch
+    let pending = stored_quota_sum != quotas_sum;
+
+    // Quotas are available, we can store them in the database
+    update_credits(
+        db,
+        credits.job_id,
+        credits.computation_id,
+        quotas_sum,
+        pending,
+    )
+    .await
+}
+
+/// Calculate the sum of credits from the list of operator quotas.
+fn quotas_sum<'q>(quotas: impl IntoIterator<Item = &'q OperatorQuota>) -> u64 {
+    quotas.into_iter().map(|q| q.count.cast_unsigned()).sum()
+}
+
+async fn update_credits(
+    db: &mut DbHandle,
+    job_id: Uuid,
+    computation_id: ComputationId,
+    quota_sum: u64,
+    pending: bool,
+) -> Result<()> {
+    toasty::update!(Credits::filter_by_job_id_and_computation_id(job_id, computation_id) {
+        geoengine_credits: quota_sum,
+        pending: pending,
+        errors: Vec::<String>::new(), // reset errors on successful update
+    })
+    .exec(db.as_mut())
+    .await
+    .context("Failed to update credits in database")
+}
+
+async fn update_credits_with_error(
+    db: &mut DbHandle,
+    job_id: Uuid,
+    computation_id: ComputationId,
+    previous_errors: Vec<String>,
+    error: String,
+) -> Result<()> {
+    let mut errors = previous_errors;
+    errors.push(error);
+
+    toasty::update!(Credits::filter_by_job_id_and_computation_id(job_id, computation_id) {
+        errors,
+    })
+    .exec(db.as_mut())
+    .await
+    .context("Failed to update credits in database")
 }

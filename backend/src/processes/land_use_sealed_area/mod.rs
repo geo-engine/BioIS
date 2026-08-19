@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     CONFIG,
-    credits::add_credits_pending,
+    credits::add_credits_used_pending,
     db::DbHandle,
     processes::{
         land_use_sealed_area::{
@@ -390,7 +390,8 @@ impl LandUseSealedAreaProcess {
                 outputs.errors = Some(errors);
             }
 
-            add_credits_pending(self.db.clone(), configuration.clone(), computation_id).await?;
+            add_credits_used_pending(self.db.clone(), configuration.clone(), computation_id)
+                .await?;
         }
 
         if requested_outputs.documentation_sources {
@@ -524,7 +525,10 @@ impl From<LandUseSealedAreaProcessOutputs> for ExecuteResults {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{auth::User, processes::parameters::GeoJsonInputMediaType, state::TaskContext};
+    use crate::{
+        auth::User, credits::run_lookup_task_once, processes::parameters::GeoJsonInputMediaType,
+        state::TaskContext,
+    };
     use geoengine_api_client::models::{
         BoundingBox2D, CollectionType, Coordinate2D, DataId, DatasetNameResponse, FeatureDataType,
         GeoJson, IdResponse, InternalDataId, Measurement, OperatorQuota, Provenance,
@@ -1051,6 +1055,7 @@ mod tests {
                 "GET",
                 "//quota/computations/00000000-0000-0000-0000-000000000003",
             ))
+            // .times(0..=1) // either background task will have queried it or not, depending on timing
             .respond_with(json_encoded(vec![OperatorQuota::new(
                 "OPERATOR-NAME".to_string(),
                 "OPERATOR-PATH".to_string(),
@@ -1169,7 +1174,7 @@ mod tests {
         .collect();
         let requested_outputs = OutputKeys::from_requested_outputs(&requested_outputs).unwrap();
 
-        let process = LandUseSealedAreaProcess::new(db);
+        let process = LandUseSealedAreaProcess::new(db.clone());
         let result = process
             .execute(inputs.clone(), requested_outputs, api_config)
             .await
@@ -1326,5 +1331,7 @@ mod tests {
                 }
             })
         );
+
+        run_lookup_task_once(db).await.unwrap();
     }
 }

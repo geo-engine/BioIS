@@ -167,9 +167,51 @@ pub struct Credits {
     /// Note: Not stored as nullable because `toasty` requires a primary key.
     pub computation_id: ComputationId,
 
-    /// Credits used; empty if not yet determined (e.g., job still running)
+    /// Credits used from `BioIS` directly
+    ///
+    /// `Credits = geoengine_credits + biois_credits`
     #[allow(clippy::struct_field_names, reason = "Database field name")]
-    pub credits: Option<u64>,
+    pub biois_credits: u64,
+
+    /// Credits used from Geo Engine; empty if not yet determined (e.g., job still running)
+    ///
+    /// `Credits = geoengine_credits + biois_credits`
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
+    pub geoengine_credits: Option<u64>,
+
+    /// Status of the credits lookup; true if the credits have been determined, false if still pending
+    pub pending: bool,
+
+    /// Optional configuration for Geo Engine API access, used for credits lookup
+    pub configuration: Option<Configuration>,
+
+    /// Errors encountered during credits lookup from Geo Engine
+    #[default(Vec::<String>::new())]
+    pub errors: Vec<String>,
+}
+
+impl Credits {
+    /// Calculate the total credits used for this entry.
+    #[must_use]
+    pub fn credits(&self) -> u64 {
+        self.geoengine_credits.unwrap_or(0) + self.biois_credits
+    }
+}
+
+/// Link reference (stored as JSONB)
+#[derive(Debug, Clone, Serialize, Deserialize, o2o, toasty::Embed)]
+#[from_owned(geoengine_api_client::apis::configuration::Configuration)]
+#[owned_into(geoengine_api_client::apis::configuration::Configuration)]
+#[ghosts(
+    client: Default::default(),
+    basic_auth: None,
+    api_key: None,
+    oauth_access_token: None,
+)]
+pub struct Configuration {
+    pub base_path: String,
+    pub user_agent: Option<String>,
+    pub bearer_access_token: Option<String>,
 }
 
 /// An optional computation ID for Geo Engine jobs, stored as a string.
