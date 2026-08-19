@@ -74,4 +74,11 @@ FROM "jobs_old";
 
 -- Drop manually after checking that the migration worked as expected.
 -- This is a safety measure to prevent accidental data loss.
--- DROP TABLE "jobs_old";
+DO $$ 
+BEGIN 
+    IF EXISTS (SELECT 1 FROM "jobs_old") THEN 
+        RAISE NOTICE 'Table "jobs_old" contains data. Skipping drop operation.';
+    ELSE 
+        DROP TABLE "jobs_old";
+    END IF;
+END $$;
