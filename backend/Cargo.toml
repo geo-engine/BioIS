@@ -47,12 +47,12 @@ multiple_crate_versions = { level = "allow", priority = 1 }
 
 [[bin]]
 name = "biois-server"
-path = "src/main.rs"
+path = "src/bin/server.rs"
 bench = false
 
 [[bin]]
 name = "biois-cli"
-path = "src/bin/biois_cli.rs"
+path = "src/bin/cli.rs"
 bench = false
 
 [dependencies]
