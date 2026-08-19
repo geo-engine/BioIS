@@ -17,10 +17,12 @@ RUN npm install --silent
 # 1.2 Copy source and build
 WORKDIR /app/frontend
 COPY frontend/public ./public
+COPY frontend/scripts ./scripts
 COPY frontend/src ./src
 COPY \
     frontend/_theme-colors.scss \
     frontend/angular.json \
+    frontend/ngsw-config.json \
     frontend/tsconfig*.json \
     ./
 RUN npm run build --silent

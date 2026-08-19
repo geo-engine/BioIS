@@ -8,7 +8,17 @@ const appPrefix = 'app';
 
 module.exports = defineConfig([
   {
-    files: ['**/*.ts'],
+    files: ['scripts/**/*.ts'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: ['./tsconfig.scripts.json'],
+        tsconfigRootDir: __dirname,
+      },
+    },
+  },
+  {
+    files: ['src/**/*.ts'],
     extends: [
       eslint.configs.recommended,
       tseslint.configs.recommendedTypeChecked,
