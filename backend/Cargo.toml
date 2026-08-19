@@ -1,6 +1,12 @@
+[workspace]
+members = ["macros"]
+
+[workspace.dependencies]
+pretty_assertions = "1.4"
+
 [package]
 name = "biois"
-version = "0.1.0"
+version = "0.2.0"
 publish = false
 authors = [
     "Christian Beilschmidt <christian.beilschmidt@geoengine.de>",
@@ -10,9 +16,9 @@ authors = [
 license-file = "LICENSE"
 repository = "https://github.com/geo-engine/BioIS"
 edition = "2024"
-default-run = "biois"
+default-run = "biois-server"
 
-[lints.clippy]
+[workspace.lints.clippy]
 cargo = { level = "warn", priority = 0 }
 complexity = { level = "warn", priority = 0 }
 style = { level = "warn", priority = 0 }
@@ -21,20 +27,12 @@ pedantic = { level = "warn", priority = 0 }
 correctness = "deny"
 
 # disable some pedantic lints
-result_large_err = { level = "allow", priority = 1 }          # TODO: investigate this
-cast_possible_truncation = { level = "allow", priority = 1 }
-cast_possible_wrap = { level = "allow", priority = 1 }
-cast_precision_loss = { level = "allow", priority = 1 }
-cast_sign_loss = { level = "allow", priority = 1 }
 default_trait_access = { level = "allow", priority = 1 }
 missing_errors_doc = { level = "allow", priority = 1 }
 module_name_repetitions = { level = "allow", priority = 1 }
-must_use_candidate = { level = "allow", priority = 1 }
 non_ascii_literal = { level = "allow", priority = 1 }
 option_if_let_else = { level = "allow", priority = 1 }
 similar_names = { level = "allow", priority = 1 }
-single_match_else = { level = "allow", priority = 1 }
-type_repetition_in_bounds = { level = "allow", priority = 1 }
 wildcard_imports = { level = "allow", priority = 1 }
 
 # enable some restriction lints
@@ -47,27 +45,28 @@ unwrap_used = { level = "warn", priority = 1 }
 # disable some cargo lints
 multiple_crate_versions = { level = "allow", priority = 1 }
 
+[[bin]]
+name = "biois-server"
+path = "src/bin/server.rs"
+bench = false
+
+[[bin]]
+name = "biois-cli"
+path = "src/bin/cli.rs"
+bench = false
+
 [dependencies]
 anyhow = "1.0"
 approx = { version = "0.6.0-rc2", features = ["derive", "vec_impl"] }
 async-trait = "0.1"
 axum = { version = "0.8", features = ["multipart"] }
-bb8 = "0.9" # wrt. `diesel-async`
+biois-macros = { path = "macros" }
 chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.6", features = ["derive"] }
 config = "0.15"
-diesel = { version = "2.3", features = [
-    "postgres",
-    "chrono",
-    "uuid",
-    "r2d2",
-    "serde_json",
-] }
-diesel_migrations = "2.3"
-diesel-async = { version = "0.9", features = ["migrations", "postgres", "bb8"] }
-diesel-derive-enum = { version = "3.0.0-beta.1", features = ["postgres"] }
 futures = "0.3"
 geo-types = "0.7"
-geoengine-api-client = "0.9.3"
+geoengine-api-client = "0.9.4"
 geojson = "1.0"
 indoc = "2.0"
 nom = "8.0"
@@ -79,15 +78,22 @@ ogcapi = { git = "https://github.com/georust/ogcapi", branch = "main", default-f
     "types",
 ] }
 o2o = "0.5"
-pretty_assertions = "1.4"
-reqwest = { version = "0.13", features = ["json"] }
 schemars = "1.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 tempfile = "3.27"
+# toasty = { version = "0.10", features = ["postgresql", "serde"] }
+toasty = { git = "https://github.com/tokio-rs/toasty", branch = "main", features = [
+    "migration",
+    "postgresql",
+    "serde",
+] }
+# toasty-cli = "0.10"
+toasty-cli = { git = "https://github.com/tokio-rs/toasty", branch = "main" }
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
 tower = "0.5"
 tracing = "0.1"
+tracing-appender = "0.2"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = "2.5"
 utoipa = { version = "5.5", features = ["uuid"] }
@@ -97,3 +103,7 @@ wkt = "0.14"
 
 [dev-dependencies]
 httptest = "0.16"
+pretty_assertions = { workspace = true }
+
+[lints]
+workspace = true

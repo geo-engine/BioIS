@@ -1,6 +1,9 @@
 use crate::{
-    db::{DbPool, PooledConnection},
+    CONFIG,
+    credits::add_credits_used,
+    db::{DbHandle, model::ComputationId, util::RecordValueExt},
     processes::{
+        habitat_distance::natura2000_exists,
         parameters::{
             Area, DataResource, DataResourceSchema, DocumentationSource,
             FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
@@ -12,8 +15,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use approx::AbsDiffEq;
-use diesel::{deserialize::QueryableByName, sql_query, sql_types};
-use diesel_async::RunQueryDsl;
+use geojson::Feature;
 use indoc::formatdoc;
 use ogcapi::{
     processes::Processor,
@@ -26,6 +28,7 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
+use toasty::stmt::Type as StmtType;
 use tracing::instrument;
 use utoipa::ToSchema;
 use wkt::ToWkt;
@@ -87,7 +90,7 @@ impl FromStr for SiteSpecification {
 #[doc = include_str!("description.md")]
 #[derive(Debug, Clone)]
 pub struct BiodiversitySensitiveAreasProcess {
-    connection: DbPool,
+    connection: DbHandle,
     natura2000_schema: &'static str,
 }
 
@@ -331,6 +334,8 @@ impl Processor for BiodiversitySensitiveAreasProcess {
         let value = serde_json::to_value(execute.inputs)?;
         let inputs: BiodiversitySensitiveAreasProcessInputs = serde_json::from_value(value)?;
 
+        let number_of_input_features = inputs.sites.value().features.len();
+
         // If no outputs were requested, default to all outputs
         if execute.outputs.is_empty() {
             for key in [
@@ -372,7 +377,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             || execute.outputs.contains_key(output_keys::ERRORS)
         {
             let (site_table, errors) = compute_biodiversity_sensitive_areas(
-                self.connection().await?,
+                &mut self.connection.clone(),
                 self.natura2000_schema,
                 inputs.sites,
                 inputs.location_name_field.as_ref(),
@@ -392,6 +397,14 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                 .then_some(errors);
         }
 
+        add_credits_used(
+            self.connection.clone(),
+            ComputationId::none(),
+            number_of_input_features as u64
+                * CONFIG.credits.biodiversity_sensitive_areas.credits_per_site,
+        )
+        .await?;
+
         Ok(outputs.into())
     }
 }
@@ -399,49 +412,16 @@ impl Processor for BiodiversitySensitiveAreasProcess {
 impl BiodiversitySensitiveAreasProcess {
     pub const ID: &'static str = "biodiversity-sensitive-areas";
 
-    pub async fn new(connection: DbPool, natura2000_schema: &'static str) -> Result<Self> {
-        let this = Self {
-            connection,
-            natura2000_schema,
-        };
-
-        let mut conn = this.connection().await?;
-        let table: Natura2000Exists = sql_query(formatdoc! {"
-            SELECT EXISTS (
-                SELECT 1
-                  FROM information_schema.tables
-                 WHERE table_schema = '{natura2000_schema}'
-                   AND table_name = 'naturasite_polygon'
-            ) as exists
-        "})
-        .get_result(&mut *conn)
-        .await
-        .context(format!(
-            "Failed to check if {natura2000_schema}.naturasite_polygon exists"
-        ))?;
-
-        if !table.exists {
+    pub async fn new(mut db: DbHandle, natura2000_schema: &'static str) -> Result<Self> {
+        if !natura2000_exists(&mut db, natura2000_schema).await? {
             anyhow::bail!("Table {natura2000_schema}.naturasite_polygon does not exist");
         }
 
-        // drop the pooled connection before moving `this` out
-        drop(conn);
-
-        Ok(this)
+        Ok(Self {
+            connection: db,
+            natura2000_schema,
+        })
     }
-
-    async fn connection(&self) -> anyhow::Result<PooledConnection<'_>> {
-        self.connection
-            .get()
-            .await
-            .context("could not get db connection from pool")
-    }
-}
-
-#[derive(QueryableByName)]
-struct Natura2000Exists {
-    #[diesel(sql_type = sql_types::Bool)]
-    exists: bool,
 }
 
 fn json_format() -> Format {
@@ -665,35 +645,78 @@ fn was_point(feature: &geojson::Feature) -> bool {
     )
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, QueryableByName)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SiteRow {
-    #[diesel(sql_type = sql_types::Text)]
     pub location: String,
-
-    #[diesel(sql_type = sql_types::Nullable<sql_types::Double>)]
     pub area_m2: Option<SquareMeter>,
-
-    #[diesel(sql_type = sql_types::Bool)]
     pub site_in_biodiversity_sensitive_area: bool,
-
-    #[diesel(sql_type = sql_types::Bool)]
     pub site_near_biodiversity_sensitive_area: bool,
-
-    #[diesel(sql_type = sql_types::Double)]
     pub biodiversity_sensitive_area_m2: SquareMeter,
-
-    #[diesel(sql_type = sql_types::Nullable<sql_types::Array<sql_types::Text>>)]
     pub intersecting_biodiversity_sensitive_areas: Option<Vec<String>>,
-
-    #[diesel(sql_type = sql_types::Array<sql_types::Text>)]
     pub nearby_biodiversity_sensitive_areas: Vec<String>,
-
-    #[diesel(sql_type = sql_types::Text)]
     pub site_type: String,
-
-    #[diesel(sql_type = sql_types::Double)]
     pub buffer_distance_km: Kilometers,
+}
+
+impl TryFrom<toasty::stmt::Value> for SiteRow {
+    type Error = anyhow::Error;
+
+    fn try_from(value: toasty::stmt::Value) -> Result<Self, Self::Error> {
+        //0 r.location,
+        //1 r.buffer_distance_km as buffer_distance_km,
+        //2 r.specification AS site_type,
+        //3 NULLIF(r.area_m2, 0) AS area_m2,
+        //4 COALESCE(ST_AREA(ST_INTERSECTION(s_in.geom, r.geom)), 0) > 0 AS site_in_biodiversity_sensitive_area,
+        //5 ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) > 0 AS site_near_biodiversity_sensitive_area,
+        //6 ST_AREA(ST_INTERSECTION(s_out.geom, r.buffered_geom)) AS biodiversity_sensitive_area_m2,
+        //7 s_in.site_list AS intersecting_biodiversity_sensitive_areas,
+        //8 s_out.site_list AS nearby_biodiversity_sensitive_areas
+        const LOCATION_IDX: usize = 0;
+        const BUFFER_DISTANCE_KM_IDX: usize = 1;
+        const SITE_TYPE_IDX: usize = 2;
+        const AREA_M2_IDX: usize = 3;
+        const SITE_IN_BIODIVERSITY_SENSITIVE_AREA_IDX: usize = 4;
+        const SITE_NEAR_BIODIVERSITY_SENSITIVE_AREA_IDX: usize = 5;
+        const BIODIVERSITY_SENSITIVE_AREA_M2_IDX: usize = 6;
+        const INTERSECTING_BIODIVERSITY_SENSITIVE_AREAS_IDX: usize = 7;
+        const NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX: usize = 8;
+
+        Ok(SiteRow {
+            location: value
+                .get_string(LOCATION_IDX)
+                .context("Invalid location type")?,
+            area_m2: value
+                .get_number_option(AREA_M2_IDX)
+                .context("Invalid area_m2 type")?
+                .map(SquareMeter),
+            site_in_biodiversity_sensitive_area: value
+                .get_bool(SITE_IN_BIODIVERSITY_SENSITIVE_AREA_IDX)
+                .context("Invalid site_in_biodiversity_sensitive_area type")?,
+            site_near_biodiversity_sensitive_area: value
+                .get_bool(SITE_NEAR_BIODIVERSITY_SENSITIVE_AREA_IDX)
+                .context("Invalid site_near_biodiversity_sensitive_area type")?,
+            biodiversity_sensitive_area_m2: SquareMeter(
+                value
+                    .get_number(BIODIVERSITY_SENSITIVE_AREA_M2_IDX)
+                    .context("Invalid biodiversity_sensitive_area_m2 type")?,
+            ),
+            intersecting_biodiversity_sensitive_areas: value
+                .get_string_list_option(INTERSECTING_BIODIVERSITY_SENSITIVE_AREAS_IDX)
+                .context("Invalid intersecting_biodiversity_sensitive_areas type")?,
+            nearby_biodiversity_sensitive_areas: value
+                .get_string_list(NEARBY_BIODIVERSITY_SENSITIVE_AREAS_IDX)
+                .context("Invalid nearby_biodiversity_sensitive_areas type")?,
+            site_type: value
+                .get_string(SITE_TYPE_IDX)
+                .context("Invalid site_type type")?,
+            buffer_distance_km: Kilometers(
+                value
+                    .get_number(BUFFER_DISTANCE_KM_IDX)
+                    .context("Invalid buffer_distance_km type")?,
+            ),
+        })
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq, AbsDiffEq, JsonSchema, ToSchema)]
@@ -814,10 +837,10 @@ fn site_row_into_output(
 /// to any provided `workflow_refs` (if they are HTTP URLs) and includes their responses
 /// in the `sources` output for auditing. The spatial computations are placeholders and
 /// should be replaced by Geo Engine workflow calls in future.
-#[instrument(skip(connection), err(Debug))]
+#[instrument(skip(db), err(Debug))]
 pub async fn compute_biodiversity_sensitive_areas(
-    mut connection: PooledConnection<'_>,
-    natura2000_schema: &'static str,
+    db: &mut DbHandle,
+    natura2000_schema: &str,
     sites: FeatureCollectionGeoJsonInput,
     location_property: &str,
     site_type_property: &str,
@@ -827,39 +850,13 @@ pub async fn compute_biodiversity_sensitive_areas(
     let mut errors = Vec::new();
 
     for feature in &sites.value().features {
-        let location = match location_from_feature(feature, location_property) {
-            Ok(location) => location,
-            Err(error) => {
-                errors.push(error.to_string());
-                continue;
-            }
-        };
-        let site_specification = match site_specification_from_feature(feature, site_type_property)
-        {
-            Ok(spec) => spec,
-            Err(error) => {
-                errors.push(error.to_string());
-                continue;
-            }
-        };
-        let Some(polygon) = polygon_from_feature(feature) else {
-            errors.push(format!(
-                "Skipping feature `{}` due to missing or invalid geometry (not a point or polygon)",
-                feature_id_str(feature),
-            ));
-            continue;
-        };
-
-        site_inputs.push(SiteInput {
-            location,
-            was_point: was_point(feature),
-            buffer_distance_km: site_specification.buffer_distance(),
-            specification: site_specification,
-            geom: polygon,
-        });
+        match feature_to_site_input(feature, location_property, site_type_property) {
+            Ok(site_input) => site_inputs.push(site_input),
+            Err(error) => errors.push(error.to_string()),
+        }
     }
 
-    let site_table: Vec<SiteRow> = sql_query(formatdoc! {r#"
+    let site_table: Vec<SiteRow> = toasty::sql::query(formatdoc!(r#"
         WITH reference AS (
             SELECT
                 v.location,
@@ -902,62 +899,105 @@ pub async fn compute_biodiversity_sensitive_areas(
             GROUP BY r.location
         ) as s_out USING (location)
         ORDER BY biodiversity_sensitive_area_m2 DESC;
-    "#})
-    .bind::<sql_types::Json, _>(serde_json::to_value(&site_inputs)?)
-    .get_results(&mut *connection)
+    "#))
+    .bind(serde_json::to_string(&site_inputs)?)
+    .column_types([
+        StmtType::String,
+        StmtType::F64,
+        StmtType::String,
+        StmtType::F64,
+        StmtType::Bool,
+        StmtType::F64,
+        StmtType::F64,
+        StmtType::list(StmtType::String),
+        StmtType::list(StmtType::String),
+    ])
+    .exec(db.as_mut())
     .await
-    .context(format!("Failed to query {natura2000_schema}.naturasite_polygon"))?;
+    .context(format!(
+        "Failed to query {natura2000_schema}.naturasite_polygon"
+    ))?
+    .into_iter()
+    .map(SiteRow::try_from)
+    .collect::<Result<Vec<_>, _>>()
+    .context("Failed to parse site row results")?;
 
     Ok((site_table, errors))
+}
+
+/// Convert a `GeoJSON` feature into a `SiteInput`, extracting the location, site specification, and geometry.
+/// Returns an error if any required property is missing or if the geometry is invalid.
+fn feature_to_site_input(
+    feature: &Feature,
+    location_property: &str,
+    site_type_property: &str,
+) -> Result<SiteInput> {
+    let location = location_from_feature(feature, location_property)?;
+    let site_specification = site_specification_from_feature(feature, site_type_property)?;
+    let Some(polygon) = polygon_from_feature(feature) else {
+        anyhow::bail!(
+            "Skipping feature `{feature_id}` due to missing or invalid geometry (not a point or polygon)",
+            feature_id = feature_id_str(feature),
+        );
+    };
+
+    Ok(SiteInput {
+        location,
+        was_point: was_point(feature),
+        buffer_distance_km: site_specification.buffer_distance(),
+        specification: site_specification,
+        geom: polygon,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        CONFIG,
-        db::setup_db,
-        processes::parameters::{GeoJsonInputMediaType, Hectare},
-    };
+    use crate::processes::parameters::{GeoJsonInputMediaType, Hectare};
     use approx::abs_diff_ne;
-    use diesel_async::SimpleAsyncConnection;
     use geojson::FeatureCollection;
     use ogcapi::types::processes::Input;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+    use toasty::schema::db::Type as DbType;
 
-    async fn mock_db_pool() -> DbPool {
-        setup_db(&CONFIG.database).await.unwrap()
-    }
+    async fn create_schema_and_insert_test_site(db: &mut DbHandle) {
+        let schema = db.schema_name().to_string();
 
-    async fn create_schema_and_insert_test_site(
-        connection: &mut impl SimpleAsyncConnection,
-        schema: &str,
-    ) {
-        connection
-            .batch_execute(&formatdoc! {r#"
+        toasty::sql::statement(formatdoc! {r#"
             CREATE TABLE "{schema}".naturasite_polygon (
                 sitecode TEXT,
                 sitename TEXT,
                 geom geometry
             );
+        "#})
+        .exec(db.as_mut())
+        .await
+        .unwrap();
 
+        toasty::sql::statement(formatdoc! {r#"
             INSERT INTO "{schema}".naturasite_polygon (sitecode, sitename, geom)
             VALUES (
                 'DE5118301',
                 'Dammelsberg und Köhlersgrund',
-                ST_GeomFromText('{wkt1}', 3035)
+                ST_GeomFromText($1, 3035)
             ), (
                 'DE5317307',
                 'Fohnbach und Gleibach',
-                ST_GeomFromText('{wkt2}', 3035)
+                ST_GeomFromText($2, 3035)
             );
-            "#,
-                wkt1 = include_str!("../../../test-data/DE5118301.wkt"),
-                wkt2 = include_str!("../../../test-data/DE5317307.wkt"),
-            })
-            .await
-            .unwrap();
+        "#})
+        .bind_typed(
+            include_str!("../../../test-data/DE5118301.wkt"),
+            DbType::Text,
+        )
+        .bind_typed(
+            include_str!("../../../test-data/DE5317307.wkt"),
+            DbType::Text,
+        )
+        .exec(db.as_mut())
+        .await
+        .unwrap();
     }
 
     #[test]
@@ -1025,13 +1065,12 @@ mod tests {
             serde_json::from_value(json).unwrap();
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn process_summary_has_expected_inputs_and_outputs() {
-        let pool = mock_db_pool().await;
-        create_schema_and_insert_test_site(&mut pool.get().await.unwrap(), &CONFIG.database.schema)
-            .await;
+    #[crate::test]
+    async fn process_summary_has_expected_inputs_and_outputs(mut db: DbHandle) {
+        create_schema_and_insert_test_site(&mut db).await;
 
-        let p = BiodiversitySensitiveAreasProcess::new(pool, &CONFIG.database.schema)
+        let schema = db.schema_name().to_string();
+        let p = BiodiversitySensitiveAreasProcess::new(db, schema.leak())
             .await
             .unwrap();
         let process = p.process().expect("to produce process description");
@@ -1078,18 +1117,15 @@ mod tests {
         }
     }
 
-    #[tokio::test(flavor = "multi_thread")]
+    #[crate::test]
     #[allow(
         clippy::too_many_lines,
         reason = "This test is verbose due to the detailed assertions on the process outputs."
     )]
-    async fn it_computes_biodiversity_sensitive_areas() {
-        let pool = mock_db_pool().await;
-        let mut connection = pool.get().await.unwrap();
-        create_schema_and_insert_test_site(&mut connection, &CONFIG.database.schema).await;
+    async fn it_computes_biodiversity_sensitive_areas(mut db: DbHandle) {
+        create_schema_and_insert_test_site(&mut db).await;
 
         // crate::util::setup_tracing(
-        //     crate::config::Logging {
         //         level: crate::config::LogLevel::Debug,
         //     }
         //     .into(),
@@ -1173,9 +1209,10 @@ mod tests {
             unit_for_area: UnitForArea::Hectare,
         };
 
+        let schema = db.schema_name().to_string();
         let (site_rows, errors) = compute_biodiversity_sensitive_areas(
-            connection,
-            CONFIG.database.schema.as_str(),
+            &mut db,
+            &schema,
             inputs.sites,
             inputs.location_name_field.as_ref(),
             inputs.site_type_field.as_ref(),

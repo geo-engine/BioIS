@@ -1,6 +1,6 @@
 use crate::util::Secret;
 use geoengine_api_client::apis::configuration::Configuration;
-use std::{path::Path, sync::LazyLock};
+use std::{path::Path, sync::LazyLock, time::Duration};
 use tracing::Level;
 use tracing_subscriber::filter::Directive;
 use url::Url;
@@ -14,6 +14,7 @@ pub struct Config {
     pub database: Database,
     pub geoengine: GeoEngineInstance,
     pub data_ids: DataIdsConfig,
+    pub credits: CreditsConfig,
     pub logging: Logging,
 }
 
@@ -40,15 +41,20 @@ pub struct Database {
     pub database: String,
     pub schema: String,
     pub user: String,
-    pub password: String,
+    pub password: Secret<String>,
     pub clear_database_on_start: bool,
 }
 
 impl Database {
     pub fn connection_string(&self) -> String {
         format!(
-            "postgresql://{}:{}@{}:{}/{}",
-            self.user, self.password, self.host, self.port, self.database
+            "postgresql://{user}:{password}@{host}:{port}/{database}?options=-c%20search_path%3D{schema},public",
+            user = self.user,
+            password = self.password.expose(),
+            host = self.host,
+            port = self.port,
+            database = self.database,
+            schema = self.schema,
         )
     }
 }
@@ -65,6 +71,7 @@ impl GeoEngineInstance {
 
         if let Some(session_token) = session_token {
             let session_token: Uuid = *session_token;
+
             configuration.bearer_access_token = Some(session_token.to_string());
         }
 
@@ -124,6 +131,32 @@ fn get_config() -> anyhow::Result<Config> {
     // TODO: environment variables
 
     Ok(builder.build()?.try_deserialize()?)
+}
+
+/// Specifies configuration for the credits system
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct CreditsConfig {
+    pub credits_lookup_interval_seconds: u64,
+    pub biodiversity_sensitive_areas: BiodiversitySensitiveAreasCreditsConfig,
+    pub habitat_distance: HabitatDistanceCreditsConfig,
+}
+
+impl CreditsConfig {
+    pub fn credits_lookup_interval(&self) -> Duration {
+        Duration::from_secs(self.credits_lookup_interval_seconds)
+    }
+}
+
+/// Specifies credits configuration for the biodiversity sensitive areas
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct BiodiversitySensitiveAreasCreditsConfig {
+    pub credits_per_site: u64,
+}
+
+/// Specifies credits configuration for the habitat distance
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct HabitatDistanceCreditsConfig {
+    pub credits_per_coordinate: u64,
 }
 
 #[cfg(test)]

@@ -46,6 +46,8 @@ async fn main() {
         Coordinate2D::new(5.988_658_074_58, 54.983_104_153),
     );
 
+    let mut computation_id = String::new();
+
     let feature_collection = wfs_handler(
         &configuration,
         &workflow_id,
@@ -62,9 +64,11 @@ async fn main() {
         None,
         Some(&workflow_id),
         None,
+        Some(&mut computation_id),
     )
     .await
     .unwrap();
 
+    eprintln!("Computation ID: {computation_id}");
     eprintln!("{feature_collection:#?}");
 }

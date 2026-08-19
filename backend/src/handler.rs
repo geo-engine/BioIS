@@ -1,4 +1,7 @@
-use crate::auth::{AuthCodeResponse, UserSession};
+use crate::{
+    auth::{AuthCodeResponse, UserSession},
+    server::AppState,
+};
 use anyhow::Context;
 use axum::{
     Json,
@@ -6,10 +9,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use geoengine_api_client::apis::{
-    configuration::Configuration,
-    session_api::{oidc_init, oidc_login},
-};
+use geoengine_api_client::apis::session_api::{oidc_init, oidc_login};
 use ogcapi::{
     services::{self as ogcapi_services},
     types::common::Exception,
@@ -19,7 +19,7 @@ use url::Url;
 use utoipa::IntoParams;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-pub fn auth_router() -> OpenApiRouter<Configuration> {
+pub fn auth_router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(auth_handler))
         .routes(routes!(auth_request_url_handler))
@@ -47,12 +47,12 @@ pub async fn health_handler() -> StatusCode {
     )
 )]
 async fn auth_handler(
-    State(api_config): State<Configuration>,
+    State(app_state): State<AppState>,
     Query(AuthRequestUrlParams { redirect_uri }): Query<AuthRequestUrlParams>,
     Json(auth_code_response): Json<AuthCodeResponse>,
 ) -> ogcapi_services::Result<Json<UserSession>> {
     let user_session = oidc_login(
-        &api_config,
+        &app_state.api_config,
         redirect_uri.as_str(),
         auth_code_response.into(),
     )
@@ -87,10 +87,10 @@ struct AuthRequestUrlParams {
     )
 )]
 async fn auth_request_url_handler(
-    State(api_config): State<Configuration>,
+    State(app_state): State<AppState>,
     Query(AuthRequestUrlParams { redirect_uri }): Query<AuthRequestUrlParams>,
 ) -> ogcapi_services::Result<UrlResponse> {
-    let auth_code_flow_request_url = oidc_init(&api_config, redirect_uri.as_str())
+    let auth_code_flow_request_url = oidc_init(&app_state.api_config, redirect_uri.as_str())
         .await
         .context("Failed to perform OIDC login")?;
 
@@ -121,7 +121,6 @@ mod tests {
     use axum::{body::Body, http::Request};
     use httptest::matchers::request::method;
     use httptest::{Expectation, Server, responders::json_encoded};
-    use reqwest::StatusCode;
     use serde_json::json;
     use tower::ServiceExt;
     use url::Url;
@@ -138,8 +137,8 @@ mod tests {
         assert_eq!(response.status(), StatusCode::NO_CONTENT);
     }
 
-    #[tokio::test]
-    async fn test_auth_handler_with_mock_server() {
+    #[crate::test]
+    async fn it_retrieves_user_session_from_auth_handler(db: DbHandle) {
         // start mock server
         let server = Server::run();
 
@@ -172,7 +171,7 @@ mod tests {
 
         // call handler
         let res = auth_handler(
-            State(api_config),
+            State(AppState { db, api_config }),
             Query(AuthRequestUrlParams {
                 redirect_uri: Url::parse(&redirect).unwrap(),
             }),

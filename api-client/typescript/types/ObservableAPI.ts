@@ -33,6 +33,7 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
 import { DateTimeField } from '../models/DateTimeField';
@@ -57,6 +58,7 @@ import { GeoJSONPoint } from '../models/GeoJSONPoint';
 import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
 import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { GeoPointField } from '../models/GeoPointField';
+import { GetCreditsResponse } from '../models/GetCreditsResponse';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
@@ -733,6 +735,40 @@ export class ObservableUserApi {
      */
     public authRequestUrlHandler(redirectUri: string, _options?: ConfigurationOptions): Observable<string> {
         return this.authRequestUrlHandlerWithHttpInfo(redirectUri, _options).pipe(map((apiResponse: HttpInfo<string>) => apiResponse.data));
+    }
+
+    /**
+     * Returns the user\'s credits.
+     * @param year
+     * @param month
+     */
+    public getCreditsWithHttpInfo(year: number, month: number, _options?: ConfigurationOptions): Observable<HttpInfo<GetCreditsResponse>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.getCredits(year, month, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.getCreditsWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * Returns the user\'s credits.
+     * @param year
+     * @param month
+     */
+    public getCredits(year: number, month: number, _options?: ConfigurationOptions): Observable<GetCreditsResponse> {
+        return this.getCreditsWithHttpInfo(year, month, _options).pipe(map((apiResponse: HttpInfo<GetCreditsResponse>) => apiResponse.data));
     }
 
 }

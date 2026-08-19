@@ -115,8 +115,10 @@ pub fn year_range_from_time_descriptor(time_descriptor: &TimeDescriptor) -> Resu
     let end_exclusive =
         DateTime::<Utc>::from_timestamp_millis(time_interval.end).context("Invalid end time")?;
 
-    let start_year = start_inclusive.year() as u16;
-    let end_year_exclusive = end_exclusive.year() as u16;
+    let start_year =
+        u16::try_from(start_inclusive.year()).context("Start year out of range for u16")?;
+    let end_year_exclusive =
+        u16::try_from(end_exclusive.year()).context("End year out of range for u16")?;
     let end_year_inclusive = end_year_exclusive.saturating_sub(1).max(start_year);
 
     Ok((Year::new(start_year), Year::new(end_year_inclusive)))
@@ -132,6 +134,12 @@ pub fn set_min_max_in_schema(schema: &mut schemars::Schema, min: i64, max: i64) 
         .context("Schema is not a number")?
         .insert("maximum".to_string(), serde_json::json!(max));
     Ok(())
+}
+
+/// Rounds a floating-point number to the nearest integer and returns it as an i64.
+#[allow(clippy::cast_possible_truncation)]
+pub fn round_nearest_i64(value: f64) -> i64 {
+    value.round() as i64
 }
 
 #[cfg(test)]

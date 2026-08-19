@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::{
     CONFIG,
+    credits::add_credits_used_pending,
+    db::DbHandle,
     processes::{
         land_use_sealed_area::{
             compute::{
@@ -20,7 +22,7 @@ use crate::{
         },
         util::{set_min_max_in_schema, to_output_keys},
     },
-    state::USER,
+    state::{CONTEXT, TaskLocalContext},
     util::{md_content, md_heading},
 };
 use anyhow::Result;
@@ -44,7 +46,15 @@ mod types;
 
 #[doc = include_str!("description.md")]
 #[derive(Debug, Clone)]
-pub struct LandUseSealedAreaProcess;
+pub struct LandUseSealedAreaProcess {
+    db: DbHandle,
+}
+
+impl LandUseSealedAreaProcess {
+    pub fn new(db: DbHandle) -> Self {
+        Self { db }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -158,11 +168,10 @@ impl Processor for LandUseSealedAreaProcess {
     }
 
     fn process(&self) -> Result<Process> {
-        let configuration = USER.try_get().ok().map(|user| {
-            CONFIG
-                .geoengine
-                .api_config(Some(user.session_token.clone()))
-        });
+        let configuration = CONTEXT
+            .session_token()
+            .ok()
+            .map(|session_token| CONFIG.geoengine.api_config(Some(session_token)));
 
         // TODO: make `process` async & get `USER` passed to here
         tokio::task::block_in_place(|| {
@@ -176,15 +185,11 @@ impl Processor for LandUseSealedAreaProcess {
 
         let requested_outputs = OutputKeys::from_requested_outputs(&execute.outputs)?;
 
-        let user = USER.try_get()?;
-
         let results = self
             .execute(
                 inputs,
                 requested_outputs,
-                CONFIG
-                    .geoengine
-                    .api_config(Some(user.session_token.clone())),
+                CONFIG.geoengine.api_config(Some(CONTEXT.session_token()?)),
             )
             .await?;
 
@@ -353,7 +358,7 @@ impl LandUseSealedAreaProcess {
             || requested_outputs.errors
         {
             // Compute per-site land-use data
-            let (site_rows, errors) = compute_site_land_use_data(
+            let (site_rows, errors, computation_id) = compute_site_land_use_data(
                 &configuration,
                 inputs.year,
                 &inputs.sites,
@@ -384,6 +389,9 @@ impl LandUseSealedAreaProcess {
             if requested_outputs.errors {
                 outputs.errors = Some(errors);
             }
+
+            add_credits_used_pending(self.db.clone(), configuration.clone(), computation_id)
+                .await?;
         }
 
         if requested_outputs.documentation_sources {
@@ -517,11 +525,15 @@ impl From<LandUseSealedAreaProcessOutputs> for ExecuteResults {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{auth::User, processes::parameters::GeoJsonInputMediaType, state::USER};
+    use crate::{
+        auth::User, credits::start_credits_process_task,
+        processes::parameters::GeoJsonInputMediaType, state::TaskContext,
+    };
     use geoengine_api_client::models::{
         BoundingBox2D, CollectionType, Coordinate2D, DataId, DatasetNameResponse, FeatureDataType,
-        GeoJson, IdResponse, InternalDataId, Measurement, Provenance, ProvenanceEntry,
-        TypedResultDescriptor, TypedVectorResultDescriptor, VectorColumnInfo, VectorDataType,
+        GeoJson, IdResponse, InternalDataId, Measurement, OperatorQuota, Provenance,
+        ProvenanceEntry, TypedResultDescriptor, TypedVectorResultDescriptor, VectorColumnInfo,
+        VectorDataType,
     };
     use geojson::FeatureCollection;
     use httptest::{
@@ -653,9 +665,9 @@ mod tests {
         assert!(deserialized.previous_year_data.is_some());
     }
 
-    #[tokio::test]
-    async fn process_summary_has_expected_inputs_and_outputs() {
-        let process = LandUseSealedAreaProcess
+    #[crate::test]
+    async fn process_summary_has_expected_inputs_and_outputs(db: DbHandle) {
+        let process = LandUseSealedAreaProcess::new(db)
             .process(None)
             .await
             .expect("to produce process description");
@@ -868,14 +880,17 @@ mod tests {
         assert!(results.is_empty());
     }
 
-    #[test]
-    fn it_provides_correct_process_metadata() {
-        let process = LandUseSealedAreaProcess;
+    #[crate::test]
+    async fn it_provides_correct_process_metadata(db: DbHandle) {
+        let process = LandUseSealedAreaProcess::new(db);
         assert_eq!(process.id(), "land-use-sealed-area");
         assert_eq!(process.version(), "0.1.0");
     }
 
-    #[tokio::test(flavor = "multi_thread")]
+    #[crate::test(task_context = TaskContext::new(User {
+        id: Uuid::from_u128(42),
+        session_token: Uuid::from_u128(42).into(),
+    }))]
     #[allow(
         clippy::too_many_lines,
         reason = "Test is verbose due to detailed mocking and assertions"
@@ -885,147 +900,174 @@ mod tests {
         clippy::excessive_precision,
         reason = "Ok for coordinates in test data"
     )]
-    async fn it_runs_the_process() {
-        let user = User {
-            id: Uuid::from_u128(42),
-            session_token: Uuid::from_u128(42).into(),
-        };
+    async fn it_runs_the_process(db: DbHandle) {
+        CONTEXT
+            .set_job_id(Uuid::from_u128(0x0000_0000_0000_0000_0000))
+            .unwrap();
 
-        USER.scope(user, async {
-            // Start httptest server and mock the external Geo Engine endpoints
-            let server = Server::run();
+        // Start httptest server and mock the external Geo Engine endpoints
+        let server = Server::run();
 
-            server.expect(
-                Expectation::matching(request::method_path("POST", "//upload"))
-                    .respond_with(json_encoded(
-                        IdResponse::new(
-                            Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-                        )
-                    )),
-            );
-            server.expect(
-                Expectation::matching(request::method_path("POST", "//dataset"))
-                    .respond_with(json_encoded(
-                        DatasetNameResponse::new(
-                            "test-dataset".to_string()
-                        )
-                    )),
-            );
-            server.expect(
-                Expectation::matching(request::method_path("POST", "//workflow"))
+        server.expect(
+            Expectation::matching(request::method_path("POST", "//upload")).respond_with(
+                json_encoded(IdResponse::new(
+                    Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+                )),
+            ),
+        );
+        server.expect(
+            Expectation::matching(request::method_path("POST", "//dataset")).respond_with(
+                json_encoded(DatasetNameResponse::new("test-dataset".to_string())),
+            ),
+        );
+        server.expect(
+            Expectation::matching(request::method_path("POST", "//workflow"))
                 .times(3)
-                    .respond_with(
-                        cycle(vec![
-                            Box::new(json_encoded(
-                                IdResponse::new(
-                                    Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap()
-                                )
-                            )),
-                            Box::new(json_encoded(
-                                IdResponse::new(
-                                    Uuid::parse_str("00000000-0000-0000-0000-000000000003").unwrap()
-                                )
-                            )),
-                            Box::new(json_encoded(
-                                IdResponse::new(
-                                    Uuid::parse_str("00000000-0000-0000-0000-000000000004").unwrap()
-                                )
-                            )),
-                        ])
-                    ),
-            );
-            server.expect(
-                Expectation::matching(request::method_path("GET", "//workflow/00000000-0000-0000-0000-000000000003/metadata"))
-                    .respond_with(json_encoded(
-                        TypedResultDescriptor::Vector(
-                            Box::new(TypedVectorResultDescriptor {
-                                r#type: Default::default(),
-                                data_type:VectorDataType::MultiPolygon,
-                                spatial_reference:"EPSG:4326".to_string(),
-                                columns:[("name".to_string(),VectorColumnInfo{data_type:FeatureDataType::Text,measurement:Box::new(Measurement::Unitless(Box::default()))}),("siteType".to_string(),VectorColumnInfo{data_type:FeatureDataType::Text,measurement:Box::new(Measurement::Unitless(Box::default()))})].into_iter().collect(),
-                                bbox:Some(Box::new(BoundingBox2D{lower_left_coordinate:Coordinate2D::new(8.770,50.813).into(),upper_right_coordinate:Coordinate2D::new(8.774,50.813).into()})),
-                                time: None,
-                            })
-                        )
-                    )),
-            );
-
-            server.expect(
-                Expectation::matching(request::method_path("GET", "//wfs/00000000-0000-0000-0000-000000000002"))
-                    .respond_with(json_encoded(GeoJson {
-                        r#type: CollectionType::FeatureCollection,
-                        features: vec![
-                            json!({
-                                "type": "Feature",
-                                "properties": {
-                                    "name": "Musizierhaus",
-                                    "siteType": "site",
-                                    "area": 1500.0,
-                                    "fractionSealed": 1.0
-                                }
-                            }),
-                            json!({
-                                "type": "Feature",
-                                "properties": {
-                                    "name": "Im Garten",
-                                    "siteType": "site",
-                                    "area": 2000.0,
-                                    "fractionSealed": 0.75
-                                }
-                               }),
-                            json!({
-                                "type": "Feature",
-                                "properties": {
-                                    "name": "Teil der Zentralbib",
-                                    "siteType": "site",
-                                    "area": 1800.0,
-                                    "fractionSealed": 0.8294
-                                }
-                               }),
-                            json!({
-                                "type": "Feature",
-                                "properties": {
-                                    "name": "Garten im Musizierhaus",
-                                    "siteType": "natureOnSite",
-                                    "area": 500.0,
-                                    "fractionSealed": 0.0
-                                }
-                              }),
-                            json!({
-                                "type": "Feature",
-                                "properties": {
-                                    "name": "Im Alten Botanischen Garten",
-                                    "siteType": "natureOffSite",
-                                    "area": 3000.0,
-                                    "fractionSealed": 0.0
-                                }
-                            }),
-                        ],
+                .respond_with(cycle(vec![
+                    Box::new(json_encoded(IdResponse::new(
+                        Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap(),
+                    ))),
+                    Box::new(json_encoded(IdResponse::new(
+                        Uuid::parse_str("00000000-0000-0000-0000-000000000003").unwrap(),
+                    ))),
+                    Box::new(json_encoded(IdResponse::new(
+                        Uuid::parse_str("00000000-0000-0000-0000-000000000004").unwrap(),
+                    ))),
+                ])),
+        );
+        server.expect(
+            Expectation::matching(request::method_path(
+                "GET",
+                "//workflow/00000000-0000-0000-0000-000000000003/metadata",
+            ))
+            .respond_with(json_encoded(TypedResultDescriptor::Vector(Box::new(
+                TypedVectorResultDescriptor {
+                    r#type: Default::default(),
+                    data_type: VectorDataType::MultiPolygon,
+                    spatial_reference: "EPSG:4326".to_string(),
+                    columns: [
+                        (
+                            "name".to_string(),
+                            VectorColumnInfo {
+                                data_type: FeatureDataType::Text,
+                                measurement: Box::new(Measurement::Unitless(Box::default())),
+                            },
+                        ),
+                        (
+                            "siteType".to_string(),
+                            VectorColumnInfo {
+                                data_type: FeatureDataType::Text,
+                                measurement: Box::new(Measurement::Unitless(Box::default())),
+                            },
+                        ),
+                    ]
+                    .into_iter()
+                    .collect(),
+                    bbox: Some(Box::new(BoundingBox2D {
+                        lower_left_coordinate: Coordinate2D::new(8.770, 50.813).into(),
+                        upper_right_coordinate: Coordinate2D::new(8.774, 50.813).into(),
                     })),
-            );
+                    time: None,
+                },
+            )))),
+        );
 
-            server.expect(
-                Expectation::matching(request::method_path("GET", "//workflow/00000000-0000-0000-0000-000000000004/provenance"))
-                    .respond_with(json_encoded(vec![ProvenanceEntry {
-                        provenance: Box::new(Provenance {
-                            citation: "CITATION".to_string(),
-                            license: "LICENSE".to_string(),
-                            uri: "URI".to_string()
+        server.expect(
+            Expectation::matching(request::method_path(
+                "GET",
+                "//wfs/00000000-0000-0000-0000-000000000002",
+            ))
+            .respond_with(
+                json_encoded(GeoJson {
+                    r#type: CollectionType::FeatureCollection,
+                    features: vec![
+                        json!({
+                            "type": "Feature",
+                            "properties": {
+                                "name": "Musizierhaus",
+                                "siteType": "site",
+                                "area": 1500.0,
+                                "fractionSealed": 1.0
+                            }
                         }),
-                        data: vec![
-                            DataId::Internal(Box::new(InternalDataId{
-                                r#type: Default::default(),
-                                dataset_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-                            })),
-                        ]
-                    }])),
-            );
+                        json!({
+                         "type": "Feature",
+                         "properties": {
+                             "name": "Im Garten",
+                             "siteType": "site",
+                             "area": 2000.0,
+                             "fractionSealed": 0.75
+                         }
+                        }),
+                        json!({
+                         "type": "Feature",
+                         "properties": {
+                             "name": "Teil der Zentralbib",
+                             "siteType": "site",
+                             "area": 1800.0,
+                             "fractionSealed": 0.8294
+                         }
+                        }),
+                        json!({
+                          "type": "Feature",
+                          "properties": {
+                              "name": "Garten im Musizierhaus",
+                              "siteType": "natureOnSite",
+                              "area": 500.0,
+                              "fractionSealed": 0.0
+                          }
+                        }),
+                        json!({
+                            "type": "Feature",
+                            "properties": {
+                                "name": "Im Alten Botanischen Garten",
+                                "siteType": "natureOffSite",
+                                "area": 3000.0,
+                                "fractionSealed": 0.0
+                            }
+                        }),
+                    ],
+                })
+                .append_header("x-computation-id", "00000000-0000-0000-0000-000000000003"),
+            ),
+        );
 
-            // Build API configuration pointing to the mock server
-            let mut api_config = Configuration::new();
-            api_config.base_path = server.url_str("/");
+        server.expect(
+            Expectation::matching(request::method_path(
+                "GET",
+                "//workflow/00000000-0000-0000-0000-000000000004/provenance",
+            ))
+            .respond_with(json_encoded(vec![ProvenanceEntry {
+                provenance: Box::new(Provenance {
+                    citation: "CITATION".to_string(),
+                    license: "LICENSE".to_string(),
+                    uri: "URI".to_string(),
+                }),
+                data: vec![DataId::Internal(Box::new(InternalDataId {
+                    r#type: Default::default(),
+                    dataset_id: Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+                }))],
+            }])),
+        );
 
-            let inputs = serde_json::from_value::<LandUseSealedAreaProcessInputs>(json!({
+        server.expect(
+            Expectation::matching(request::method_path(
+                "GET",
+                "//quota/computations/00000000-0000-0000-0000-000000000003",
+            ))
+            // .times(0..=1) // either background task will have queried it or not, depending on timing
+            .respond_with(json_encoded(vec![OperatorQuota::new(
+                "OPERATOR-NAME".to_string(),
+                "OPERATOR-PATH".to_string(),
+                100,
+            )])),
+        );
+
+        // Build API configuration pointing to the mock server
+        let mut api_config = Configuration::new();
+        api_config.base_path = server.url_str("/");
+
+        let inputs = serde_json::from_value::<LandUseSealedAreaProcessInputs>(json!({
                 "sites": {
                     "value": {
                         "type": "FeatureCollection",
@@ -1112,184 +1154,184 @@ mod tests {
                 }
             })).unwrap();
 
-            let requested_outputs = [
-                OutputKeys::LAND_USE_SUMMARY,
-                OutputKeys::SITE_LAND_USE_TABLE,
-                OutputKeys::INPUTS,
-                OutputKeys::ERRORS,
-                OutputKeys::DOCUMENTATION_SOURCES,
-            ]
-            .map(|key| {
-                (
-                    key.to_string(),
-                    Output {
-                        format: None,
-                        transmission_mode: Default::default(),
-                    },
-                )
-            })
-            .into_iter()
-            .collect();
-            let requested_outputs = OutputKeys::from_requested_outputs(&requested_outputs).unwrap();
+        let requested_outputs = [
+            OutputKeys::LAND_USE_SUMMARY,
+            OutputKeys::SITE_LAND_USE_TABLE,
+            OutputKeys::INPUTS,
+            OutputKeys::ERRORS,
+            OutputKeys::DOCUMENTATION_SOURCES,
+        ]
+        .map(|key| {
+            (
+                key.to_string(),
+                Output {
+                    format: None,
+                    transmission_mode: Default::default(),
+                },
+            )
+        })
+        .into_iter()
+        .collect();
+        let requested_outputs = OutputKeys::from_requested_outputs(&requested_outputs).unwrap();
 
-            let process = LandUseSealedAreaProcess;
-            let result = process
-                .execute(inputs.clone(), requested_outputs, api_config)
-                .await
-                .unwrap();
+        let process = LandUseSealedAreaProcess::new(db.clone());
+        let result = process
+            .execute(inputs.clone(), requested_outputs, api_config)
+            .await
+            .unwrap();
 
-
-            assert_eq!(
-                serde_json::to_value(&result).unwrap(),
-                json!({
-                    "landUseSummary": {
-                        "name": "Land Use",
-                        "data": [
+        assert_eq!(
+            serde_json::to_value(&result).unwrap(),
+            json!({
+                "landUseSummary": {
+                    "name": "Land Use",
+                    "data": [
+                        {
+                            "landUseType": "Total sealed area",
+                            "previousYear": 1500.0,
+                            "reportingYear": 4492.92,
+                            "percentageChange": "199.53 %"
+                        },
+                        {
+                            "landUseType": "Total nature-oriented area on-site",
+                            "previousYear": 200.0,
+                            "reportingYear": 500.0,
+                            "percentageChange": "150 %"
+                        },
+                        {
+                            "landUseType": "Total nature-oriented area off-site",
+                            "previousYear": 800.0,
+                            "reportingYear": 3000.0,
+                            "percentageChange": "275 %"
+                        },
+                        {
+                            "landUseType": "Total use of land",
+                            "previousYear": 2500.0,
+                            "reportingYear": 8800.0,
+                            "percentageChange": "252 %"
+                        }
+                    ],
+                    "schema": {
+                        "fields": [
                             {
-                                "landUseType": "Total sealed area",
-                                "previousYear": 1500.0,
-                                "reportingYear": 4492.92,
-                                "percentageChange": "199.53 %"
+                                "name": "landUseType",
+                                "type": "string",
+                                "title": "Land-use type"
                             },
                             {
-                                "landUseType": "Total nature-oriented area on-site",
-                                "previousYear": 200.0,
-                                "reportingYear": 500.0,
-                                "percentageChange": "150 %"
+                                "name": "previousYear",
+                                "type": "number",
+                                "title": "Previous year (m²)"
                             },
                             {
-                                "landUseType": "Total nature-oriented area off-site",
-                                "previousYear": 800.0,
-                                "reportingYear": 3000.0,
-                                "percentageChange": "275 %"
+                                "name": "reportingYear",
+                                "type": "number",
+                                "title": "Reporting year (m²)"
                             },
                             {
-                                "landUseType": "Total use of land",
-                                "previousYear": 2500.0,
-                                "reportingYear": 8800.0,
-                                "percentageChange": "252 %"
+                                "name": "percentageChange",
+                                "type": "string",
+                                "title": "% change"
                             }
                         ],
-                        "schema": {
-                            "fields": [
-                                {
-                                    "name": "landUseType",
-                                    "type": "string",
-                                    "title": "Land-use type"
-                                },
-                                {
-                                    "name": "previousYear",
-                                    "type": "number",
-                                    "title": "Previous year (m²)"
-                                },
-                                {
-                                    "name": "reportingYear",
-                                    "type": "number",
-                                    "title": "Reporting year (m²)"
-                                },
-                                {
-                                    "name": "percentageChange",
-                                    "type": "string",
-                                    "title": "% change"
-                                }
-                            ],
-                            "primaryKey": [
-                                "landUseType"
-                            ]
-                        }
-                    },
-                    "siteLandUseTable": {
-                        "name": "Site Land Use",
-                        "data": [
-                            {
-                                "location": "Musizierhaus",
-                                "landUseType": "site",
-                                "area": 1500.0,
-                                "sealedArea": 1500.0
-                            },
-                            {
-                                "location": "Im Garten",
-                                "landUseType": "site",
-                                "area": 2000.0,
-                                "sealedArea": 1500.0
-                            },
-                            {
-                                "location": "Teil der Zentralbib",
-                                "landUseType": "site",
-                                "area": 1800.0,
-                                "sealedArea": 1492.92
-                            },
-                            {
-                                "location": "Garten im Musizierhaus",
-                                "landUseType": "natureOnSite",
-                                "area": 500.0,
-                                "sealedArea": 0.0
-                            },
-                            {
-                                "location": "Im Alten Botanischen Garten",
-                                "landUseType": "natureOffSite",
-                                "area": 3000.0,
-                                "sealedArea": 0.0
-                            }
-                        ],
-                        "schema": {
-                            "fields": [
-                                {
-                                    "name": "location",
-                                    "type": "string",
-                                    "title": "Location"
-                                },
-                                {
-                                    "name": "landUseType",
-                                    "type": "string",
-                                    "title": "Land-use type"
-                                },
-                                {
-                                    "name": "area",
-                                    "type": "number",
-                                    "title": "Area (m²)"
-                                },
-                                {
-                                    "name": "sealedArea",
-                                    "type": "number",
-                                    "title": "Sealed area (m²)"
-                                }
-                            ],
-                            "primaryKey": [
-                                "location"
-                            ]
-                        }
-                    },
-                    "inputs": serde_json::to_value(&inputs).unwrap(),
-                    "errors": [],
-                    "documentationSources": {
-                        "name": "Documentation Sources",
-                        "data": [
-                            {
-                                "data": "CITATION",
-                                "documentation_source": "URI: <a href=\"URI\">URI</a>\nLicense: LICENSE"
-                            }
-                        ],
-                        "schema": {
-                            "fields": [
-                                {
-                                    "name": "data",
-                                    "type": "string",
-                                    "title": "Data"
-                                },
-                                {
-                                    "name": "documentation_source",
-                                    "type": "string",
-                                    "title": "Documentation Source"
-                                }
-                            ],
-                            "primaryKey": [
-                                "data"
-                            ]
-                        }
+                        "primaryKey": [
+                            "landUseType"
+                        ]
                     }
-                })
-            );
-        }).await;
+                },
+                "siteLandUseTable": {
+                    "name": "Site Land Use",
+                    "data": [
+                        {
+                            "location": "Musizierhaus",
+                            "landUseType": "site",
+                            "area": 1500.0,
+                            "sealedArea": 1500.0
+                        },
+                        {
+                            "location": "Im Garten",
+                            "landUseType": "site",
+                            "area": 2000.0,
+                            "sealedArea": 1500.0
+                        },
+                        {
+                            "location": "Teil der Zentralbib",
+                            "landUseType": "site",
+                            "area": 1800.0,
+                            "sealedArea": 1492.92
+                        },
+                        {
+                            "location": "Garten im Musizierhaus",
+                            "landUseType": "natureOnSite",
+                            "area": 500.0,
+                            "sealedArea": 0.0
+                        },
+                        {
+                            "location": "Im Alten Botanischen Garten",
+                            "landUseType": "natureOffSite",
+                            "area": 3000.0,
+                            "sealedArea": 0.0
+                        }
+                    ],
+                    "schema": {
+                        "fields": [
+                            {
+                                "name": "location",
+                                "type": "string",
+                                "title": "Location"
+                            },
+                            {
+                                "name": "landUseType",
+                                "type": "string",
+                                "title": "Land-use type"
+                            },
+                            {
+                                "name": "area",
+                                "type": "number",
+                                "title": "Area (m²)"
+                            },
+                            {
+                                "name": "sealedArea",
+                                "type": "number",
+                                "title": "Sealed area (m²)"
+                            }
+                        ],
+                        "primaryKey": [
+                            "location"
+                        ]
+                    }
+                },
+                "inputs": serde_json::to_value(&inputs).unwrap(),
+                "errors": [],
+                "documentationSources": {
+                    "name": "Documentation Sources",
+                    "data": [
+                        {
+                            "data": "CITATION",
+                            "documentation_source": "URI: <a href=\"URI\">URI</a>\nLicense: LICENSE"
+                        }
+                    ],
+                    "schema": {
+                        "fields": [
+                            {
+                                "name": "data",
+                                "type": "string",
+                                "title": "Data"
+                            },
+                            {
+                                "name": "documentation_source",
+                                "type": "string",
+                                "title": "Documentation Source"
+                            }
+                        ],
+                        "primaryKey": [
+                            "data"
+                        ]
+                    }
+                }
+            })
+        );
+
+        start_credits_process_task(db).await.unwrap();
     }
 }

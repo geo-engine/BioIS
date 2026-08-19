@@ -1,13 +1,10 @@
 use crate::{
-    db::{DbPool, PooledConnection},
-    processes::parameters::PointGeoJsonInput,
+    CONFIG,
+    credits::add_credits_used,
+    db::{DbHandle, model::ComputationId, util::RecordValueExt},
+    processes::{parameters::PointGeoJsonInput, util::round_nearest_i64},
 };
 use anyhow::{Context, Result};
-use diesel::{
-    sql_query,
-    sql_types::{Double, Text},
-};
-use diesel_async::RunQueryDsl;
 use geojson::PointType;
 use indoc::formatdoc;
 use ogcapi::{
@@ -24,65 +21,54 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use toasty::{schema::db::Type as DbType, stmt::Type as StmtType};
 use tracing::instrument;
 use utoipa::ToSchema;
 
 /// Calculates the distance to the nearest habitat of interest based on the provided coordinate input.
 #[derive(Debug, Clone)]
 pub struct HabitatDistanceProcess {
-    connection: DbPool,
+    connection: DbHandle,
     natura2000_schema: &'static str,
-}
-
-use diesel::QueryableByName;
-use diesel::sql_types::Bool;
-
-#[derive(QueryableByName)]
-struct Natura2000Exists {
-    #[diesel(sql_type = Bool)]
-    exists: bool,
 }
 
 impl HabitatDistanceProcess {
     pub const ID: &'static str = "habitatDistance";
 
-    pub async fn new(connection: DbPool, natura2000_schema: &'static str) -> Result<Self> {
-        let this = Self {
-            connection,
-            natura2000_schema,
-        };
-
-        let mut conn = this.connection().await?;
-        let table: Natura2000Exists = sql_query(formatdoc! {"
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = '{natura2000_schema}'
-                    AND table_name = 'naturasite_polygon'
-            ) as exists
-        "})
-        .get_result(&mut *conn)
-        .await
-        .context(format!(
-            "Failed to check if {natura2000_schema}.naturasite_polygon exists"
-        ))?;
-
-        if !table.exists {
+    pub async fn new(mut db: DbHandle, natura2000_schema: &'static str) -> Result<Self> {
+        if !natura2000_exists(&mut db, natura2000_schema).await? {
             anyhow::bail!("Table {natura2000_schema}.naturasite_polygon does not exist");
         }
 
-        // drop the pooled connection before moving `this` out
-        drop(conn);
-
-        Ok(this)
+        Ok(Self {
+            connection: db,
+            natura2000_schema,
+        })
     }
+}
 
-    async fn connection(&self) -> anyhow::Result<PooledConnection<'_>> {
-        self.connection
-            .get()
-            .await
-            .context("could not get db connection from pool")
-    }
+/// Check if the Natura2000 table exists
+pub async fn natura2000_exists(db: &mut DbHandle, natura2000_schema: &'static str) -> Result<bool> {
+    let result = toasty::sql::query(formatdoc! {"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = $1
+                    AND table_name = 'naturasite_polygon'
+            ) as exists
+        "})
+    .bind_typed(natura2000_schema, DbType::Text)
+    .column_types([StmtType::Bool])
+    .exec(db.as_mut())
+    .await
+    .context(format!(
+        "Failed to check if {natura2000_schema}.naturasite_polygon exists"
+    ))?
+    .into_iter()
+    .next()
+    .context("No result returned from existence check")?;
+
+    result.get_bool(0).context("Invalid exists type")
 }
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
@@ -266,7 +252,7 @@ impl Processor for HabitatDistanceProcess {
         let inputs: HabitatDistanceProcessInputs = serde_json::from_value(value)?;
 
         match compute_habitat_distance(
-            self.connection().await?,
+            &mut self.connection.clone(),
             self.natura2000_schema,
             &inputs.coordinate.value.coordinates,
         )
@@ -280,20 +266,28 @@ impl Processor for HabitatDistanceProcess {
     }
 }
 
-#[derive(QueryableByName)]
 struct Natura2000NearestHabitat {
-    #[diesel(sql_type = Text)]
     sitecode: String,
-    #[diesel(sql_type = Text)]
     sitename: String,
-    #[diesel(sql_type = Double)]
     distance_m: f64,
 }
 
-#[instrument(skip(connection), err(Debug))]
+impl TryFrom<toasty::stmt::Value> for Natura2000NearestHabitat {
+    type Error = anyhow::Error;
+
+    fn try_from(value: toasty::stmt::Value) -> Result<Self, Self::Error> {
+        Ok(Natura2000NearestHabitat {
+            sitecode: value.get_string(0).context("Invalid sitecode type")?,
+            sitename: value.get_string(1).context("Invalid sitename type")?,
+            distance_m: value.get_number(2).context("Invalid distance type")?,
+        })
+    }
+}
+
+#[instrument(skip(db), level = "debug", err(Debug))]
 async fn compute_habitat_distance(
-    mut connection: PooledConnection<'_>,
-    natura2000_schema: &'static str,
+    db: &mut DbHandle,
+    natura2000_schema: &str,
     coordinate: &PointType,
 ) -> Result<HabitatDistanceProcessOutputs> {
     let [lon, lat] = coordinate.as_slice() else {
@@ -301,66 +295,91 @@ async fn compute_habitat_distance(
         return Err(anyhow::anyhow!("Invalid coordinate"));
     };
     let point_geometry = format!("SRID=4326;POINT({lon} {lat})");
-    let table: Natura2000NearestHabitat = sql_query(formatdoc! {r#"
-        WITH reference AS (
+
+    let table: Natura2000NearestHabitat = toasty::sql::query(formatdoc!(
+        r#"WITH reference AS (
             SELECT ST_Transform($1::geometry, 3035) AS point
         )
-        SELECT s.sitecode,
+        SELECT 
+            s.sitecode,
             s.sitename,
-            ST_Distance(s.geom, reference.point) AS distance_m
+            CAST(ST_Distance(s.geom, reference.point) AS DOUBLE PRECISION) AS distance_m
         FROM "{natura2000_schema}".naturasite_polygon s, reference
         ORDER BY s.geom <-> reference.point
-        LIMIT 1
-    "#})
-    .bind::<Text, _>(point_geometry)
-    .get_result(&mut *connection)
+        LIMIT 1"#
+    ))
+    .bind_typed(point_geometry, DbType::Text)
+    .column_types([StmtType::String, StmtType::String, StmtType::F64])
+    .exec(db.as_mut())
     .await
     .context(format!(
         "Failed to query {natura2000_schema}.naturasite_polygon"
-    ))?;
+    ))?
+    .into_iter()
+    .next()
+    .context("No nearest habitat found for the given coordinate")?
+    .try_into()?;
+
+    add_credits_used(
+        db.clone(),
+        ComputationId::none(),
+        CONFIG.credits.habitat_distance.credits_per_coordinate,
+    )
+    .await?;
 
     Ok(HabitatDistanceProcessOutputs {
         habitat_code: Some(table.sitecode),
         habitat_name: Some(table.sitename),
-        distance_m: Some(table.distance_m.round() as i64),
+        distance_m: Some(round_nearest_i64(table.distance_m)),
     })
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::{
+        auth::User,
+        state::{CONTEXT, TaskLocalContext},
+        util::Secret,
+    };
+
     use super::*;
-    use crate::CONFIG;
-    use crate::db::setup_db;
-    use diesel_async::SimpleAsyncConnection;
     use ogcapi::types::processes::Input;
+    use uuid::Uuid;
 
-    async fn mock_db_pool() -> DbPool {
-        setup_db(&CONFIG.database).await.unwrap()
-    }
+    async fn create_schema_and_insert_test_site(db: &mut DbHandle) {
+        let schema = db.schema_name().to_string();
+        let wkt = include_str!("../../test-data/DE5417402.wkt");
 
-    async fn create_schema_and_insert_test_site(
-        connection: &mut impl SimpleAsyncConnection,
-        schema: &str,
-    ) {
-        connection
-            .batch_execute(&formatdoc! {r#"
+        toasty::sql::statement(formatdoc! {r#"
             CREATE TABLE "{schema}".naturasite_polygon (
                 sitecode TEXT,
                 sitename TEXT,
                 geom geometry
-            );
+            )
+        "#})
+        .exec(db.as_mut())
+        .await
+        .unwrap();
 
-            INSERT INTO "{schema}".naturasite_polygon (sitecode, sitename, geom)
+        toasty::sql::statement(formatdoc!(
+            r#"INSERT INTO "{schema}".naturasite_polygon (sitecode, sitename, geom)
             VALUES (
                 'DE5417402',
                 'Feldflur bei Hüttenberg und Schöffengrund',
-                ST_GeomFromText('{wkt}', 3035)
-            );
-            "#,
-                wkt = include_str!("../../test-data/DE5417402.wkt"),
-            })
-            .await
-            .unwrap();
+                ST_GeomFromText($1, 3035)
+            )"#,
+        ))
+        .bind_typed(wkt, DbType::Text)
+        .exec(db.as_mut())
+        .await
+        .unwrap();
+    }
+
+    fn mock_user() -> User {
+        User {
+            id: Uuid::from_u128(0xabcd_efab_cdef_abcd_efab_cdef_abcd_efab),
+            session_token: Secret(Uuid::from_u128(0x1234_5678_90ab_cdef_1234_5678_90ab_cdef)),
+        }
     }
 
     #[test]
@@ -382,22 +401,22 @@ mod tests {
         let _inputs: HabitatDistanceProcessInputs = serde_json::from_value(json).unwrap();
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn it_computes_the_nearest_habitat() {
-        let pool = mock_db_pool().await;
+    #[crate::test(task_context = crate::state::TaskContext::new(mock_user()))]
+    async fn it_computes_the_nearest_habitat(mut db: DbHandle) {
+        // crate::util::setup_tracing_for_tests();
 
         // create schema / table and insert a test site
-        let mut conn = pool.get().await.unwrap();
-        create_schema_and_insert_test_site(&mut *conn, &CONFIG.database.schema).await;
+        create_schema_and_insert_test_site(&mut db).await;
 
-        // consume the same connection in the computation (transaction stays open for test cleanup)
-        let outputs = compute_habitat_distance(
-            conn,
-            &CONFIG.database.schema,
-            &PointType::from((8.46, 50.49)),
-        )
-        .await
-        .unwrap();
+        CONTEXT
+            .set_job_id(Uuid::from_u128(0x1234_5678_90ab_cdef_1234_5678_90ab_cdef))
+            .unwrap();
+
+        // compute the habitat distance
+        let schema = db.schema_name().to_string();
+        let outputs = compute_habitat_distance(&mut db, &schema, &PointType::from((8.46, 50.49)))
+            .await
+            .unwrap();
 
         assert_eq!(outputs.habitat_code.unwrap(), "DE5417402");
         assert_eq!(
@@ -408,16 +427,12 @@ mod tests {
         assert_eq!(outputs.distance_m.unwrap(), 1415);
     }
 
-    #[tokio::test(flavor = "multi_thread")]
-    async fn process_summary_has_expected_inputs_and_outputs() {
-        let pool = mock_db_pool().await;
-        create_schema_and_insert_test_site(
-            &mut *pool.get().await.unwrap(),
-            &CONFIG.database.schema,
-        )
-        .await;
+    #[crate::test]
+    async fn process_summary_has_expected_inputs_and_outputs(mut db: DbHandle) {
+        create_schema_and_insert_test_site(&mut db).await;
 
-        let p = HabitatDistanceProcess::new(pool, &CONFIG.database.schema)
+        let schema = db.schema_name().to_string();
+        let p = HabitatDistanceProcess::new(db, schema.leak())
             .await
             .unwrap();
         let process = p.process().expect("to produce process description");

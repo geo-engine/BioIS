@@ -48,6 +48,7 @@ models/Constraints6.ts
 models/Constraints7.ts
 models/Constraints8.ts
 models/Constraints9.ts
+models/CreditsForJob.ts
 models/DataResource.ts
 models/DateField.ts
 models/DateTimeField.ts
@@ -72,6 +73,7 @@ models/GeoJSONPoint.ts
 models/GeoJSONPolygon.ts
 models/GeoJsonInputMediaType.ts
 models/GeoPointField.ts
+models/GetCreditsResponse.ts
 models/HabitatDistanceProcessInputs.ts
 models/HabitatDistanceProcessOutputs.ts
 models/HabitatDistanceProcessParams.ts
