@@ -17,7 +17,7 @@ CREATE TABLE "credits" (
     "configuration_base_path" TEXT,
     "configuration_user_agent" TEXT,
     "configuration_bearer_access_token" TEXT,
-    "errors" TEXT[] NOT NULL,
+    "errors" TEXT [] NOT NULL,
     PRIMARY KEY ("job_id", "computation_id")
 );
 
