@@ -2,7 +2,7 @@ use crate::{
     auth::GeoEngineAuthMiddlewareLayer,
     collection_transactions::NoCollectionTransactions,
     config::CONFIG,
-    credits::{self, start_lookup_task},
+    credits::{self, start_credits_process_task},
     db::DbHandle,
     handler,
     jobs::JobHandler,
@@ -84,7 +84,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .layer(GeoEngineAuthMiddlewareLayer);
     add_openapi_info(router.get_openapi_mut());
 
-    let _lookup_join_handle = start_lookup_task(db_pool.clone());
+    let _lookup_join_handle = start_credits_process_task(db_pool.clone());
 
     Ok(service)
 }

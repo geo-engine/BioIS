@@ -73,20 +73,22 @@ async fn add_credits_used_opt(
 }
 
 /// Starts a task for looking up processing credits repeatedly in the background
-pub fn start_lookup_task(mut db: DbHandle) -> JoinHandle<()> {
+///
+/// - *Normal behavior*: The task will run indefinitely, looking up credits every `<INTERVAL>` seconds.
+/// - *In tests*: The task will run once and then terminate, so that tests can run quickly.
+///
+pub fn start_credits_process_task(mut db: DbHandle) -> JoinHandle<()> {
     tokio::spawn(async move {
         loop {
             process_batch(&mut db).await;
-            wait_for_next_lookup_interval().await;
-        }
-    })
-}
 
-/// Test version of the lookup task that only runs once and then exits, for use in unit tests.
-#[cfg(test)]
-pub fn run_lookup_task_once(mut db: DbHandle) -> JoinHandle<()> {
-    tokio::spawn(async move {
-        process_batch(&mut db).await;
+            if cfg!(test) {
+                // In tests, we don't want to wait for the next interval, as it would slow down the tests
+                break; // spawn terminates!
+            }
+
+            wait_for_next_process_interval().await;
+        }
     })
 }
 
@@ -123,7 +125,7 @@ async fn process_batch(db: &mut DbHandle) {
 }
 
 /// Processing was done, wait <INTERVAL> before processing next batch
-async fn wait_for_next_lookup_interval() {
+async fn wait_for_next_process_interval() {
     sleep(CONFIG.credits.credits_lookup_interval()).await;
 }
 

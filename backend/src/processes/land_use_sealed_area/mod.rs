@@ -526,8 +526,8 @@ impl From<LandUseSealedAreaProcessOutputs> for ExecuteResults {
 mod tests {
     use super::*;
     use crate::{
-        auth::User, credits::run_lookup_task_once, processes::parameters::GeoJsonInputMediaType,
-        state::TaskContext,
+        auth::User, credits::start_credits_process_task,
+        processes::parameters::GeoJsonInputMediaType, state::TaskContext,
     };
     use geoengine_api_client::models::{
         BoundingBox2D, CollectionType, Coordinate2D, DataId, DatasetNameResponse, FeatureDataType,
@@ -1332,6 +1332,6 @@ mod tests {
             })
         );
 
-        run_lookup_task_once(db).await.unwrap();
+        start_credits_process_task(db).await.unwrap();
     }
 }
