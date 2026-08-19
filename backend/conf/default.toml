@@ -30,3 +30,6 @@ credits_lookup_interval_seconds = 60
 
 [credits.biodiversity_sensitive_areas]
 credits_per_site = 10
+
+[credits.habitat_distance]
+credits_per_coordinate = 5

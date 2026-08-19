@@ -1,5 +1,7 @@
 use crate::{
-    db::{DbHandle, util::RecordValueExt},
+    CONFIG,
+    credits::add_credits_used,
+    db::{DbHandle, model::ComputationId, util::RecordValueExt},
     processes::{parameters::PointGeoJsonInput, util::round_nearest_i64},
 };
 use anyhow::{Context, Result};
@@ -19,7 +21,6 @@ use ogcapi::{
 use schemars::{JsonSchema, generate::SchemaSettings};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use toasty::Db;
 use toasty::{schema::db::Type as DbType, stmt::Type as StmtType};
 use tracing::instrument;
 use utoipa::ToSchema;
@@ -251,7 +252,7 @@ impl Processor for HabitatDistanceProcess {
         let inputs: HabitatDistanceProcessInputs = serde_json::from_value(value)?;
 
         match compute_habitat_distance(
-            &mut self.connection.db(),
+            &mut self.connection.clone(),
             self.natura2000_schema,
             &inputs.coordinate.value.coordinates,
         )
@@ -285,7 +286,7 @@ impl TryFrom<toasty::stmt::Value> for Natura2000NearestHabitat {
 
 #[instrument(skip(db), level = "debug", err(Debug))]
 async fn compute_habitat_distance(
-    db: &mut Db,
+    db: &mut DbHandle,
     natura2000_schema: &str,
     coordinate: &PointType,
 ) -> Result<HabitatDistanceProcessOutputs> {
@@ -309,7 +310,7 @@ async fn compute_habitat_distance(
     ))
     .bind_typed(point_geometry, DbType::Text)
     .column_types([StmtType::String, StmtType::String, StmtType::F64])
-    .exec(db)
+    .exec(db.as_mut())
     .await
     .context(format!(
         "Failed to query {natura2000_schema}.naturasite_polygon"
@@ -318,6 +319,13 @@ async fn compute_habitat_distance(
     .next()
     .context("No nearest habitat found for the given coordinate")?
     .try_into()?;
+
+    add_credits_used(
+        db.clone(),
+        ComputationId::none(),
+        CONFIG.credits.habitat_distance.credits_per_coordinate,
+    )
+    .await?;
 
     Ok(HabitatDistanceProcessOutputs {
         habitat_code: Some(table.sitecode),
@@ -328,8 +336,15 @@ async fn compute_habitat_distance(
 
 #[cfg(test)]
 mod tests {
+    use crate::{
+        auth::User,
+        state::{CONTEXT, TaskLocalContext},
+        util::Secret,
+    };
+
     use super::*;
     use ogcapi::types::processes::Input;
+    use uuid::Uuid;
 
     async fn create_schema_and_insert_test_site(db: &mut DbHandle) {
         let schema = db.schema_name().to_string();
@@ -360,6 +375,13 @@ mod tests {
         .unwrap();
     }
 
+    fn mock_user() -> User {
+        User {
+            id: Uuid::from_u128(0xabcd_efab_cdef_abcd_efab_cdef_abcd_efab),
+            session_token: Secret(Uuid::from_u128(0x1234_5678_90ab_cdef_1234_5678_90ab_cdef)),
+        }
+    }
+
     #[test]
     fn it_deserializes_the_input() {
         let json = serde_json::json!({
@@ -379,11 +401,16 @@ mod tests {
         let _inputs: HabitatDistanceProcessInputs = serde_json::from_value(json).unwrap();
     }
 
-    #[crate::test]
+    #[crate::test(task_context = crate::state::TaskContext::new(mock_user()))]
     async fn it_computes_the_nearest_habitat(mut db: DbHandle) {
         // crate::util::setup_tracing_for_tests();
+
         // create schema / table and insert a test site
         create_schema_and_insert_test_site(&mut db).await;
+
+        CONTEXT
+            .set_job_id(Uuid::from_u128(0x1234_5678_90ab_cdef_1234_5678_90ab_cdef))
+            .unwrap();
 
         // compute the habitat distance
         let schema = db.schema_name().to_string();

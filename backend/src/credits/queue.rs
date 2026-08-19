@@ -138,22 +138,6 @@ async fn credits_to_lookup(db: &mut DbHandle) -> Result<Vec<Credits>> {
     Ok(credits_list)
 }
 
-// impl CreditsLookup {
-//     fn new(
-//         configuration: Configuration,
-//         db: DbHandle,
-//         job_id: Uuid,
-//         computation_id: ComputationId,
-//     ) -> Self {
-//         Self {
-//             configuration,
-//             db,
-//             job_id,
-//             computation_id,
-//             quotas: None,
-//         }
-//     }
-
 /// Process the credits lookup by querying the Geo Engine API and storing the result in the database.
 #[instrument(skip(db), level = "debug", fields(job_id = %credits.job_id, computation_id = %credits.computation_id), ret)]
 async fn process_credit(db: &mut DbHandle, credits: &Credits) -> Result<()> {

@@ -138,6 +138,7 @@ fn get_config() -> anyhow::Result<Config> {
 pub struct CreditsConfig {
     pub credits_lookup_interval_seconds: u64,
     pub biodiversity_sensitive_areas: BiodiversitySensitiveAreasCreditsConfig,
+    pub habitat_distance: HabitatDistanceCreditsConfig,
 }
 
 impl CreditsConfig {
@@ -150,6 +151,12 @@ impl CreditsConfig {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct BiodiversitySensitiveAreasCreditsConfig {
     pub credits_per_site: u64,
+}
+
+/// Specifies credits configuration for the habitat distance
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct HabitatDistanceCreditsConfig {
+    pub credits_per_coordinate: u64,
 }
 
 #[cfg(test)]
