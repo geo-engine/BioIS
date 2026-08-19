@@ -7,5 +7,5 @@ snapshot_name = ""
 
 [[migrations]]
 id = 540260129757782933
-name = "0001_migration.sql"
+name = "0001_credits.sql"
 snapshot_name = "0001_snapshot.toml"

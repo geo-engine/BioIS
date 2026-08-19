@@ -10,14 +10,14 @@ CREATE TABLE "credits" (
     "timestamp" BIGINT NOT NULL,
     "job_id" UUID NOT NULL,
     "computation_id" UUID NOT NULL,
-    "geoengine_credits" BIGINT,
     "biois_credits" BIGINT NOT NULL,
+    "geoengine_credits" BIGINT,
     "pending" BOOLEAN NOT NULL,
-    "errors" TEXT [] NOT NULL,
     "configuration" BOOLEAN,
-    "configuration_bearer_access_token" TEXT,
     "configuration_base_path" TEXT,
     "configuration_user_agent" TEXT,
+    "configuration_bearer_access_token" TEXT,
+    "errors" TEXT[] NOT NULL,
     PRIMARY KEY ("job_id", "computation_id")
 );
 

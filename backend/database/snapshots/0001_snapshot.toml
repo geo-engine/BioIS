@@ -178,14 +178,14 @@ storage_ty = "Text"
 nullable = true
 
 [[schema.tables.columns]]
-id = { table = 1, index = 10 }
+id = { table = 1, index = 9 }
 name = "configuration_bearer_access_token"
 ty = "String"
 storage_ty = "Text"
 nullable = true
 
 [[schema.tables.columns]]
-id = { table = 1, index = 11 }
+id = { table = 1, index = 10 }
 name = "errors"
 ty = { List = "String" }
 storage_ty = { List = "Text" }
