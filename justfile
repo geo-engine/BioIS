@@ -323,4 +323,28 @@ check-no-changes-in-git-repo:
 [working-directory('backend')]
 biois-cli +ARGS="": _clear
     cargo run --bin biois-cli -- {{ ARGS }}
-    
+
+[group('frontend')]
+[group('update')]
+[working-directory('frontend')]
+update-frontend-step1: _clear
+    #!/usr/bin/env bash
+    LATEST_ANGULAR_VERSION=$(npx @angular/cli@latest version --json | jq -r '.cli.version')
+    echo "Updating Angular to version $LATEST_ANGULAR_VERSION"
+
+    npx @angular/cli@latest update --allow-dirty \
+        @angular/cli@latest \
+        @angular/core@latest \
+        @angular/material@latest \
+        angular-eslint
+
+    npm run prettier -- --write .
+
+[group('frontend')]
+[group('update')]
+[working-directory('frontend')]
+update-frontend-step2: _clear
+    npx npm-check-updates -u --target minor
+    npm install
+
+    npm run prettier -- --write .

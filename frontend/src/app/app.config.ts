@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
 import { MAT_CARD_CONFIG } from '@angular/material/card';
@@ -6,6 +6,7 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { PreventDefaultOnSubmitEventPlugin } from './util/prevent-default';
 import { EVENT_MANAGER_PLUGINS } from '@angular/platform-browser';
 import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,5 +26,9 @@ export const appConfig: ApplicationConfig = {
         dateFormat: "dd.MM.yyyy 'at' H:mm",
       },
     },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
   ],
 };
