@@ -5,6 +5,7 @@ import {
   UserSession,
   UserApi,
   Configuration,
+  GetCreditsResponse,
 } from '@geoengine/biois';
 
 const USER_SESSION_KEY = 'userSession';
@@ -67,6 +68,12 @@ export class UserService {
     const oidcUrl = await userApi.authRequestUrlHandler(redirectUri);
 
     window.location.href = oidcUrl;
+  }
+
+  async credits(year: number, month: number): Promise<GetCreditsResponse> {
+    const userApi = new UserApi(this.apiConfiguration());
+    const credits = await userApi.getCredits(year, month);
+    return credits;
   }
 
   apiConfiguration(): Configuration {

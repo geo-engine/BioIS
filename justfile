@@ -12,14 +12,6 @@ _clear:
 [group('backend')]
 [group('install')]
 [working-directory('backend')]
-install-diesel-cli:
-    @echo "Installing Diesel CLI and Diesel Guard…"
-    cargo install diesel_cli --no-default-features --features postgres
-    cargo install diesel-guard --no-default-features
-
-[group('backend')]
-[group('install')]
-[working-directory('backend')]
 install-llvm-cov:
     @echo "Installing llvm-cov…"
     cargo install --locked cargo-llvm-cov
@@ -100,12 +92,13 @@ lint-api-client: _clear
     rm -r node_modules
     rm package-lock.json
 
+[arg('write', long='write', value='', help='Write changes to files instead of checking.')]
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-rustfmt: _clear
+lint-backend-rustfmt write="--check": _clear
     @echo "Running rustfmt…"
-    cargo fmt --all -- --check
+    cargo fmt --all {{ write }}
 
 [arg("relaxed", long="relaxed", value="true", help="Don't fail on warnings, only print them")]
 [group('backend')]
@@ -125,14 +118,62 @@ lint-backend-sqlfluff: _clear
 [group('backend')]
 [group('lint')]
 [working-directory('backend')]
-lint-backend-diesel-cli: _clear
-    @echo "Running Diesel CLI…"
-    diesel migration run --locked-schema
-    diesel-guard check migrations
+lint-backend-toasty: _clear
+    #!/usr/bin/env python3
+    import difflib
+    import json
+    import subprocess
+    import sys
+    import tomllib
+    from pathlib import Path
+
+    def eprint(*args, **kwargs):
+        """Print to stderr."""
+        print(*args, file=sys.stderr, **kwargs)
+
+    eprint("Checking toasty's migrations…")
+
+    snapshot_dir = Path("database/snapshots")
+    snapshot_files = sorted(snapshot_dir.glob("*.toml"))
+    if not snapshot_files:
+        eprint("No snapshot files found in database/snapshots")
+        raise SystemExit(1)
+
+    latest_file = snapshot_files[-1]
+    expected = tomllib.loads(latest_file.read_text())
+
+    generated = subprocess.check_output(
+        ["cargo", "run", "--bin", "biois-cli", "--", "database", "migration", "snapshot"],
+        text=True,
+    )
+    generated = "\n".join(
+        line for line in generated.splitlines() if line.strip() and "Current Schema Snapshot" not in line
+    )
+    actual = tomllib.loads(generated)
+
+    if expected != actual:
+        eprint(f"Snapshot mismatch: generated output differs from {latest_file.name}")
+
+        # tomllib has no writer, so we use json.dumps to pretty-print the dicts for diffing
+        expected_text = json.dumps(expected, indent=2, sort_keys=True, default=str).splitlines()
+        actual_text = json.dumps(actual, indent=2, sort_keys=True, default=str).splitlines()
+
+        diff = difflib.unified_diff(
+            expected_text,
+            actual_text,
+            fromfile=str(latest_file),
+            tofile="generated snapshot",
+            lineterm="",
+        )
+        for line in diff:
+            eprint(line)
+        raise SystemExit(1)
+
+    eprint(f"Snapshot matches {latest_file.name}")
 
 [group('backend')]
 [group('lint')]
-lint-backend: lint-backend-rustfmt lint-backend-clippy lint-backend-sqlfluff lint-backend-diesel-cli
+lint-backend: lint-backend-rustfmt lint-backend-clippy lint-backend-sqlfluff lint-backend-toasty
 
 [group('frontend')]
 [group('lint')]
@@ -179,6 +220,13 @@ test-backend-with-coverage-report: _clear
         --locked \
         --all-features \
         --html
+
+# Run the backend tests. Usage: `just test-backend`.
+[group('backend')]
+[group('test')]
+[working-directory('backend')]
+test-backend-macros filter="": _clear
+    cargo test -p biois-macros --locked -- {{ filter }} --nocapture
 
 # Run the frontend tests. Usage: `just test-frontend`.
 [group('frontend')]
@@ -252,7 +300,7 @@ down-pod:
 [group('misc')]
 [working-directory('backend')]
 generate-openapi-spec: _clear
-    cargo run --bin openapi > ../openapi.json
+    cargo run --bin biois-cli -- openapi > ../openapi.json
 
 # Run an arbitrary Angular CLI command in the frontend. Usage: `just ng -- build`.
 [group('frontend')]
@@ -271,6 +319,11 @@ check-no-changes-in-git-repo:
       echo "No uncommitted changes found in git repository."
     fi
 
+[group('backend')]
+[working-directory('backend')]
+biois-cli +ARGS="": _clear
+    cargo run --bin biois-cli -- {{ ARGS }}
+
 [group('frontend')]
 [group('update')]
 [working-directory('frontend')]
@@ -284,7 +337,7 @@ update-frontend-step1: _clear
         @angular/core@latest \
         @angular/material@latest \
         angular-eslint
-    
+
     npm run prettier -- --write .
 
 [group('frontend')]

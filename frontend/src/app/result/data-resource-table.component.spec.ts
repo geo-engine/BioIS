@@ -6,7 +6,7 @@ import {
   DataResourceTableComponent,
   tableColumnInfoFromValue,
 } from './data-resource-table.component';
-import { mockResizeObserverClass } from '../util/resize-signal.spec';
+import { mockResizeObserverClass } from '../util/mock-resize-observer';
 
 describe('DataResourceTableComponent', () => {
   let component: DataResourceTableComponent;

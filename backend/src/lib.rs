@@ -1,7 +1,8 @@
 mod auth;
 mod collection_transactions;
 mod config;
-mod db;
+mod credits;
+pub mod db;
 mod handler;
 mod jobs;
 mod processes;
@@ -9,6 +10,7 @@ mod server;
 mod state;
 mod util;
 
+pub use biois_macros::test;
 pub use config::CONFIG;
 pub use server::server;
 pub use util::setup_tracing;

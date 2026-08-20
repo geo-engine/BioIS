@@ -1,31 +1,8 @@
 import { signal, ElementRef, runInInjectionContext, Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
+import { mockResizeObserverClass } from './mock-resize-observer';
 import { fromResize } from './resize-signal';
-
-/**
- * jsdom does not implement ResizeObserver in the test environment, so we mock it to test our logic
- */
-export function mockResizeObserverClass(
-  createdObservers: Array<{ callback: ResizeObserverCallback; disconnected: boolean }>,
-): typeof ResizeObserver {
-  return class MockResizeObserver {
-    // jsdom does not implement ResizeObserver in the test environment, so we mock it to test our logic
-    callback: ResizeObserverCallback;
-    disconnected = false;
-
-    constructor(cb: ResizeObserverCallback) {
-      this.callback = cb;
-      createdObservers.push(this);
-    }
-    observe(_el: Element): void {
-      // no-op
-    }
-    disconnect(): void {
-      this.disconnected = true;
-    }
-  } as unknown as typeof ResizeObserver;
-}
 
 describe('fromResize', () => {
   let createdObservers: Array<{ callback: ResizeObserverCallback; disconnected: boolean }> = [];

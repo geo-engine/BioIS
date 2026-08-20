@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { Process, ProcessesApi } from '@geoengine/biois';
 import { CreateComponent } from './create.component';
 import { inputBinding } from '@angular/core';
-import { mockResizeObserverClass } from '../util/resize-signal.spec';
+import { mockResizeObserverClass } from '../util/mock-resize-observer';
 
 describe('CreateComponent', () => {
   let component: CreateComponent;

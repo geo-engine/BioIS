@@ -32,6 +32,7 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
 import { DateTimeField } from '../models/DateTimeField';
@@ -56,6 +57,7 @@ import { GeoJSONPoint } from '../models/GeoJSONPoint';
 import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
 import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { GeoPointField } from '../models/GeoPointField';
+import { GetCreditsResponse } from '../models/GetCreditsResponse';
 import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
 import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
 import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
@@ -557,6 +559,25 @@ export interface UserApiAuthRequestUrlHandlerRequest {
     redirectUri: string
 }
 
+export interface UserApiGetCreditsRequest {
+    /**
+     * 
+     * Minimum: 0
+     * Defaults to: undefined
+     * @type number
+     * @memberof UserApigetCredits
+     */
+    year: number
+    /**
+     * 
+     * Minimum: 0
+     * Defaults to: undefined
+     * @type number
+     * @memberof UserApigetCredits
+     */
+    month: number
+}
+
 export class ObjectUserApi {
     private api: ObservableUserApi
 
@@ -592,6 +613,22 @@ export class ObjectUserApi {
      */
     public authRequestUrlHandler(param: UserApiAuthRequestUrlHandlerRequest, options?: ConfigurationOptions): Promise<string> {
         return this.api.authRequestUrlHandler(param.redirectUri,  options).toPromise();
+    }
+
+    /**
+     * Returns the user\'s credits.
+     * @param param the request object
+     */
+    public getCreditsWithHttpInfo(param: UserApiGetCreditsRequest, options?: ConfigurationOptions): Promise<HttpInfo<GetCreditsResponse>> {
+        return this.api.getCreditsWithHttpInfo(param.year, param.month,  options).toPromise();
+    }
+
+    /**
+     * Returns the user\'s credits.
+     * @param param the request object
+     */
+    public getCredits(param: UserApiGetCreditsRequest, options?: ConfigurationOptions): Promise<GetCreditsResponse> {
+        return this.api.getCredits(param.year, param.month,  options).toPromise();
     }
 
 }

@@ -2,6 +2,7 @@ use geoengine_api_client::models::{
     RasterOperator, TypedOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
     Workflow, typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
 };
+use serde::Deserialize;
 use std::ops::Deref;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -44,7 +45,6 @@ pub fn error_response<T>(
 }
 
 /// Helper function to read-lock a `RwLock`, recovering from poisoning if necessary
-#[allow(unused)] // TODO: use or delete
 pub(crate) fn read_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockReadGuard<'_, T> {
     match mutex.read() {
         Ok(guard) => guard,
@@ -56,7 +56,6 @@ pub(crate) fn read_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockRea
 }
 
 /// Helper function to write-lock a `RwLock`, recovering from poisoning if necessary.
-#[allow(unused)] // TODO: use or delete
 pub(crate) fn write_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockWriteGuard<'_, T> {
     match mutex.write() {
         Ok(guard) => guard,
@@ -69,6 +68,13 @@ pub(crate) fn write_lock<T>(mutex: &std::sync::RwLock<T>) -> std::sync::RwLockWr
 
 /// A wrapper type to hide sensitive information in Debug implementations.
 pub struct Secret<T>(pub T);
+
+impl Secret<String> {
+    /// Returns the inner string.
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
 
 impl<T> std::fmt::Debug for Secret<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -102,6 +108,16 @@ impl<T> From<T> for Secret<T> {
     }
 }
 
+impl<'de> Deserialize<'de> for Secret<String> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Secret(s))
+    }
+}
+
 /// Extracts the heading from a markdown string, if it starts with a level 1 heading (`# `).
 pub fn md_heading(s: &str) -> &str {
     let mut lines = s.lines();
@@ -131,15 +147,29 @@ pub fn md_content(s: &str) -> &str {
     s[first_content_index..].trim()
 }
 
-pub fn setup_tracing(log_level: Directive) {
+pub fn setup_tracing(log_level: Directive) -> tracing_appender::non_blocking::WorkerGuard {
+    let (non_blocking, guard) = tracing_appender::non_blocking(std::io::stderr());
+
     tracing_subscriber::registry()
         .with(
             EnvFilter::builder()
                 .with_default_directive(log_level)
                 .from_env_lossy(),
         )
-        .with(tracing_subscriber::fmt::layer().pretty())
+        .with(
+            tracing_subscriber::fmt::layer()
+                .pretty()
+                .with_writer(non_blocking),
+        )
         .init();
+
+    guard
+}
+
+#[cfg(test)]
+#[allow(dead_code, reason = "Used in tests to setup tracing")]
+pub fn setup_tracing_for_tests() -> tracing_appender::non_blocking::WorkerGuard {
+    setup_tracing("debug".parse().unwrap())
 }
 
 /// A macro to concatenate two static strings (`&'static str`) at compile time.
@@ -406,7 +436,7 @@ mod tests {
         }
 
         let result = std::panic::catch_unwind(|| {
-            setup_tracing("info".parse().unwrap());
+            let _guard = setup_tracing("info".parse().unwrap());
             tracing::info!("tracing initialized");
         });
 

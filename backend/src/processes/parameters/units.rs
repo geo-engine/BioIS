@@ -273,6 +273,10 @@ impl<'de> Deserialize<'de> for Percentage {
                 Ok(Percentage::from_percent(value))
             }
 
+            #[allow(
+                clippy::cast_precision_loss,
+                reason = "We want to allow deserialization from integers, but some cannot be represented as f64 without loss of precision."
+            )]
             fn visit_i64<E>(self, value: i64) -> Result<Percentage, E>
             where
                 E: serde::de::Error,
@@ -296,33 +300,6 @@ impl Deref for Percentage {
 impl HasTableSchemaType for Percentage {
     fn table_schema_type() -> TableSchemaType {
         TableSchemaType::String // Represented as a string with a percent sign in the table schema
-    }
-}
-
-mod db {
-    use super::*;
-    use diesel::{
-        deserialize::{self, FromSql},
-        pg::{Pg, PgValue},
-        sql_types::Double,
-    };
-
-    impl FromSql<Double, Pg> for Hectare {
-        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-            f64::from_sql(value).map(Hectare)
-        }
-    }
-
-    impl FromSql<Double, Pg> for SquareMeter {
-        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-            f64::from_sql(value).map(SquareMeter)
-        }
-    }
-
-    impl FromSql<Double, Pg> for Kilometers {
-        fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-            f64::from_sql(value).map(Kilometers)
-        }
     }
 }
 

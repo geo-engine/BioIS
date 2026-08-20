@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LongTextComponent } from './long-text.component';
-import { mockResizeObserverClass } from './resize-signal.spec';
+import { mockResizeObserverClass } from './mock-resize-observer';
 
 @Component({
   template: `<app-long-text>Projected content for test</app-long-text>`,

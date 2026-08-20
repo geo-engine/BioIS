@@ -1,105 +1,22 @@
-use super::schema::{jobs, sql_types};
+#![allow(
+    clippy::used_underscore_binding,
+    reason = "For embedded NewTypes, toasty accesses the inner value via `_0`, cf. <https://github.com/tokio-rs/toasty/issues/1179>"
+)]
+
+use anyhow::Context;
 use chrono::{DateTime, Utc};
-use diesel::{
-    deserialize::{FromSql, FromSqlRow},
-    expression::AsExpression,
-    pg::{Pg, PgValue},
-    prelude::*,
-    serialize::{Output, ToSql, WriteTuple},
-    sql_types::{BigInt, Nullable, SqlType, Text},
-};
-use diesel_derive_enum::DbEnum;
 use o2o::o2o;
-use serde::Deserialize;
+use ogcapi::types::processes::ExecuteResults;
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Insertable)]
-#[diesel(table_name = jobs)]
-pub struct NewJob<'a> {
-    pub job_id: &'a str,
-    pub process_id: Option<&'a str>,
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub job_type: JobType,
-    pub created: DateTime<Utc>,
-    pub updated: DateTime<Utc>,
-    pub progress: Option<i16>,
-    pub links: Vec<Link>,
-    pub response: Response,
-    pub user_id: uuid::Uuid,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct UpdateJob<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-    pub progress: Option<i16>,
-    pub links: Vec<Link>,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct UpdateJobStatus<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct FinishJob<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-    pub finished: DateTime<Utc>,
-    pub progress: Option<i16>,
-    pub links: Vec<Link>,
-    pub results: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize, AsChangeset)]
-#[diesel(table_name = jobs)]
-pub struct DismissJob<'a> {
-    pub status: StatusCode,
-    pub message: Option<&'a str>,
-    pub updated: DateTime<Utc>,
-}
-
-#[derive(Debug, Deserialize, HasQuery, o2o)]
-#[owned_into(ogcapi::types::processes::StatusInfo)]
-#[diesel(table_name = jobs)]
-pub struct StatusInfo {
-    pub job_id: String,
-    pub process_id: Option<String>,
-    #[map(~.into())]
-    pub status: StatusCode,
-    pub message: Option<String>,
-    #[map(r#type, ~.into())]
-    pub job_type: JobType,
-    #[map(~.into())]
-    pub created: DateTime<Utc>,
-    #[map(~.into())]
-    pub updated: DateTime<Utc>,
-    pub finished: Option<DateTime<Utc>>,
-    #[map(~.map(|p| p as u8))]
-    pub progress: Option<i16>,
-    #[map(~.into_iter().filter_map(|l| l.map(Into::into)).collect())]
-    pub links: Vec<Option<Link>>,
-}
-
-#[derive(Debug, Deserialize, DbEnum, SqlType, o2o)]
-#[from_owned(ogcapi::types::processes::JobType)]
-#[owned_into(ogcapi::types::processes::JobType)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::JobType")]
-pub enum JobType {
-    Process,
-}
-
-#[derive(Debug, Deserialize, DbEnum, SqlType, o2o)]
+/// Job status code enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed, o2o)]
+#[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::StatusCode)]
 #[owned_into(ogcapi::types::processes::StatusCode)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::StatusCode")]
+#[column(type = enum("StatusCode"))]
 pub enum StatusCode {
     Accepted,
     Running,
@@ -108,91 +25,247 @@ pub enum StatusCode {
     Dismissed,
 }
 
-#[derive(Debug, Deserialize, AsExpression, FromSqlRow, o2o)]
-#[from_owned(ogcapi::types::common::Link)]
-#[owned_into(ogcapi::types::common::Link)]
-#[ghosts(templated: None, var_base: None)]
-#[diesel(sql_type = sql_types::Link, postgres_type(name = "Link"))]
-pub struct Link {
-    pub href: String,
-    pub rel: String,
-    pub r#type: Option<String>,
-    pub hreflang: Option<String>,
-    pub title: Option<String>,
-    pub length: Option<i64>,
+/// Job type enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed, o2o)]
+#[serde(rename_all = "PascalCase")]
+#[from_owned(ogcapi::types::processes::JobType)]
+#[owned_into(ogcapi::types::processes::JobType)]
+#[column(type = enum("JobType"))]
+pub enum JobType {
+    Process,
 }
 
-impl ToSql<sql_types::Link, Pg> for Link {
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> diesel::serialize::Result {
-        // Write the fields in the order: href TEXT, rel TEXT, type TEXT, hreflang TEXT, title TEXT, length BIGINT
-        WriteTuple::<(
-            Text,
-            Text,
-            Nullable<Text>,
-            Nullable<Text>,
-            Nullable<Text>,
-            Nullable<BigInt>,
-        )>::write_tuple(
-            &(
-                &self.href,
-                &self.rel,
-                self.r#type.as_ref(),
-                self.hreflang.as_ref(),
-                self.title.as_ref(),
-                self.length.as_ref(),
-            ),
-            &mut out.reborrow(),
-        )
-    }
-}
-
-impl FromSql<sql_types::Link, Pg> for Link {
-    fn from_sql(bytes: PgValue<'_>) -> diesel::deserialize::Result<Self> {
-        // Use the tuple implementation to extract the fields
-        let (href, rel, r#type, hreflang, title, length): (
-            String,
-            String,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<i64>,
-        ) = <(
-            String,
-            String,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<i64>,
-        ) as FromSql<
-            diesel::sql_types::Record<(
-                Text,
-                Text,
-                Nullable<Text>,
-                Nullable<Text>,
-                Nullable<Text>,
-                Nullable<BigInt>,
-            )>,
-            Pg,
-        >>::from_sql(bytes)?;
-
-        Ok(Link {
-            href,
-            rel,
-            r#type,
-            hreflang,
-            title,
-            length,
-        })
-    }
-}
-
-#[derive(Debug, Deserialize, SqlType, DbEnum, o2o)]
+/// Response type enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, toasty::Embed, o2o)]
+#[serde(rename_all = "PascalCase")]
 #[from_owned(ogcapi::types::processes::Response)]
 #[owned_into(ogcapi::types::processes::Response)]
-#[db_enum(existing_type_path = "crate::db::schema::sql_types::Response")]
+#[column(type = enum("Response"))]
 pub enum Response {
     Raw,
     Document,
+}
+
+/// Link reference (stored as JSONB)
+#[derive(Debug, Clone, Serialize, Deserialize, o2o, toasty::Embed)]
+#[from_owned(ogcapi::types::common::Link)]
+#[owned_into(ogcapi::types::common::Link)]
+#[ghosts(templated: None, var_base: None)]
+pub struct Link {
+    pub href: String,
+    pub rel: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hreflang: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub length: Option<i64>,
+}
+
+/// Job database model
+#[derive(Debug, Clone, Serialize, Deserialize, toasty::Model)]
+pub struct Job {
+    /// Primary key: job ID
+    #[key]
+    #[auto(uuid(v7))]
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
+    pub job_id: uuid::Uuid,
+
+    /// Referenced process ID
+    pub process_id: Option<String>,
+
+    /// Job type
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
+    pub job_type: JobType,
+
+    /// Current status
+    pub status: StatusCode,
+
+    /// Status message
+    pub message: Option<String>,
+
+    /// Job creation timestamp (stored as Unix timestamp in milliseconds)
+    #[default(TimestampMillis::now())]
+    pub created: TimestampMillis,
+
+    /// Job completion timestamp (stored as Unix timestamp in milliseconds)
+    #[default(None)]
+    pub finished: Option<TimestampMillis>,
+
+    /// Last update timestamp (stored as Unix timestamp in milliseconds)
+    #[update(TimestampMillis::now())]
+    pub updated: TimestampMillis,
+
+    /// Progress percentage (0-100)
+    pub progress: Option<i16>,
+
+    /// Links associated with the job
+    pub links: Vec<Link>,
+
+    /// Response type
+    pub response: Response,
+
+    /// Job results
+    /// TODO: make enum of all possible result types
+    #[column(type = "jsonb")]
+    pub results: Option<toasty::Json<ExecuteResults>>,
+
+    /// User ID who created the job
+    pub user_id: uuid::Uuid,
+
+    #[has_many]
+    pub credits: toasty::Deferred<Vec<Credits>>,
+}
+
+/// A timestamp stored as a Unix timestamp in milliseconds, used for database storage.
+///
+/// TODO: Remove once we can use `jiff` or `DateTime` in `toasty` models
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, toasty::Embed,
+)]
+pub struct TimestampMillis(i64);
+
+impl TimestampMillis {
+    #[must_use]
+    pub fn now() -> Self {
+        Self(Utc::now().timestamp_millis())
+    }
+}
+
+impl From<DateTime<Utc>> for TimestampMillis {
+    fn from(dt: DateTime<Utc>) -> Self {
+        Self(dt.timestamp_millis())
+    }
+}
+
+impl TryInto<DateTime<Utc>> for TimestampMillis {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<DateTime<Utc>, Self::Error> {
+        DateTime::<Utc>::from_timestamp_millis(self.0).context("invalid timestamp")
+    }
+}
+
+/// Credits database model
+#[derive(Debug, Clone, Serialize, Deserialize, toasty::Model)]
+#[key(job_id, computation_id)] // Note: `toasty` requires a primary key, but we would omit this normally.
+pub struct Credits {
+    pub timestamp: TimestampMillis,
+
+    /// Referenced job ID
+    #[index]
+    pub job_id: uuid::Uuid,
+
+    /// Referenced job
+    #[belongs_to(key = job_id, references = job_id)]
+    pub job: toasty::Deferred<Job>,
+
+    /// Geo Engine computation ID (if applicable)
+    ///
+    /// Note: Not stored as nullable because `toasty` requires a primary key.
+    pub computation_id: ComputationId,
+
+    /// Credits used from `BioIS` directly
+    ///
+    /// `Credits = geoengine_credits + biois_credits`
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
+    pub biois_credits: u64,
+
+    /// Credits used from Geo Engine; empty if not yet determined (e.g., job still running)
+    ///
+    /// `Credits = geoengine_credits + biois_credits`
+    #[allow(clippy::struct_field_names, reason = "Database field name")]
+    pub geoengine_credits: Option<u64>,
+
+    /// Status of the credits lookup; true if the credits have been determined, false if still pending
+    pub pending: bool,
+
+    /// Optional configuration for Geo Engine API access, used for credits lookup
+    pub configuration: Option<Configuration>,
+
+    /// Errors encountered during credits lookup from Geo Engine
+    #[default(Vec::<String>::new())]
+    pub errors: Vec<String>,
+}
+
+impl Credits {
+    /// Calculate the total credits used for this entry.
+    #[must_use]
+    pub fn credits(&self) -> u64 {
+        self.geoengine_credits.unwrap_or(0) + self.biois_credits
+    }
+}
+
+/// Link reference (stored as JSONB)
+#[derive(Debug, Clone, Serialize, Deserialize, o2o, toasty::Embed)]
+#[from_owned(geoengine_api_client::apis::configuration::Configuration)]
+#[owned_into(geoengine_api_client::apis::configuration::Configuration)]
+#[ghosts(
+    client: Default::default(),
+    basic_auth: None,
+    api_key: None,
+    oauth_access_token: None,
+)]
+pub struct Configuration {
+    pub base_path: String,
+    pub user_agent: Option<String>,
+    pub bearer_access_token: Option<String>,
+}
+
+/// An optional computation ID for Geo Engine jobs, stored as a string.
+/// This is used to track the compute resources used by a job in the Geo Engine system.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, toasty::Embed)]
+pub struct ComputationId(Uuid);
+
+impl ComputationId {
+    #[must_use]
+    pub fn some(id: Uuid) -> Self {
+        Self(id)
+    }
+
+    #[must_use]
+    pub fn none() -> Self {
+        Self(Uuid::nil())
+    }
+
+    #[must_use]
+    pub fn get(&self) -> Option<Uuid> {
+        if self.is_none() {
+            return None;
+        }
+        Some(self.0)
+    }
+
+    #[must_use]
+    pub fn is_none(&self) -> bool {
+        self.0.is_nil()
+    }
+
+    #[must_use]
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+}
+
+impl FromStr for ComputationId {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let id = Uuid::parse_str(s).context("invalid UUID string")?;
+        Ok(Self(id))
+    }
+}
+
+impl std::fmt::Display for ComputationId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(id) = self.get() {
+            write!(f, "{id}")
+        } else {
+            write!(f, "None")
+        }
+    }
 }
 
 #[cfg(test)]

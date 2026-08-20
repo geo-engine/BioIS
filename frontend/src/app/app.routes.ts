@@ -23,6 +23,11 @@ const appRoutes: Routes = [
     loadComponent: () => import('./create/create.component').then((m) => m.CreateComponent),
   },
   {
+    path: 'credits',
+    title: 'Credits',
+    loadComponent: () => import('./credits/credits.component').then((m) => m.CreditsComponent),
+  },
+  {
     path: 'signout',
     title: `${TITLE} – Sign Out`,
     redirectTo: (): string => {

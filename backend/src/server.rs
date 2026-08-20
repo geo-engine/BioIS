@@ -2,7 +2,8 @@ use crate::{
     auth::GeoEngineAuthMiddlewareLayer,
     collection_transactions::NoCollectionTransactions,
     config::CONFIG,
-    db::setup_db,
+    credits::{self, start_credits_process_task},
+    db::DbHandle,
     handler,
     jobs::JobHandler,
     processes::{
@@ -11,6 +12,7 @@ use crate::{
     },
     state::spawn_with_user,
 };
+use geoengine_api_client::apis::configuration::Configuration;
 use ogcapi::{
     processes::{Processor, echo::Echo},
     services::{self as ogcapi_services},
@@ -25,14 +27,24 @@ use utoipa::{
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
+#[derive(Clone, Debug)]
+pub struct AppState {
+    pub db: crate::db::DbHandle,
+    pub api_config: Configuration,
+}
+
 /// Create and configure the OGC API service, including routes, state, and OpenAPI documentation.
 pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
-    let db_pool = setup_db(&CONFIG.database).await?;
+    let db_pool = DbHandle::from_config(&CONFIG.database).await?;
 
     let mut misc_router = OpenApiRouter::new()
         .routes(routes!(handler::health_handler))
         .nest("/auth", handler::auth_router())
-        .with_state(CONFIG.geoengine.api_config(None));
+        .nest("/credits", credits::router())
+        .with_state(AppState {
+            db: db_pool.clone(),
+            api_config: CONFIG.geoengine.api_config(None),
+        });
 
     misc_router
         .get_openapi_mut()
@@ -40,14 +52,14 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
 
     let mut processors: Vec<Box<dyn Processor>> = vec![
         Box::new(Echo),
-        Box::new(NDVIProcess),
-        Box::new(LandUseSealedAreaProcess),
+        Box::new(NDVIProcess::new(db_pool.clone())),
+        Box::new(LandUseSealedAreaProcess::new(db_pool.clone())),
     ];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
     add_biodiversity_sensitive_areas_process(&mut processors, db_pool.clone()).await;
 
     let drivers = ogcapi_services::Drivers {
-        jobs: Box::new(JobHandler::new(db_pool).await?),
+        jobs: Box::new(JobHandler::new(db_pool.clone()).await?),
         collections: Box::new(NoCollectionTransactions),
     };
 
@@ -71,6 +83,8 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .merge(misc_router)
         .layer(GeoEngineAuthMiddlewareLayer);
     add_openapi_info(router.get_openapi_mut());
+
+    let _lookup_join_handle = start_credits_process_task(db_pool.clone());
 
     Ok(service)
 }
@@ -125,7 +139,7 @@ impl Modify for ResultsSchemaModifier {
 
 async fn add_habitat_distance_process(
     processors: &mut Vec<Box<dyn Processor>>,
-    db_pool: crate::db::DbPool,
+    db_pool: crate::db::DbHandle,
 ) {
     match HabitatDistanceProcess::new(db_pool, "Natura2000").await {
         Ok(habitat_distance_process) => {
@@ -145,7 +159,7 @@ async fn add_habitat_distance_process(
 
 async fn add_biodiversity_sensitive_areas_process(
     processors: &mut Vec<Box<dyn Processor>>,
-    db_pool: crate::db::DbPool,
+    db_pool: crate::db::DbHandle,
 ) {
     match BiodiversitySensitiveAreasProcess::new(db_pool, "Natura2000").await {
         Ok(biodiversity_sensitive_areas_process) => {

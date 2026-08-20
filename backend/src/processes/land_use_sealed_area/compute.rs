@@ -1,5 +1,6 @@
 use crate::{
     CONFIG,
+    db::model::ComputationId,
     processes::{
         land_use_sealed_area::types::{
             LandUseSummary, LandUseSummaryRow, LandUseSummaryRowType, SiteLandUseRow,
@@ -63,7 +64,7 @@ pub async fn compute_site_land_use_data(
     sites: &FeatureCollectionGeoJsonInput,
     location_name_field: &str,
     location_type_field: &str,
-) -> anyhow::Result<(Vec<SiteLandUseRow>, Vec<String>)> {
+) -> anyhow::Result<(Vec<SiteLandUseRow>, Vec<String>, ComputationId)> {
     let mut site_rows = Vec::new();
 
     tracing::info!(
@@ -83,9 +84,9 @@ pub async fn compute_site_land_use_data(
     )
     .await?;
 
-    let result_geojson = GeoJsonFeatureCollection::try_from(
-        sealed_area_process(configuration, upload_data_id, year).await?,
-    )?;
+    let (result_geojson, computation_id) =
+        sealed_area_process(configuration, upload_data_id, year).await?;
+    let result_geojson = GeoJsonFeatureCollection::try_from(result_geojson)?;
 
     for feature in &result_geojson.as_ref().features {
         match extract_site_land_use_rows(feature, location_name_field, location_type_field) {
@@ -97,7 +98,7 @@ pub async fn compute_site_land_use_data(
         }
     }
 
-    Ok((site_rows, validation_and_bbox.errors))
+    Ok((site_rows, validation_and_bbox.errors, computation_id))
 }
 
 fn extract_site_land_use_rows(
@@ -326,7 +327,7 @@ async fn sealed_area_process(
     configuration: &Configuration,
     upload_data_id: String,
     year: Year,
-) -> Result<GeoJson> {
+) -> Result<(GeoJson, ComputationId)> {
     let operators = build_sealed_area_vector_operator(upload_data_id);
 
     let processing_graph_id = register_workflow_handler(configuration, operators.sealed_area())
@@ -348,7 +349,9 @@ async fn sealed_area_process(
             .context("unable to get workflow metadata")?,
     )?)?;
 
-    wfs_handler(
+    let mut computation_id = String::new();
+
+    let geojson = wfs_handler(
         configuration,
         &processing_graph_id,
         WfsRequest::GetFeature,
@@ -364,9 +367,14 @@ async fn sealed_area_process(
         Some(&time_str),
         Some(&processing_graph_id),
         None,
+        Some(&mut computation_id),
     )
     .await
-    .context("unable to compute sealed areas")
+    .context("unable to compute sealed areas")?;
+
+    let computation_id = ComputationId::from_str(&computation_id)?;
+
+    Ok((geojson, computation_id))
 }
 
 /// Compute summary table from per-site land-use data.
@@ -639,10 +647,9 @@ pub async fn compute_documentation_sources(
 
 #[cfg(test)]
 mod tests {
-    use approx::assert_abs_diff_eq;
-
     use super::*;
     use crate::processes::parameters::UnitForArea;
+    use approx::assert_abs_diff_eq;
 
     #[test]
     fn it_calculates_percentage_change() {
@@ -1011,7 +1018,7 @@ mod tests {
     )]
     async fn it_computes_sealed_surface_correctly() {
         use crate::auth::User;
-        use crate::state::USER;
+        use crate::state::{CONTEXT, TaskContext};
         use geoengine_api_client::models::{
             BoundingBox2D, CollectionType, Coordinate2D, DatasetNameResponse, FeatureDataType,
             GeoJson, IdResponse, Measurement, TypedResultDescriptor, TypedVectorResultDescriptor,
@@ -1030,7 +1037,7 @@ mod tests {
             session_token: Uuid::from_u128(42).into(),
         };
 
-        USER.scope(user, async {
+        CONTEXT.scope(TaskContext::new(user), async {
             // Start httptest server and mock the external Geo Engine endpoints
             let server = Server::run();
 
@@ -1155,7 +1162,7 @@ mod tests {
                                 }
                             }),
                         ],
-                    })),
+                    }).append_header("x-computation-id", "00000000-0000-0000-0000-000000000003")),
             );
 
             // Build API configuration pointing to the mock server
@@ -1237,7 +1244,7 @@ mod tests {
             let year = Year::new(2026);
 
             // Call compute_site_land_use_data
-            let (site_rows, errors) = compute_site_land_use_data(
+            let (site_rows, errors, _computation_id) = compute_site_land_use_data(
                 &api_config,
                 year,
                 &sites,
