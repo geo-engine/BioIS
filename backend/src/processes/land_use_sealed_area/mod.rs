@@ -375,7 +375,7 @@ impl LandUseSealedAreaProcess {
             // Store per-site results if requested
             if requested_outputs.site_land_use_table {
                 outputs.site_land_use_table =
-                    Some(site_to_data_resource(site_rows, inputs.unit_for_area));
+                    Some(site_to_data_resource(site_rows, inputs.unit_for_area)?);
             }
 
             // Compute summary table from site data
@@ -383,7 +383,7 @@ impl LandUseSealedAreaProcess {
                 outputs.land_use_summary = Some(summary_to_data_resource(
                     land_use_summary,
                     inputs.unit_for_area,
-                ));
+                )?);
             }
 
             if requested_outputs.errors {
@@ -395,8 +395,11 @@ impl LandUseSealedAreaProcess {
         }
 
         if requested_outputs.documentation_sources {
-            outputs.documentation_sources =
-                Some(compute_documentation_sources(&configuration).await?.into());
+            outputs.documentation_sources = Some(
+                compute_documentation_sources(&configuration)
+                    .await?
+                    .try_into()?,
+            );
         }
 
         Ok(outputs)
@@ -1184,7 +1187,8 @@ mod tests {
             serde_json::to_value(&result).unwrap(),
             json!({
                 "landUseSummary": {
-                    "name": "Land Use",
+                    "name": "land-use",
+                    "title": "Land Use",
                     "data": [
                         {
                             "landUseType": "Total sealed area",
@@ -1240,7 +1244,8 @@ mod tests {
                     }
                 },
                 "siteLandUseTable": {
-                    "name": "Site Land Use",
+                    "name": "site-land-use",
+                    "title": "Site Land Use",
                     "data": [
                         {
                             "location": "Musizierhaus",
@@ -1304,7 +1309,8 @@ mod tests {
                 "inputs": serde_json::to_value(&inputs).unwrap(),
                 "errors": [],
                 "documentationSources": {
-                    "name": "Documentation Sources",
+                    "name": "documentation-sources",
+                    "title": "Documentation Sources",
                     "data": [
                         {
                             "data": "CITATION",

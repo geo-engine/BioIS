@@ -1,4 +1,6 @@
 use crate::processes::util::json_input_value;
+use anyhow::Result;
+use nom::{Finish, Parser, bytes::complete::take_while1, combinator::all_consuming};
 use ogcapi::types::processes::InputValue;
 use serde::{Deserialize, Serialize};
 
@@ -10,14 +12,76 @@ pub struct DataResourceSchema;
 /// Based on <https://datapackage.org/profiles/2.0/dataresource.json>.
 #[derive(Serialize, Debug)]
 pub struct DataResource<R> {
-    pub name: String,
+    /// A resource MUST contain a name property.
+    pub name: DataResourceName,
+    pub title: Option<String>,
     pub data: R,
     pub schema: Fields,
 }
 
 impl<R: Serialize> DataResource<R> {
-    pub fn to_input_value(&self) -> anyhow::Result<InputValue> {
+    pub fn to_input_value(&self) -> Result<InputValue> {
         Ok(json_input_value(serde_json::to_value(self)?))
+    }
+}
+
+impl<T> AsRef<DataResource<T>> for DataResource<T> {
+    fn as_ref(&self) -> &DataResource<T> {
+        self
+    }
+}
+
+/// The name is a simple name or identifier to be used for this resource.
+///
+/// It MUST be unique amongst all resources in this data package.
+/// It SHOULD be human-readable and consist only of lowercase English alphanumeric characters plus ., - and _.
+/// It would be usual for the name to correspond to the file name (minus the extension) of the data file the resource describes.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[serde(transparent)]
+pub struct DataResourceName(String);
+
+impl DataResourceName {
+    pub fn new(name: impl Into<String>) -> Result<Self> {
+        let name = name.into();
+        validate_data_resource_name(&name)?;
+        Ok(Self(name))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+/// It SHOULD be human-readable and consist only of lowercase English alphanumeric characters plus ., - and _.
+fn validate_data_resource_name(input: &str) -> Result<()> {
+    all_consuming(take_while1(
+        |c: char| matches!(c, 'a'..='z' | '0'..='9' | '.' | '-' | '_'),
+    ))
+    .parse(input)
+    .finish()
+    .map(|_| ())
+    .map_err(|e: nom::error::Error<&str>| anyhow::anyhow!("invalid resource name '{input}': {e}"))
+}
+
+impl TryFrom<String> for DataResourceName {
+    type Error = anyhow::Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl<'s> TryFrom<&'s str> for DataResourceName {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl AsRef<str> for DataResourceName {
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -124,9 +188,19 @@ mod tests {
     }
 
     #[test]
+    fn it_validates_data_resource_name() {
+        assert!(DataResourceName::new("biodiversity-sensitive_areas").is_ok());
+        assert!(DataResourceName::new("biodiversity-sensitive-areas").is_ok());
+        assert!(DataResourceName::new("Biodiversity-sensitive Areas").is_err());
+        assert!(DataResourceName::new("biodiversity sensitive areas").is_err());
+        assert!(DataResourceName::new("biodiversity/sensitive/areas").is_err());
+    }
+
+    #[test]
     fn it_converts_data_resource_to_input_value() {
         let data_resource = DataResource {
-            name: "test_resource".to_string(),
+            name: DataResourceName::new("test_resource").unwrap(),
+            title: None,
             data: vec!["item1", "item2"],
             schema: Fields {
                 fields: vec![TableSchemaField {
