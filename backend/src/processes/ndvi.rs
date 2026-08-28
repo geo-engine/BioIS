@@ -860,7 +860,7 @@ mod tests {
             match opt {
                 JobControlOptions::SyncExecute => has_sync = true,
                 JobControlOptions::AsyncExecute => has_async = true,
-                JobControlOptions::Dismiss => todo!(),
+                JobControlOptions::Dismiss => panic!("not implemented in test"),
             }
         }
         assert!(has_sync, "expected SyncExecute in job_control_options");
