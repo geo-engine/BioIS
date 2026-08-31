@@ -5,3 +5,5 @@ doc-valid-idents = ["OpenAPI", "PostgreSQL", ".."]
 
 # It is okay to being able to easily write tests.
 allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
