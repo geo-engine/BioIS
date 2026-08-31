@@ -2580,7 +2580,7 @@ dependencies = [
 [[package]]
 name = "ogcapi"
 version = "0.3.1"
-source = "git+https://github.com/georust/ogcapi?branch=main#dff16d63cdc09509096516b3410361e13ebd74a5"
+source = "git+https://github.com/georust/ogcapi?branch=fix%2Fmissing-sync-job-in-builder#bf638fb99b114fc46660218c55bf2999f2c306ea"
 dependencies = [
  "ogcapi-client",
  "ogcapi-drivers",
@@ -2592,7 +2592,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-client"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#dff16d63cdc09509096516b3410361e13ebd74a5"
+source = "git+https://github.com/georust/ogcapi?branch=fix%2Fmissing-sync-job-in-builder#bf638fb99b114fc46660218c55bf2999f2c306ea"
 dependencies = [
  "futures-core",
  "geojson",
@@ -2610,10 +2610,11 @@ dependencies = [
 [[package]]
 name = "ogcapi-drivers"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#dff16d63cdc09509096516b3410361e13ebd74a5"
+source = "git+https://github.com/georust/ogcapi?branch=fix%2Fmissing-sync-job-in-builder#bf638fb99b114fc46660218c55bf2999f2c306ea"
 dependencies = [
  "anyhow",
  "async-trait",
+ "log",
  "ogcapi-types",
  "rink-core",
  "serde_json",
@@ -2624,30 +2625,29 @@ dependencies = [
 [[package]]
 name = "ogcapi-processes"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#dff16d63cdc09509096516b3410361e13ebd74a5"
+source = "git+https://github.com/georust/ogcapi?branch=fix%2Fmissing-sync-job-in-builder#bf638fb99b114fc46660218c55bf2999f2c306ea"
 dependencies = [
  "anyhow",
  "async-trait",
- "dyn-clone",
  "ogcapi-types",
  "schemars 1.2.2",
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "url",
 ]
 
 [[package]]
 name = "ogcapi-services"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#dff16d63cdc09509096516b3410361e13ebd74a5"
+source = "git+https://github.com/georust/ogcapi?branch=fix%2Fmissing-sync-job-in-builder#bf638fb99b114fc46660218c55bf2999f2c306ea"
 dependencies = [
  "anyhow",
  "axum",
  "axum-extra",
  "clap",
  "dotenvy",
- "dyn-clone",
  "futures",
  "headers",
  "hyper",
@@ -2676,7 +2676,7 @@ dependencies = [
 [[package]]
 name = "ogcapi-types"
 version = "0.3.0"
-source = "git+https://github.com/georust/ogcapi?branch=main#dff16d63cdc09509096516b3410361e13ebd74a5"
+source = "git+https://github.com/georust/ogcapi?branch=fix%2Fmissing-sync-job-in-builder#bf638fb99b114fc46660218c55bf2999f2c306ea"
 dependencies = [
  "chrono",
  "geojson",
@@ -5190,9 +5190,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.24.0"
+version = "1.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf3923a6f5c4c6382e0b653c4117f48d631ea17f38ed86e2a828e6f7412f5239"
+checksum = "b5772d71c9be8a8a6ac2117d949c5b224c1b72241bb611d9a3012edcf8af7812"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
@@ -5421,7 +5421,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

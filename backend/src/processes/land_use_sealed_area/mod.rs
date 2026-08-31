@@ -129,6 +129,11 @@ pub struct OutputKeys {
     pub documentation_sources: bool,
 }
 
+pub struct LandUseSealedAreaProcessParams {
+    pub inputs: LandUseSealedAreaProcessInputs,
+    pub requested_outputs: OutputKeys,
+}
+
 impl OutputKeys {
     pub const LAND_USE_SUMMARY: &str = "landUseSummary";
     pub const SITE_LAND_USE_TABLE: &str = "siteLandUseTable";
@@ -159,6 +164,9 @@ impl OutputKeys {
 
 #[async_trait::async_trait]
 impl Processor for LandUseSealedAreaProcess {
+    type Input = LandUseSealedAreaProcessParams;
+    type Output = LandUseSealedAreaProcessOutputs;
+
     fn id(&self) -> &'static str {
         Self::ID
     }
@@ -167,24 +175,31 @@ impl Processor for LandUseSealedAreaProcess {
         Self::VERSION
     }
 
-    fn process(&self) -> Result<Process> {
+    async fn process(&self) -> Result<Process> {
         let configuration = CONTEXT
             .session_token()
             .ok()
             .map(|session_token| CONFIG.geoengine.api_config(Some(session_token)));
 
-        // TODO: make `process` async & get `USER` passed to here
-        tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(self.process(configuration))
+        self.process(configuration).await
+    }
+
+    async fn parse(&self, execute: Execute) -> Result<Self::Input> {
+        let inputs = LandUseSealedAreaProcessInputs::try_from(&execute.inputs)?;
+        let requested_outputs = OutputKeys::from_requested_outputs(&execute.outputs)?;
+        Ok(Self::Input {
+            inputs,
+            requested_outputs,
         })
     }
 
-    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
-        let inputs: LandUseSealedAreaProcessInputs =
-            LandUseSealedAreaProcessInputs::try_from(&execute.inputs)?;
-
-        let requested_outputs = OutputKeys::from_requested_outputs(&execute.outputs)?;
-
+    async fn execute(
+        &self,
+        Self::Input {
+            inputs,
+            requested_outputs,
+        }: Self::Input,
+    ) -> Result<Self::Output> {
         let results = self
             .execute(
                 inputs,
@@ -193,7 +208,7 @@ impl Processor for LandUseSealedAreaProcess {
             )
             .await?;
 
-        Ok(results.into())
+        Ok(results)
     }
 }
 
@@ -414,8 +429,10 @@ fn json_format() -> Format {
     }
 }
 
-impl From<LandUseSealedAreaProcessOutputs> for ExecuteResults {
-    fn from(outputs: LandUseSealedAreaProcessOutputs) -> Self {
+impl TryFrom<LandUseSealedAreaProcessOutputs> for ExecuteResults {
+    type Error = anyhow::Error;
+
+    fn try_from(outputs: LandUseSealedAreaProcessOutputs) -> Result<Self, Self::Error> {
         let mut result = ExecuteResults::default();
 
         if let Some(land_use_summary) = outputs.land_use_summary
@@ -521,7 +538,7 @@ impl From<LandUseSealedAreaProcessOutputs> for ExecuteResults {
             );
         }
 
-        result
+        Ok(result)
     }
 }
 
@@ -864,7 +881,7 @@ mod tests {
             documentation_sources: None,
         };
 
-        let results: ExecuteResults = outputs.into();
+        let results: ExecuteResults = outputs.try_into().unwrap();
 
         // Verify inputs and errors are in results
         assert!(results.contains_key(OutputKeys::INPUTS));
@@ -879,7 +896,7 @@ mod tests {
             documentation_sources: None,
         };
 
-        let results: ExecuteResults = empty_outputs.into();
+        let results: ExecuteResults = empty_outputs.try_into().unwrap();
         assert!(results.is_empty());
     }
 

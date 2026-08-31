@@ -13,7 +13,7 @@ use geoengine_api_client::{
     models::OperatorQuota,
 };
 use tokio::{task::JoinHandle, time::sleep};
-use tracing::{error, instrument, warn};
+use tracing::{error, instrument};
 use uuid::Uuid;
 
 const LOOKUP_RETRY_THRESHOLD: i64 = 5;
@@ -47,14 +47,9 @@ async fn add_credits_used_opt(
     geoengine_credits: Option<u64>,
     biois_credits: u64,
 ) -> anyhow::Result<()> {
-    let Some(job_id) = CONTEXT.job_id()? else {
-        // anyhow::bail!("No job ID set in the task context"); // TODO: enforce this always
-        warn!(
-            "computationId"=%computation_id,
-            "No job ID set in the task context, skipping adding credits"
-        );
-        return Ok(());
-    };
+    let job_id = CONTEXT
+        .job_id()?
+        .context("No job ID set in the task context")?;
 
     toasty::create!(Credits {
         job_id,

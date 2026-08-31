@@ -84,8 +84,10 @@ pub struct HabitatDistanceProcessOutputs {
     pub distance_m: Option<i64>,
 }
 
-impl From<HabitatDistanceProcessOutputs> for ExecuteResults {
-    fn from(outputs: HabitatDistanceProcessOutputs) -> Self {
+impl TryFrom<HabitatDistanceProcessOutputs> for ExecuteResults {
+    type Error = anyhow::Error;
+
+    fn try_from(outputs: HabitatDistanceProcessOutputs) -> Result<Self> {
         let mut result = ExecuteResults::default();
         if let Some(habitat_code) = outputs.habitat_code {
             result.insert(
@@ -129,12 +131,15 @@ impl From<HabitatDistanceProcessOutputs> for ExecuteResults {
                 },
             );
         }
-        result
+        Ok(result)
     }
 }
 
 #[async_trait::async_trait]
 impl Processor for HabitatDistanceProcess {
+    type Input = HabitatDistanceProcessInputs;
+    type Output = HabitatDistanceProcessOutputs;
+
     fn id(&self) -> &'static str {
         Self::ID
     }
@@ -147,7 +152,7 @@ impl Processor for HabitatDistanceProcess {
         clippy::too_many_lines,
         reason = "description is long but better understood this way"
     )]
-    fn process(&self) -> Result<Process> {
+    async fn process(&self) -> Result<Process> {
         let mut settings = SchemaSettings::default();
         settings.meta_schema = None;
 
@@ -247,22 +252,19 @@ impl Processor for HabitatDistanceProcess {
         })
     }
 
-    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
+    async fn parse(&self, execute: Execute) -> Result<Self::Input> {
         let value = serde_json::to_value(execute.inputs)?;
-        let inputs: HabitatDistanceProcessInputs = serde_json::from_value(value)?;
+        Ok(serde_json::from_value(value)?)
+    }
 
-        match compute_habitat_distance(
+    async fn execute(&self, inputs: Self::Input) -> Result<Self::Output> {
+        compute_habitat_distance(
             &mut self.connection.clone(),
             self.natura2000_schema,
             &inputs.coordinate.value.coordinates,
         )
         .await
-        {
-            Ok(outputs) => Ok(outputs.into()),
-            Err(_e) => Err(anyhow::anyhow!(
-                "The server was unable to compute the habitat distance."
-            )),
-        }
+        .context("The server was unable to compute the habitat distance.")
     }
 }
 
@@ -401,6 +403,44 @@ mod tests {
         let _inputs: HabitatDistanceProcessInputs = serde_json::from_value(json).unwrap();
     }
 
+    #[test]
+    fn it_converts_habitat_distance_process_outputs_to_execute_results() {
+        let output = HabitatDistanceProcessOutputs {
+            habitat_code: Some("DE5417402".to_string()),
+            habitat_name: Some("Feldflur bei Hüttenberg und Schöffengrund".to_string()),
+            distance_m: Some(1415),
+        };
+
+        let results: ExecuteResults = output.try_into().unwrap();
+        let json = serde_json::to_value(&results).unwrap();
+
+        let expected = serde_json::json!({
+            "distanceM": {
+                "data": 1415,
+                "output": {
+                    "format": null,
+                    "transmissionMode": "value"
+                }
+            },
+            "habitatCode": {
+                "data": "DE5417402",
+                "output": {
+                    "format": null,
+                    "transmissionMode": "value"
+                }
+            },
+            "habitatName": {
+                "data": "Feldflur bei Hüttenberg und Schöffengrund",
+                "output": {
+                    "format": null,
+                    "transmissionMode": "value"
+                }
+            }
+        });
+
+        assert_eq!(json, expected);
+    }
+
     #[crate::test(task_context = crate::state::TaskContext::new(mock_user()))]
     async fn it_computes_the_nearest_habitat(mut db: DbHandle) {
         // crate::util::setup_tracing_for_tests();
@@ -435,7 +475,7 @@ mod tests {
         let p = HabitatDistanceProcess::new(db, schema.leak())
             .await
             .unwrap();
-        let process = p.process().expect("to produce process description");
+        let process = p.process().await.expect("to produce process description");
 
         // summary id / version
         assert_eq!(process.summary.id, "habitatDistance");

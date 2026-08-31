@@ -70,6 +70,14 @@ pub struct NDVIProcessInputs {
 }
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
+pub struct NDVIProcessParams {
+    pub inputs: NDVIProcessInputs,
+    pub should_compute_ndvi: bool,
+    pub should_compute_k_ndvi: bool,
+    pub should_reflect_inputs: bool,
+}
+
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct NDVIProcessOutputs {
     pub ndvi: Option<f64>,
@@ -81,8 +89,10 @@ impl NDVIProcess {
     pub const ID: &'static str = "ndvi";
 }
 
-impl From<NDVIProcessOutputs> for ExecuteResults {
-    fn from(outputs: NDVIProcessOutputs) -> Self {
+impl TryFrom<NDVIProcessOutputs> for ExecuteResults {
+    type Error = anyhow::Error;
+
+    fn try_from(outputs: NDVIProcessOutputs) -> Result<Self, Self::Error> {
         let mut result = ExecuteResults::default();
 
         if let Some(inputs) = outputs.inputs
@@ -145,12 +155,16 @@ impl From<NDVIProcessOutputs> for ExecuteResults {
                 },
             );
         }
-        result
+
+        Ok(result)
     }
 }
 
 #[async_trait::async_trait]
 impl Processor for NDVIProcess {
+    type Input = NDVIProcessParams;
+    type Output = NDVIProcessOutputs;
+
     fn id(&self) -> &'static str {
         Self::ID
     }
@@ -163,7 +177,7 @@ impl Processor for NDVIProcess {
         clippy::too_many_lines,
         reason = "description is long but better understood this way"
     )]
-    fn process(&self) -> Result<Process> {
+    async fn process(&self) -> Result<Process> {
         let mut settings = SchemaSettings::default();
         settings.meta_schema = None;
 
@@ -310,10 +324,9 @@ impl Processor for NDVIProcess {
         })
     }
 
-    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
+    async fn parse(&self, execute: Execute) -> Result<Self::Input> {
         let value = serde_json::to_value(execute.inputs)?;
         let inputs: NDVIProcessInputs = serde_json::from_value(value)?;
-
         validate_date(inputs.year, inputs.month)?;
 
         let mut should_compute_ndvi = execute.outputs.is_empty();
@@ -328,6 +341,23 @@ impl Processor for NDVIProcess {
             }
         }
 
+        Ok(Self::Input {
+            inputs,
+            should_compute_ndvi,
+            should_compute_k_ndvi,
+            should_reflect_inputs,
+        })
+    }
+
+    async fn execute(
+        &self,
+        Self::Input {
+            inputs,
+            should_compute_ndvi,
+            should_compute_k_ndvi,
+            should_reflect_inputs,
+        }: Self::Input,
+    ) -> Result<Self::Output> {
         let configuration = CONFIG.geoengine.api_config(CONTEXT.session_token().ok());
         let (mut outputs, computation_id) = compute_ndvi(
             &configuration,
@@ -347,11 +377,12 @@ impl Processor for NDVIProcess {
             add_credits_used_pending(self.db.clone(), configuration, computation_id).await?;
         }
 
-        Ok(outputs.into())
+        Ok(outputs)
     }
 }
 
 fn validate_date(Year(year): Year, Month(month): Month) -> Result<()> {
+    // TODO: get available years from server
     if year != 2020 {
         anyhow::bail!("Year must be 2020");
     }
@@ -799,6 +830,81 @@ mod tests {
         let _inputs: NDVIProcessInputs = serde_json::from_value(json).unwrap();
     }
 
+    #[test]
+    fn it_converts_ndvi_process_outputs_to_execute_results() {
+        let inputs: NDVIProcessInputs = serde_json::from_value(json!({
+            "coordinate": {
+                "value": {
+                    "type": "Point",
+                    "coordinates": [12.34, 56.78]
+                },
+                "mediaType": "application/geo+json"
+            },
+            "year": 2020,
+            "month": 3
+        }))
+        .unwrap();
+
+        let outputs = NDVIProcessOutputs {
+            ndvi: Some(0.42),
+            k_ndvi: Some(0.81),
+            inputs: Some(inputs),
+        };
+
+        let results: ExecuteResults = outputs.try_into().unwrap();
+        let json = serde_json::to_value(&results).unwrap();
+        let expected = serde_json::json!({
+            "inputs": {
+                "data": {
+                    "encoding": "utf-8",
+                    "mediaType": "application/json",
+                    "schema": null,
+                    "value": {
+                        "coordinate": {
+                            "value": {
+                                "type": "Point",
+                                "coordinates": [12.34, 56.78]
+                            },
+                            "mediaType": "application/geo+json"
+                        },
+                        "year": 2020,
+                        "month": 3
+                    }
+                },
+                "output": {
+                    "format": null,
+                    "transmissionMode": "value"
+                }
+            },
+            "kNdvi": {
+                "data": {
+                    "encoding": null,
+                    "mediaType": "text/plain; spectral=ndvi",
+                    "schema": null,
+                    "value": 0.81
+                },
+                "output": {
+                    "format": null,
+                    "transmissionMode": "value"
+                }
+            },
+            "ndvi": {
+                "data": {
+                    "encoding": null,
+                    "mediaType": "text/plain; spectral=ndvi",
+                    "schema": null,
+                    "value": 0.42
+                },
+                "output": {
+                    "format": null,
+                    "transmissionMode": "value"
+                }
+            }
+        });
+
+        assert_eq!(json, expected);
+    }
+
     #[tokio::test]
     async fn compute_ndvi_integration_with_mock_backend() {
         // Start httptest server and mock the external Geo Engine endpoints
@@ -847,7 +953,7 @@ mod tests {
     #[crate::test]
     async fn process_summary_has_expected_inputs_and_outputs(db: DbHandle) {
         let p = NDVIProcess::new(db);
-        let process = p.process().expect("to produce process description");
+        let process = p.process().await.expect("to produce process description");
 
         // summary id / version
         assert_eq!(process.summary.id, "ndvi");
