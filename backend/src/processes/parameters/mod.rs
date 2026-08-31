@@ -1,3 +1,4 @@
+use anyhow::Result;
 use geoengine_api_client::models::{BoundingBox2D, Coordinate2D, ProvenanceEntry};
 use geojson::Position;
 use ogcapi::types::{
@@ -134,10 +135,13 @@ impl From<ProvenanceEntry> for DocumentationSource {
     }
 }
 
-impl From<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>> {
-    fn from(value: Vec<DocumentationSource>) -> Self {
-        Self {
-            name: "Documentation Sources".to_string(),
+impl TryFrom<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>> {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Vec<DocumentationSource>) -> Result<Self> {
+        Ok(Self {
+            name: "documentation-sources".try_into()?,
+            title: Some("Documentation Sources".to_string()),
             data: value,
             schema: Fields {
                 fields: vec![
@@ -156,7 +160,7 @@ impl From<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>> {
                 ],
                 primary_key: vec![DocumentationSource::DATA_FIELD_NAME.to_string()].into(),
             },
-        }
+        })
     }
 }
 
@@ -349,6 +353,8 @@ pub enum JsonInputMediaType {
 
 #[cfg(test)]
 mod tests {
+    use crate::processes::test_util::assert_valid_data_resource;
+
     use super::*;
     use approx::assert_abs_diff_eq;
     use pretty_assertions::assert_eq;
@@ -360,8 +366,13 @@ mod tests {
             documentation_source: "https://example.com/workflow/xyz".to_string(),
         }];
 
-        let data_resource: DataResource<Vec<DocumentationSource>> = sources.into();
+        let data_resource: DataResource<Vec<DocumentationSource>> = sources.try_into().unwrap();
 
+        assert_eq!(data_resource.name.as_str(), "documentation-sources");
+        assert_eq!(
+            data_resource.title.as_deref(),
+            Some("Documentation Sources")
+        );
         assert_eq!(data_resource.data.len(), 1);
         assert_eq!(data_resource.data[0].data, "Geo Engine workflow XYZ");
         assert_eq!(
@@ -389,6 +400,8 @@ mod tests {
             data_resource.schema.fields[1].title,
             Some("Documentation Source".to_string())
         );
+
+        assert_valid_data_resource(data_resource);
     }
 
     #[test]

@@ -366,9 +366,9 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     vec![DocumentationSource {
                         data: "Natura 2000 sites (state of 2024).".to_string(), // TODO: get state from dataset metadata
                         documentation_source: "https://environment.ec.europa.eu/topics/nature-and-biodiversity/natura-2000_en".to_string(),
-                    }].into()
+                    }].try_into()
                 },
-            ),
+            ).transpose()?,
         };
 
         if execute
@@ -389,7 +389,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             outputs.biodiversity_sensitive_areas = execute
                 .outputs
                 .contains_key(output_keys::BIODIVERSITY_SENSITIVE_AREAS)
-                .then_some(site_row_into_output(site_table, inputs.unit_for_area));
+                .then_some(site_row_into_output(site_table, inputs.unit_for_area)?);
 
             outputs.errors = execute
                 .outputs
@@ -749,9 +749,10 @@ pub struct SiteRowOutput {
 fn site_row_into_output(
     site_rows: Vec<SiteRow>,
     unit_for_area: UnitForArea,
-) -> DataResource<Vec<SiteRowOutput>> {
-    DataResource {
-        name: "Biodiversity-sensitive Areas".to_string(),
+) -> Result<DataResource<Vec<SiteRowOutput>>> {
+    Ok(DataResource {
+        name: "biodiversity-sensitive-areas".try_into()?,
+        title: Some("Biodiversity-sensitive Areas".to_string()),
         data: site_rows
             .into_iter()
             .map(|row| SiteRowOutput {
@@ -830,7 +831,7 @@ fn site_row_into_output(
             ],
             primary_key: vec!["location".to_string()].into(),
         },
-    }
+    })
 }
 
 /// Compute the impact metrics from inputs. This helper performs optional HTTP GET requests
@@ -953,7 +954,10 @@ fn feature_to_site_input(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::processes::parameters::{GeoJsonInputMediaType, Hectare};
+    use crate::processes::{
+        parameters::{GeoJsonInputMediaType, Hectare},
+        test_util::assert_valid_data_resource,
+    };
     use approx::abs_diff_ne;
     use geojson::FeatureCollection;
     use ogcapi::types::processes::Input;
@@ -1221,7 +1225,7 @@ mod tests {
         .await
         .unwrap();
 
-        let site_row_outputs = site_row_into_output(site_rows, inputs.unit_for_area);
+        let site_row_outputs = site_row_into_output(site_rows, inputs.unit_for_area).unwrap();
 
         let expected = vec![
             SiteRowOutput {
@@ -1273,5 +1277,110 @@ mod tests {
             errors,
             vec!["Feature `the-error-feature` is missing location property `location`".to_string(),]
         );
+    }
+
+    #[crate::test]
+    async fn it_validates_data_resource_output(mut db: DbHandle) {
+        create_schema_and_insert_test_site(&mut db).await;
+
+        // crate::util::setup_tracing(
+        //         level: crate::config::LogLevel::Debug,
+        //     }
+        //     .into(),
+        // );
+
+        let inputs = BiodiversitySensitiveAreasProcessInputs {
+            sites: FeatureCollectionGeoJsonInput {
+                value: json!({
+                  "type": "FeatureCollection",
+                  "features": [
+                    {
+                      "type": "Feature",
+                      "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [8.773_665_480_497_84, 50.803_270_291_022_386],
+                                [8.773_649_409_958_182, 50.802_437_463_615_604],
+                                [8.774_613_642_351_255, 50.802_412_072_303_04],
+                                [8.774_597_571_811_597, 50.803_255_056_507_936],
+                                [8.773_665_480_497_84, 50.803_270_291_022_386]
+                            ]
+                        ]
+                      },
+                      "properties": {
+                        "location": "Marburger Unistadion",
+                        "siteType": "office"
+                      }
+                    },
+                    {
+                      "type": "Feature",
+                      "geometry": {
+                        "type": "Point",
+                        "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
+                      },
+                      "properties": {
+                        "location": "Garten des Gedenkens",
+                        "siteType": "other"
+                      }
+                    },
+                    {
+                      "type": "Feature",
+                      "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                          [
+                            [8.754_139_485_384, 50.809_101_655_468],
+                            [8.754_266_459_025, 50.808_497_270_648],
+                            [8.755_374_371_521, 50.809_035_957_506],
+                            [8.754_139_485_384, 50.809_101_655_468]
+                          ]
+                        ]
+                      },
+                      "properties": {
+                        "location": "Auf dem Dammelsberg",
+                        "siteType": "office"
+                      }
+                    },
+                    {
+                      "type": "Feature",
+                      "geometry": {
+                        "type": "Point",
+                        "coordinates": [8.770_273_718_309_227, 50.807_468_318_244_67]
+                      },
+                      "id": "the-error-feature",
+                      "properties": {
+                        "siteType": "other"
+                      }
+                    }
+                  ]
+                })
+                .to_string()
+                .as_str()
+                .parse::<FeatureCollection>()
+                .unwrap()
+                .into(),
+                media_type: GeoJsonInputMediaType::GeoJson,
+            },
+            location_name_field: "location".into(),
+            site_type_field: "siteType".into(),
+            unit_for_area: UnitForArea::Hectare,
+        };
+
+        let schema = db.schema_name().to_string();
+        let (site_rows, _errors) = compute_biodiversity_sensitive_areas(
+            &mut db,
+            &schema,
+            inputs.sites,
+            inputs.location_name_field.as_ref(),
+            inputs.site_type_field.as_ref(),
+            inputs.unit_for_area,
+        )
+        .await
+        .unwrap();
+
+        let site_row_outputs = site_row_into_output(site_rows, inputs.unit_for_area).unwrap();
+
+        assert_valid_data_resource(site_row_outputs);
     }
 }

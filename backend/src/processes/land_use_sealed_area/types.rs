@@ -2,6 +2,7 @@ use crate::processes::parameters::{
     Area, DataResource, Fields, HasTableSchemaType, Percentage, SquareMeter, TableSchemaField,
     TableSchemaType, UnitForArea,
 };
+use anyhow::Result;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -216,9 +217,10 @@ impl FromStr for SiteSpecification {
 pub fn summary_to_data_resource(
     site_rows: LandUseSummary,
     unit_for_area: UnitForArea,
-) -> DataResource<Vec<LandUseSummaryRowOutput>> {
-    DataResource {
-        name: "Land Use".to_string(),
+) -> Result<DataResource<Vec<LandUseSummaryRowOutput>>> {
+    Ok(DataResource {
+        name: "land-use".try_into()?,
+        title: Some("Land Use".to_string()),
         schema: Fields {
             fields: vec![
                 TableSchemaField {
@@ -254,15 +256,16 @@ pub fn summary_to_data_resource(
             land_use_summary_row_to_output(site_rows.total_nature_off_site_area, unit_for_area),
             land_use_summary_row_to_output(site_rows.total_use_of_land, unit_for_area),
         ],
-    }
+    })
 }
 
 pub fn site_to_data_resource(
     site_rows: Vec<SiteLandUseRow>,
     unit_for_area: UnitForArea,
-) -> DataResource<Vec<SiteLandUseRowOutput>> {
-    DataResource {
-        name: "Site Land Use".to_string(),
+) -> Result<DataResource<Vec<SiteLandUseRowOutput>>> {
+    Ok(DataResource {
+        name: "site-land-use".try_into()?,
+        title: Some("Site Land Use".to_string()),
         schema: Fields {
             fields: vec![
                 TableSchemaField {
@@ -296,12 +299,13 @@ pub fn site_to_data_resource(
             .into_iter()
             .map(|row| site_land_use_row_to_output(row, unit_for_area))
             .collect(),
-    }
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::processes::test_util::assert_valid_data_resource;
 
     #[test]
     fn it_converts_land_use_summary_types() {
@@ -437,8 +441,9 @@ mod tests {
                 percentage_change: None,
             },
         };
-        let resource = summary_to_data_resource(summary, unit);
-        assert_eq!(resource.name, "Land Use");
+        let resource = summary_to_data_resource(summary, unit).unwrap();
+        assert_eq!(resource.name.as_str(), "land-use");
+        assert_eq!(resource.title.unwrap(), "Land Use");
         assert_eq!(resource.data.len(), 4);
         assert_eq!(resource.schema.fields.len(), 4);
 
@@ -457,9 +462,24 @@ mod tests {
                 sealed_area: SquareMeter(100.0),
             },
         ];
-        let resource = site_to_data_resource(site_rows, unit);
-        assert_eq!(resource.name, "Site Land Use");
+        let resource = site_to_data_resource(site_rows, unit).unwrap();
+        assert_eq!(resource.name.as_str(), "site-land-use");
+        assert_eq!(resource.title.unwrap(), "Site Land Use");
         assert_eq!(resource.data.len(), 2);
         assert_eq!(resource.schema.fields.len(), 4);
+
+        assert_valid_data_resource(summary_to_data_resource(summary, unit).unwrap());
+        assert_valid_data_resource(
+            site_to_data_resource(
+                vec![SiteLandUseRow {
+                    location: "Site A".to_string(),
+                    land_use_type: SiteSpecification::Site,
+                    area: SquareMeter(1000.0),
+                    sealed_area: SquareMeter(500.0),
+                }],
+                unit,
+            )
+            .unwrap(),
+        );
     }
 }
