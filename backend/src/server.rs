@@ -14,10 +14,10 @@ use crate::{
 };
 use geoengine_api_client::apis::configuration::Configuration;
 use ogcapi::{
-    processes::{Processor, echo::Echo},
+    processes::{DynProcessor, echo::Echo},
     services::{self as ogcapi_services},
 };
-use std::mem;
+use std::{mem, sync::Arc};
 use utoipa::{
     Modify, OpenApi as _,
     openapi::{
@@ -50,10 +50,10 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .get_openapi_mut()
         .merge(ProcessesOpenApiSpec::openapi());
 
-    let mut processors: Vec<Box<dyn Processor>> = vec![
-        Box::new(Echo),
-        Box::new(NDVIProcess::new(db_pool.clone())),
-        Box::new(LandUseSealedAreaProcess::new(db_pool.clone())),
+    let mut processors: Vec<Arc<dyn DynProcessor>> = vec![
+        Arc::new(Echo),
+        Arc::new(NDVIProcess::new(db_pool.clone())),
+        Arc::new(LandUseSealedAreaProcess::new(db_pool.clone())),
     ];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
     add_biodiversity_sensitive_areas_process(&mut processors, db_pool.clone()).await;
@@ -66,6 +66,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
     let ogcapi_state = ogcapi_services::AppState::new(drivers)
         .await
         .processors(processors)
+        .sync_process_calls_are_jobs(true)
         .with_spawn_fn(spawn_with_user);
 
     let mut server_cfg: ogcapi_services::Config = (&CONFIG.server).into();
@@ -138,7 +139,7 @@ impl Modify for ResultsSchemaModifier {
 }
 
 async fn add_habitat_distance_process(
-    processors: &mut Vec<Box<dyn Processor>>,
+    processors: &mut Vec<Arc<dyn DynProcessor>>,
     db_pool: crate::db::DbHandle,
 ) {
     match HabitatDistanceProcess::new(db_pool, "Natura2000").await {
@@ -146,7 +147,7 @@ async fn add_habitat_distance_process(
             tracing::info!(
                 "Successfully initialized HabitatDistanceProcess, adding it to the list of available processes."
             );
-            processors.push(Box::new(habitat_distance_process));
+            processors.push(Arc::new(habitat_distance_process));
         }
         Err(err) => {
             tracing::warn!(
@@ -158,7 +159,7 @@ async fn add_habitat_distance_process(
 }
 
 async fn add_biodiversity_sensitive_areas_process(
-    processors: &mut Vec<Box<dyn Processor>>,
+    processors: &mut Vec<Arc<dyn DynProcessor>>,
     db_pool: crate::db::DbHandle,
 ) {
     match BiodiversitySensitiveAreasProcess::new(db_pool, "Natura2000").await {
@@ -166,7 +167,7 @@ async fn add_biodiversity_sensitive_areas_process(
             tracing::info!(
                 "Successfully initialized BiodiversitySensitiveAreasProcess, adding it to the list of available processes."
             );
-            processors.push(Box::new(biodiversity_sensitive_areas_process));
+            processors.push(Arc::new(biodiversity_sensitive_areas_process));
         }
         Err(err) => {
             tracing::warn!(

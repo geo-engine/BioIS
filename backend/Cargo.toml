@@ -75,7 +75,7 @@ geoengine-api-client = "0.9.4"
 geojson = "1.0"
 indoc = "2.0"
 nom = "8.0"
-ogcapi = { git = "https://github.com/georust/ogcapi", branch = "main", default-features = false, features = [
+ogcapi = { git = "https://github.com/georust/ogcapi", branch = "fix/missing-sync-job-in-builder", default-features = false, features = [
     "common",
     "drivers",
     "processes",
@@ -87,13 +87,13 @@ schemars = "1.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 tempfile = "3.27"
-# toasty = { version = "0.10", features = ["postgresql", "serde"] }
+# toasty = { version = "0.11", features = ["migration", "postgresql", "serde"] }
 toasty = { git = "https://github.com/tokio-rs/toasty", branch = "main", features = [
     "migration",
     "postgresql",
     "serde",
 ] }
-# toasty-cli = "0.10"
+# toasty-cli = "0.11"
 toasty-cli = { git = "https://github.com/tokio-rs/toasty", branch = "main" }
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
 tower = "0.5"
@@ -103,7 +103,7 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = "2.5"
 utoipa = { version = "5.5", features = ["uuid"] }
 utoipa-axum = "0.2"
-uuid = { version = "1.24", features = ["v7"] }
+uuid = { version = "1.26", features = ["v7"] }
 wkt = "0.14"
 
 [dev-dependencies]

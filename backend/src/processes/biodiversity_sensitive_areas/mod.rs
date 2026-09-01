@@ -9,7 +9,7 @@ use crate::{
             FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
             TableSchemaField, TableSchemaItemType, TableSchemaType, UnitForArea,
         },
-        util::json_input_value,
+        util::{json_input_value, to_output_keys},
     },
     util::{md_content, md_heading},
 };
@@ -136,15 +136,49 @@ pub struct BiodiversitySensitiveAreasProcessOutputs {
     pub documentation_sources: Option<DataResource<Vec<DocumentationSource>>>,
 }
 
-mod output_keys {
+#[allow(clippy::struct_excessive_bools, reason = "This is not a state machine")]
+pub struct OutputKeys {
+    pub biodiversity_sensitive_areas: bool,
+    pub inputs: bool,
+    pub errors: bool,
+    pub documentation_sources: bool,
+}
+
+impl OutputKeys {
     pub const BIODIVERSITY_SENSITIVE_AREAS: &str = "biodiversitySensitiveAreas";
     pub const INPUTS: &str = "inputs";
     pub const ERRORS: &str = "errors";
     pub const DOCUMENTATION_SOURCES: &str = "documentationSources";
+
+    pub fn from_requested_outputs(outputs: &HashMap<String, Output>) -> Result<Self> {
+        let outputs = to_output_keys(
+            outputs,
+            [
+                Self::BIODIVERSITY_SENSITIVE_AREAS,
+                Self::INPUTS,
+                Self::ERRORS,
+                Self::DOCUMENTATION_SOURCES,
+            ],
+        )?;
+        Ok(Self {
+            biodiversity_sensitive_areas: outputs.contains(Self::BIODIVERSITY_SENSITIVE_AREAS),
+            inputs: outputs.contains(Self::INPUTS),
+            errors: outputs.contains(Self::ERRORS),
+            documentation_sources: outputs.contains(Self::DOCUMENTATION_SOURCES),
+        })
+    }
+}
+
+pub struct BiodiversitySensitiveAreasParams {
+    inputs: BiodiversitySensitiveAreasProcessInputs,
+    requested_outputs: OutputKeys,
 }
 
 #[async_trait::async_trait]
 impl Processor for BiodiversitySensitiveAreasProcess {
+    type Input = BiodiversitySensitiveAreasParams;
+    type Output = BiodiversitySensitiveAreasProcessOutputs;
+
     fn id(&self) -> &'static str {
         Self::ID
     }
@@ -157,7 +191,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
         clippy::too_many_lines,
         reason = "This function is verbose due to the detailed process description and schema generation."
     )]
-    fn process(&self) -> Result<Process> {
+    async fn process(&self) -> Result<Process> {
         let mut settings = SchemaSettings::default();
         settings.meta_schema = None;
 
@@ -269,7 +303,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             ]),
             outputs: HashMap::from([
                 (
-                    output_keys::BIODIVERSITY_SENSITIVE_AREAS.to_string(),
+                    OutputKeys::BIODIVERSITY_SENSITIVE_AREAS.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
                             title: "Biodiversity-sensitive Areas".to_string().into(),
@@ -284,7 +318,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    output_keys::DOCUMENTATION_SOURCES.to_string(),
+                    OutputKeys::DOCUMENTATION_SOURCES.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
                             title: "Documentation Sources".to_string().into(),
@@ -299,7 +333,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    output_keys::ERRORS.to_string(),
+                    OutputKeys::ERRORS.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
                             title: "Processing Errors".to_string().into(),
@@ -312,7 +346,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                     },
                 ),
                 (
-                    output_keys::INPUTS.to_string(),
+                    OutputKeys::INPUTS.to_string(),
                     OutputDescription {
                         description_type: DescriptionType {
                             title: "Input Parameters".to_string().into(),
@@ -330,38 +364,30 @@ impl Processor for BiodiversitySensitiveAreasProcess {
         })
     }
 
-    async fn execute(&self, mut execute: Execute) -> Result<ExecuteResults> {
+    async fn parse(&self, execute: Execute) -> Result<<Self as Processor>::Input> {
         let value = serde_json::to_value(execute.inputs)?;
         let inputs: BiodiversitySensitiveAreasProcessInputs = serde_json::from_value(value)?;
+        Ok(Self::Input {
+            inputs,
+            requested_outputs: OutputKeys::from_requested_outputs(&execute.outputs)?,
+        })
+    }
 
+    async fn execute(
+        &self,
+        Self::Input {
+            inputs,
+            requested_outputs,
+        }: Self::Input,
+    ) -> Result<Self::Output> {
         let number_of_input_features = inputs.sites.value().features.len();
-
-        // If no outputs were requested, default to all outputs
-        if execute.outputs.is_empty() {
-            for key in [
-                output_keys::BIODIVERSITY_SENSITIVE_AREAS,
-                output_keys::ERRORS,
-                output_keys::INPUTS,
-                output_keys::DOCUMENTATION_SOURCES,
-            ] {
-                execute.outputs.insert(
-                    key.to_string(),
-                    Output {
-                        format: None,
-                        transmission_mode: TransmissionMode::Value,
-                    },
-                );
-            }
-        }
 
         let mut outputs = BiodiversitySensitiveAreasProcessOutputs {
             biodiversity_sensitive_areas: None,
             errors: None,
-            inputs: execute
-                .outputs
-                .contains_key(output_keys::INPUTS)
+            inputs: requested_outputs.inputs
                 .then(|| inputs.clone()),
-            documentation_sources: execute.outputs.contains_key(output_keys::DOCUMENTATION_SOURCES).then(
+            documentation_sources: requested_outputs.documentation_sources.then(
                 || {
                     vec![DocumentationSource {
                         data: "Natura 2000 sites (state of 2024).".to_string(), // TODO: get state from dataset metadata
@@ -371,11 +397,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             ).transpose()?,
         };
 
-        if execute
-            .outputs
-            .contains_key(output_keys::BIODIVERSITY_SENSITIVE_AREAS)
-            || execute.outputs.contains_key(output_keys::ERRORS)
-        {
+        if requested_outputs.biodiversity_sensitive_areas || requested_outputs.errors {
             let (site_table, errors) = compute_biodiversity_sensitive_areas(
                 &mut self.connection.clone(),
                 self.natura2000_schema,
@@ -386,15 +408,11 @@ impl Processor for BiodiversitySensitiveAreasProcess {
             )
             .await?;
 
-            outputs.biodiversity_sensitive_areas = execute
-                .outputs
-                .contains_key(output_keys::BIODIVERSITY_SENSITIVE_AREAS)
+            outputs.biodiversity_sensitive_areas = requested_outputs
+                .biodiversity_sensitive_areas
                 .then_some(site_row_into_output(site_table, inputs.unit_for_area)?);
 
-            outputs.errors = execute
-                .outputs
-                .contains_key(output_keys::ERRORS)
-                .then_some(errors);
+            outputs.errors = requested_outputs.errors.then_some(errors);
         }
 
         add_credits_used(
@@ -405,7 +423,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
         )
         .await?;
 
-        Ok(outputs.into())
+        Ok(outputs)
     }
 }
 
@@ -432,15 +450,17 @@ fn json_format() -> Format {
     }
 }
 
-impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
-    fn from(outputs: BiodiversitySensitiveAreasProcessOutputs) -> Self {
+impl TryFrom<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
+    type Error = anyhow::Error;
+
+    fn try_from(outputs: BiodiversitySensitiveAreasProcessOutputs) -> Result<Self, Self::Error> {
         let mut result = ExecuteResults::default();
 
         if let Some(biodiversity_sensitive_areas) = outputs.biodiversity_sensitive_areas
             && let Ok(value) = biodiversity_sensitive_areas.to_input_value()
         {
             result.insert(
-                output_keys::BIODIVERSITY_SENSITIVE_AREAS.to_string(),
+                OutputKeys::BIODIVERSITY_SENSITIVE_AREAS.to_string(),
                 ExecuteResult {
                     output: Output {
                         format: Some(json_format()),
@@ -462,7 +482,7 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
             && let Ok(inputs_log) = serde_json::to_value(&inputs)
         {
             result.insert(
-                output_keys::INPUTS.to_string(),
+                OutputKeys::INPUTS.to_string(),
                 ExecuteResult {
                     output: Output {
                         format: Some(json_format()),
@@ -484,7 +504,7 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
             && let Ok(value) = documentation_sources.to_input_value()
         {
             result.insert(
-                output_keys::DOCUMENTATION_SOURCES.to_string(),
+                OutputKeys::DOCUMENTATION_SOURCES.to_string(),
                 ExecuteResult {
                     output: Output {
                         format: Some(json_format()),
@@ -504,7 +524,7 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
 
         if let Some(errors) = outputs.errors {
             result.insert(
-                output_keys::ERRORS.to_string(),
+                OutputKeys::ERRORS.to_string(),
                 ExecuteResult {
                     output: Output {
                         format: Some(json_format()),
@@ -515,7 +535,7 @@ impl From<BiodiversitySensitiveAreasProcessOutputs> for ExecuteResults {
             );
         }
 
-        result
+        Ok(result)
     }
 }
 
@@ -1069,6 +1089,69 @@ mod tests {
             serde_json::from_value(json).unwrap();
     }
 
+    #[test]
+    fn it_converts_biodiversity_sensitive_areas_process_outputs_to_execute_results() {
+        let outputs = BiodiversitySensitiveAreasProcessOutputs {
+            biodiversity_sensitive_areas: None,
+            inputs: Some(BiodiversitySensitiveAreasProcessInputs {
+                sites: FeatureCollectionGeoJsonInput {
+                    value: FeatureCollection::default().into(),
+                    media_type: GeoJsonInputMediaType::GeoJson,
+                },
+                location_name_field: "location".into(),
+                site_type_field: "siteType".into(),
+                unit_for_area: UnitForArea::Hectare,
+            }),
+            errors: Some(vec!["error1".to_string(), "error2".to_string()]),
+            documentation_sources: None,
+        };
+
+        let results: ExecuteResults = outputs.try_into().unwrap();
+        let json = serde_json::to_value(&results).unwrap();
+        let expected = serde_json::json!({
+            "errors": {
+                "data": ["error1", "error2"],
+                "output": {
+                    "format": {
+                        "encoding": null,
+                        "mediaType": "application/json",
+                        "schema": null
+                    },
+                    "transmissionMode": "value"
+                }
+            },
+            "inputs": {
+                "data": {
+                    "encoding": null,
+                    "mediaType": "application/json",
+                    "schema": null,
+                    "value": {
+                        "locationNameField": "location",
+                        "siteTypeField": "siteType",
+                        "sites": {
+                            "mediaType": "application/geo+json",
+                            "value": {
+                                "features": [],
+                                "type": "FeatureCollection"
+                            }
+                        },
+                        "unitForArea": "ha"
+                    }
+                },
+                "output": {
+                    "format": {
+                        "encoding": null,
+                        "mediaType": "application/json",
+                        "schema": null
+                    },
+                    "transmissionMode": "value"
+                }
+            }
+        });
+
+        assert_eq!(json, expected);
+    }
+
     #[crate::test]
     async fn process_summary_has_expected_inputs_and_outputs(mut db: DbHandle) {
         create_schema_and_insert_test_site(&mut db).await;
@@ -1077,7 +1160,7 @@ mod tests {
         let p = BiodiversitySensitiveAreasProcess::new(db, schema.leak())
             .await
             .unwrap();
-        let process = p.process().expect("to produce process description");
+        let process = p.process().await.expect("to produce process description");
 
         // summary id / version
         assert_eq!(process.summary.id, "biodiversity-sensitive-areas");
@@ -1109,10 +1192,10 @@ mod tests {
         }
 
         for key in [
-            output_keys::BIODIVERSITY_SENSITIVE_AREAS,
-            output_keys::INPUTS,
-            output_keys::ERRORS,
-            output_keys::DOCUMENTATION_SOURCES,
+            OutputKeys::BIODIVERSITY_SENSITIVE_AREAS,
+            OutputKeys::INPUTS,
+            OutputKeys::ERRORS,
+            OutputKeys::DOCUMENTATION_SOURCES,
         ] {
             assert!(
                 process.outputs.contains_key(key),

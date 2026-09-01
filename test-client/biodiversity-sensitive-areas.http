@@ -97,5 +97,8 @@ Prefer: respond-async
 
 ###
 
-GET http://localhost:4040/credits/2026/08
+@year = {{$datetime "YYYY"}}
+@month = {{$datetime "MM"}}
+
+GET http://localhost:4040/credits/{{year}}/{{month}}
 Authorization: Bearer {{token}}
