@@ -6,8 +6,8 @@ use crate::{
         habitat_distance::natura2000_exists,
         parameters::{
             Area, DataResource, DataResourceSchema, DocumentationSource,
-            FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
-            TableSchemaField, TableSchemaItemType, TableSchemaType, UnitForArea,
+            FeatureCollectionGeoJsonInput, Kilometers, RelativeJsonPointer, SquareMeter,
+            TableSchema, TableSchemaField, TableSchemaItemType, TableSchemaType, UnitForArea,
         },
         util::{json_input_value, to_output_keys},
     },
@@ -798,7 +798,7 @@ fn site_row_into_output(
                 nearby_biodiversity_sensitive_areas: row.nearby_biodiversity_sensitive_areas,
             })
             .collect(),
-        schema: Fields {
+        schema: TableSchema {
             fields: vec![
                 TableSchemaField {
                     name: "location".into(),
@@ -850,6 +850,7 @@ fn site_row_into_output(
                 },
             ],
             primary_key: vec!["location".to_string()].into(),
+            ..Default::default()
         },
     })
 }

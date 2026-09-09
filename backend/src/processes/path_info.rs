@@ -8,6 +8,7 @@ use crate::processes::{
     biodiversity_sensitive_areas::{
         BiodiversitySensitiveAreasProcessInputs, BiodiversitySensitiveAreasProcessOutputs,
     },
+    climate_risk::{ClimateRiskInputs, ClimateRiskOutputs},
     habitat_distance::{HabitatDistanceProcessInputs, HabitatDistanceProcessOutputs},
     land_use_sealed_area::{LandUseSealedAreaProcessInputs, LandUseSealedAreaProcessOutputs},
     ndvi::{NDVIProcessInputs, NDVIProcessOutputs},
@@ -85,6 +86,27 @@ fn execute_biodiversity_sensitive_areas(
 ) {
 }
 
+/// Process execution (Climate Risk)
+#[allow(unused, reason = "Placeholder for spec only")]
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct ClimateRiskProcessParams {
+    pub inputs: ClimateRiskInputs,
+    #[serde(default)]
+    #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
+    pub outputs: HashMap<String, ()>,
+    #[serde(default)]
+    pub response: Response,
+}
+
+#[allow(unused, reason = "Placeholder for spec only")]
+#[utoipa::path(
+    post,
+    path = "/processes/climate-risk/execution",
+    tag = "Processes",
+    responses((status = OK, body = ClimateRiskOutputs))
+)]
+fn execute_climate_risk(Json(_input): Json<ClimateRiskProcessParams>) {}
+
 /// Process execution (Land Use Sealed Area – ESRS E4-5)
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(Deserialize, ToSchema, Debug)]
@@ -113,6 +135,7 @@ fn execute_land_use_sealed_area(Json(_input): Json<LandUseSealedAreaProcessParam
     execute_ndvi,
     execute_habitat_distance,
     execute_biodiversity_sensitive_areas,
+    execute_climate_risk,
     execute_land_use_sealed_area
 ))]
 pub struct ProcessesOpenApiSpec;

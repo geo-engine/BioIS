@@ -12,6 +12,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -32,6 +36,8 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CordexModel } from '../models/CordexModel';
+import { CordexRegion } from '../models/CordexRegion';
 import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
@@ -244,6 +250,15 @@ export interface ProcessesApiExecuteBiodiversitySensitiveAreasRequest {
     biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams
 }
 
+export interface ProcessesApiExecuteClimateRiskRequest {
+    /**
+     * 
+     * @type ClimateRiskProcessParams
+     * @memberof ProcessesApiexecuteClimateRisk
+     */
+    climateRiskProcessParams: ClimateRiskProcessParams
+}
+
 export interface ProcessesApiExecuteHabitatDistanceRequest {
     /**
      * 
@@ -376,6 +391,20 @@ export class ObjectProcessesApi {
      */
     public executeBiodiversitySensitiveAreas(param: ProcessesApiExecuteBiodiversitySensitiveAreasRequest, options?: ConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
         return this.api.executeBiodiversitySensitiveAreas(param.biodiversitySensitiveAreasProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeClimateRiskWithHttpInfo(param: ProcessesApiExecuteClimateRiskRequest, options?: ConfigurationOptions): Promise<HttpInfo<ClimateRiskOutputs>> {
+        return this.api.executeClimateRiskWithHttpInfo(param.climateRiskProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeClimateRisk(param: ProcessesApiExecuteClimateRiskRequest, options?: ConfigurationOptions): Promise<ClimateRiskOutputs> {
+        return this.api.executeClimateRisk(param.climateRiskProcessParams,  options).toPromise();
     }
 
     /**

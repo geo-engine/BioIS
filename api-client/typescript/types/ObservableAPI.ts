@@ -13,6 +13,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -33,6 +37,8 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CordexModel } from '../models/CordexModel';
+import { CordexRegion } from '../models/CordexRegion';
 import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
@@ -357,6 +363,36 @@ export class ObservableProcessesApi {
      */
     public executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: ConfigurationOptions): Observable<BiodiversitySensitiveAreasProcessOutputs> {
         return this.executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams, _options).pipe(map((apiResponse: HttpInfo<BiodiversitySensitiveAreasProcessOutputs>) => apiResponse.data));
+    }
+
+    /**
+     * @param climateRiskProcessParams
+     */
+    public executeClimateRiskWithHttpInfo(climateRiskProcessParams: ClimateRiskProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<ClimateRiskOutputs>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.executeClimateRisk(climateRiskProcessParams, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.executeClimateRiskWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * @param climateRiskProcessParams
+     */
+    public executeClimateRisk(climateRiskProcessParams: ClimateRiskProcessParams, _options?: ConfigurationOptions): Observable<ClimateRiskOutputs> {
+        return this.executeClimateRiskWithHttpInfo(climateRiskProcessParams, _options).pipe(map((apiResponse: HttpInfo<ClimateRiskOutputs>) => apiResponse.data));
     }
 
     /**

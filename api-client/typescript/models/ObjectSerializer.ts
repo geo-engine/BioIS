@@ -8,6 +8,10 @@ export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
 export * from '../models/BiodiversitySensitiveAreasProcessParams';
 export * from '../models/BooleanField';
 export * from '../models/BoundingBox';
+export * from '../models/ClimateRiskInputs';
+export * from '../models/ClimateRiskOutputs';
+export * from '../models/ClimateRiskProcessParams';
+export * from '../models/ClimateVariable';
 export * from '../models/Conformance';
 export * from '../models/Constraints';
 export * from '../models/Constraints1';
@@ -28,6 +32,8 @@ export * from '../models/Constraints6';
 export * from '../models/Constraints7';
 export * from '../models/Constraints8';
 export * from '../models/Constraints9';
+export * from '../models/CordexModel';
+export * from '../models/CordexRegion';
 export * from '../models/CreditsForJob';
 export * from '../models/DataResource';
 export * from '../models/DateField';
@@ -126,6 +132,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams    } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField     , BooleanFieldTypeEnum  , BooleanFieldFormatEnum       } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs        } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams    } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -146,6 +156,8 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
+import { CordexModel } from '../models/CordexModel';
+import { CordexRegion } from '../models/CordexRegion';
 import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResourceClass } from '../models/DataResource';
 import { DateField     , DateFieldTypeEnum      } from '../models/DateField';
@@ -252,6 +264,9 @@ let enumsMap: Set<string> = new Set<string>([
     "ArrayFieldFormatEnum",
     "BooleanFieldTypeEnum",
     "BooleanFieldFormatEnum",
+    "ClimateVariable",
+    "CordexModel",
+    "CordexRegion",
     "DateFieldTypeEnum",
     "DateTimeFieldTypeEnum",
     "DurationFieldTypeEnum",
@@ -308,6 +323,9 @@ let typeMap: {[index: string]: any} = {
     "BiodiversitySensitiveAreasProcessParams": BiodiversitySensitiveAreasProcessParams,
     "BooleanField": BooleanField,
     "BoundingBox": BoundingBox,
+    "ClimateRiskInputs": ClimateRiskInputs,
+    "ClimateRiskOutputs": ClimateRiskOutputs,
+    "ClimateRiskProcessParams": ClimateRiskProcessParams,
     "Conformance": Conformance,
     "Constraints": Constraints,
     "Constraints1": Constraints1,

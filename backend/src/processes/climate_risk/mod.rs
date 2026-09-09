@@ -1,0 +1,833 @@
+use crate::{
+    config::CONFIG,
+    credits::add_credits_used_pending,
+    db::DbHandle,
+    processes::parameters::{DataResource, PointGeoJsonInput, Year, YearRange},
+    state::{CONTEXT, TaskLocalContext},
+};
+use anyhow::{Context, Result};
+use geojson::PointType;
+use ogcapi::{
+    processes::Processor,
+    types::{
+        common::Link,
+        processes::{
+            Execute, ExecuteResults, JobControlOptions, Process, ProcessSummary, TransmissionMode,
+            description::{DescriptionType, InputDescription, OutputDescription},
+        },
+    },
+};
+use schemars::generate::SchemaSettings;
+use std::collections::HashMap;
+
+mod compute;
+mod types;
+mod workflow;
+
+pub use types::{ClimateRiskInputs, ClimateRiskOutputs};
+
+use self::{compute::*, types::*};
+/// Calculates climate-risk indicators for a given point and time window.
+#[derive(Debug, Clone)]
+pub struct ClimateRiskProcess {
+    db: DbHandle,
+}
+
+impl ClimateRiskProcess {
+    #[must_use]
+    pub fn new(db: DbHandle) -> Self {
+        Self { db }
+    }
+}
+
+/// Generate the JSON Schema for the `models` input and attach `enumNames` hints
+/// that list the scenarios each model is available for.
+fn models_schema_with_hints(generator: &mut schemars::SchemaGenerator) -> serde_json::Value {
+    let mut schema = generator.root_schema_for::<Vec<CordexModel>>().to_value();
+
+    // schemars emits the enum behind `items.$ref` + `$defs`; enrich the referenced
+    // definition so every resolver of the ref sees the hints.
+    let Some(model_schema) = schema
+        .get_mut("$defs")
+        .and_then(|defs| defs.get_mut("CordexModel"))
+        .and_then(|model| model.as_object_mut())
+    else {
+        return schema;
+    };
+    let Some(enum_values) = model_schema
+        .get("enum")
+        .and_then(|values| values.as_array().cloned())
+    else {
+        return schema;
+    };
+    let enum_names: Vec<String> = enum_values
+        .iter()
+        .filter_map(|value| value.as_str())
+        .map(model_display_name)
+        .collect();
+    model_schema.insert(
+        "enumNames".to_string(),
+        serde_json::to_value(enum_names).unwrap_or_default(),
+    );
+
+    schema
+}
+
+fn model_display_name(model_value: &str) -> String {
+    CordexModel::ALL
+        .iter()
+        .find(|model| model.name() == model_value)
+        .map_or_else(
+            || model_value.to_string(),
+            |model| {
+                let props = model.properties();
+                let scenarios = props
+                    .scenarios
+                    .iter()
+                    .map(|s| s.properties().name)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{} ({})", props.name, scenarios)
+            },
+        )
+}
+
+fn build_inputs(generator: &mut schemars::SchemaGenerator) -> HashMap<String, InputDescription> {
+    let mut reference_year_begin_schema = generator.root_schema_for::<Year>().to_value();
+    reference_year_begin_schema["default"] = serde_json::json!(default_reference_year_begin().0);
+
+    HashMap::from([
+        (
+            "coordinate".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Coordinate in WGS84".to_string()),
+                    description: Some("This is a POINT input in WGS84 (EPSG:4326) format.".to_string()),
+                    ..Default::default()
+                },
+                schema: generator.root_schema_for::<PointGeoJsonInput>().to_value(),
+                ..Default::default()
+            },
+        ),
+        (
+            "yearBegin".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Start year".to_string()),
+                    description: Some("The first year to include in the climate-risk aggregation.".to_string()),
+                    ..Default::default()
+                },
+                schema: generator.root_schema_for::<Year>().to_value(),
+                ..Default::default()
+            },
+        ),
+        (
+            "yearRange".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Range (years)".to_string()),
+                    description: Some(
+                        "Length of the climate-risk aggregation window in years (5-30).".to_string(),
+                    ),
+                    ..Default::default()
+                },
+                schema: generator.root_schema_for::<YearRange>().to_value(),
+                ..Default::default()
+            },
+        ),
+        (
+            "referenceYearBegin".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Reference period start".to_string()),
+                    description: Some(
+                        "First year of the reference period used to compute anomalies. Uses the same range as the analysis window.".to_string(),
+                    ),
+                    ..Default::default()
+                },
+                schema: reference_year_begin_schema,
+                ..Default::default()
+            },
+        ),
+        (
+            "variables".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Climate variables".to_string()),
+                    description: Some(
+                        "The climate indicators to derive from the source dataset. If empty, all available indicators are computed.".to_string(),
+                    ),
+                    ..Default::default()
+                },
+                schema: generator.root_schema_for::<Vec<ClimateVariable>>().to_value(),
+                min_occurs: Some(0),
+                ..Default::default()
+            },
+        ),
+        (
+            "models".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Climate models".to_string()),
+                    description: Some("The climate-model workflows to execute for each requested variable.".to_string()),
+                    ..Default::default()
+                },
+                schema: models_schema_with_hints(generator),
+                ..Default::default()
+            },
+        ),
+        (
+            "region".to_string(),
+            InputDescription {
+                description_type: DescriptionType {
+                    title: Some("Climate data region".to_string()),
+                    description: Some("The climate-data region to use for the risk aggregation. If not specified, the region will be inferred from the input coordinate.".to_string()),
+                    ..Default::default()
+                },
+                schema: generator.root_schema_for::<Option<CordexRegion>>().to_value(),
+                min_occurs: Some(0),
+                ..Default::default()
+            },
+        ),
+    ])
+}
+
+fn build_outputs(generator: &mut schemars::SchemaGenerator) -> HashMap<String, OutputDescription> {
+    let mut outputs = HashMap::from([
+        (
+            "inputs".to_string(),
+            OutputDescription {
+                description_type: DescriptionType {
+                    title: Some("Input parameters".to_string()),
+                    description: Some(
+                        "The inputs used to compute the climate-risk summary.".to_string(),
+                    ),
+                    ..Default::default()
+                },
+                schema: generator.root_schema_for::<ClimateRiskInputs>().to_value(),
+            },
+        ),
+        (
+            "rawEnsembleData".to_string(),
+            OutputDescription {
+                description_type: DescriptionType {
+                    title: Some("Raw ensemble data".to_string()),
+                    description: Some(
+                        "Per-model raw values for each variable × scenario combination."
+                            .to_string(),
+                    ),
+                    ..Default::default()
+                },
+                schema: generator
+                    .root_schema_for::<DataResource<Vec<ClimateRiskRawRow>>>()
+                    .to_value(),
+            },
+        ),
+    ]);
+
+    for scenario in ClimateScenario::ALL {
+        let props = scenario.properties();
+        outputs.insert(
+            scenario.name().to_string(),
+            OutputDescription {
+                description_type: DescriptionType {
+                    title: Some(props.name.to_string()),
+                    description: Some(format!(
+                        "A table of climate-risk indicators for the {} scenario.",
+                        props.name
+                    )),
+                    ..Default::default()
+                },
+                schema: generator
+                    .root_schema_for::<DataResource<Vec<ClimateRiskRow>>>()
+                    .to_value(),
+            },
+        );
+    }
+
+    outputs
+}
+
+#[async_trait::async_trait]
+impl Processor for ClimateRiskProcess {
+    fn id(&self) -> &'static str {
+        "climate-risk"
+    }
+
+    fn version(&self) -> &'static str {
+        "0.2.0"
+    }
+
+    fn process(&self) -> Result<Process> {
+        let mut settings = SchemaSettings::default();
+        settings.meta_schema = None;
+        let mut generator = settings.into_generator();
+
+        let inputs = build_inputs(&mut generator);
+        let outputs = build_outputs(&mut generator);
+
+        Ok(Process {
+            summary: ProcessSummary {
+                id: self.id().into(),
+                version: self.version().into(),
+                description: DescriptionType {
+                    title: Some("Climate risk indicators".to_string()),
+                    description: Some(
+                        "This process derives climate-risk indicators such as heat days from CORDEX/CMIP5 climate data for a point location and a time window. The workflow builds a daily threshold mask, aggregates it over the requested years and returns summary statistics for the selected climate variable. An anomaly relative to a reference period (same length) is reported as the difference of the multi-year means. If no models are specified, all models compatible with the region are used. If no region is specified, it is automatically inferred from the coordinate. If no scenario outputs are requested, all scenarios are computed."
+                            .to_string(),
+                    ),
+                    ..Default::default()
+                },
+                job_control_options: vec![
+                    JobControlOptions::SyncExecute,
+                    JobControlOptions::AsyncExecute,
+                ],
+                output_transmission: vec![TransmissionMode::Value],
+                links: vec![Link::new(
+                    format!("./{}/execution", self.id()),
+                    "http://www.opengis.net/def/rel/ogc/1.0/execute",
+                )
+                .title("Execution endpoint")],
+            },
+            inputs,
+            outputs,
+        })
+    }
+
+    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
+        let mut inputs = parse_inputs(&execute.inputs)?;
+
+        validate_inputs(
+            inputs.year_begin,
+            inputs.year_range,
+            inputs.reference_year_begin,
+        )?;
+
+        let point = inputs.coordinate.value.coordinates.clone();
+
+        let region_props = resolve_region(inputs.region, &point)?;
+        if inputs.region.is_none() {
+            inputs.region = Some(region_props.region);
+        }
+
+        let (filtered_models, model_props, dropped_models) =
+            resolve_models(&inputs.models, region_props.region);
+        if !dropped_models.is_empty() {
+            tracing::warn!(
+                "Ignoring climate models not available for region {}: {}",
+                region_props.name,
+                dropped_models.join(", ")
+            );
+        }
+        if model_props.is_empty() {
+            let detail = if dropped_models.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "; none of the requested models ({}) are available",
+                    dropped_models.join(", ")
+                )
+            };
+            anyhow::bail!(
+                "No climate models valid / available for the specified region: {}{detail}",
+                region_props.name
+            );
+        }
+        inputs.models = filtered_models;
+
+        let scenario_props = resolve_available_scenarios(&model_props);
+        if scenario_props.is_empty() {
+            anyhow::bail!(
+                "No climate scenarios valid / available for the specified region and models."
+            );
+        }
+
+        let available_scenarios: Vec<ClimateScenario> =
+            scenario_props.iter().map(|s| s.scenario).collect();
+
+        let output_keys: std::collections::BTreeSet<String> =
+            execute.outputs.keys().cloned().collect();
+        let (selected_scenarios, should_reflect_inputs, include_raw_ensemble) =
+            resolve_requests(&output_keys, &available_scenarios)?;
+
+        let variables = resolve_variables(&inputs.variables);
+        let requests: Vec<_> = selected_scenarios
+            .into_iter()
+            .flat_map(|scenario| {
+                variables
+                    .iter()
+                    .map(move |v| (ClimateVariableRequest::new(*v), scenario))
+            })
+            .collect();
+
+        let request_props: Vec<(ClimateVariableRequest, ClimateScenarioProperties)> = requests
+            .into_iter()
+            .map(|(v, s)| (v, s.properties()))
+            .collect();
+
+        let configuration = CONFIG.geoengine.api_config(CONTEXT.session_token().ok());
+        let (mut outputs, computation_ids) = compute_climate(
+            &configuration,
+            &point,
+            &ClimatePeriods {
+                analysis_start: inputs.year_begin,
+                range: inputs.year_range,
+                reference_start: inputs.reference_year_begin,
+            },
+            &request_props,
+            &model_props,
+            &region_props,
+        )
+        .await?;
+
+        if should_reflect_inputs {
+            outputs.inputs = Some(inputs);
+        }
+        if !include_raw_ensemble {
+            outputs.raw_ensemble_data = None;
+        }
+
+        for computation_id in computation_ids.iter().filter(|id| id.is_some()) {
+            add_credits_used_pending(self.db.clone(), configuration.clone(), *computation_id)
+                .await?;
+        }
+
+        Ok(outputs.into())
+    }
+}
+
+fn parse_inputs(
+    inputs: &HashMap<String, ogcapi::types::processes::Input>,
+) -> Result<ClimateRiskInputs> {
+    let value = serde_json::to_value(inputs).context("Failed to serialize process inputs")?;
+    serde_json::from_value(value).context("Failed to deserialize climate-risk inputs")
+}
+
+fn validate_inputs(
+    Year(start_year): Year,
+    YearRange(range): YearRange,
+    Year(reference_year): Year,
+) -> Result<()> {
+    if !(5..=30).contains(&range) {
+        anyhow::bail!("Year range must be between 5 and 30 years");
+    }
+    if start_year < DATA_START_YEAR {
+        anyhow::bail!("Start year must be at least {DATA_START_YEAR}");
+    }
+    if start_year + range > 2100 {
+        anyhow::bail!("Start year plus range must not exceed 2100");
+    }
+    if reference_year < DATA_START_YEAR {
+        anyhow::bail!("Reference period start year must be at least {DATA_START_YEAR}");
+    }
+    if reference_year + range > 2100 {
+        anyhow::bail!("Reference period start year plus range must not exceed 2100");
+    }
+    Ok(())
+}
+
+fn resolve_region(
+    region: Option<CordexRegion>,
+    point: &PointType,
+) -> Result<CordexRegionProperties> {
+    if let Some(r) = region {
+        let props = r.properties();
+        if !props.bounding_box.contains(point) {
+            anyhow::bail!(
+                "Coordinate is outside of the specified CORDEX/CMIP5 region: {}",
+                props.name
+            );
+        }
+        Ok(props)
+    } else {
+        let region = CordexRegion::point_to_region(point).ok_or_else(|| {
+            anyhow::anyhow!("Coordinate is outside of the supported CORDEX/CMIP5 regions")
+        })?;
+        Ok(region.properties())
+    }
+}
+
+/// Filters the requested models down to those of the given region. The third return value
+/// lists the user-specified models that were dropped, so callers can report them.
+fn resolve_models(
+    specified_models: &[CordexModel],
+    region: CordexRegion,
+) -> (Vec<CordexModel>, Vec<CordexModelProperties>, Vec<String>) {
+    if specified_models.is_empty() {
+        let (models, props): (Vec<_>, Vec<_>) = CordexModel::ALL
+            .iter()
+            .map(|m| (*m, m.properties()))
+            .filter(|(_, p)| p.region == region)
+            .unzip();
+        (models, props, Vec::new())
+    } else {
+        let mut models = Vec::new();
+        let mut props = Vec::new();
+        let mut dropped = Vec::new();
+        for model in specified_models {
+            let model_props = model.properties();
+            if model_props.region == region {
+                models.push(*model);
+                props.push(model_props);
+            } else {
+                dropped.push(model_props.name.to_string());
+            }
+        }
+        (models, props, dropped)
+    }
+}
+
+fn resolve_available_scenarios(
+    model_props: &[CordexModelProperties],
+) -> Vec<ClimateScenarioProperties> {
+    ClimateScenario::ALL
+        .iter()
+        .copied()
+        .filter(|s| model_props.iter().any(|m| m.scenarios.contains(s)))
+        .map(ClimateScenario::properties)
+        .collect()
+}
+
+fn resolve_variables(specified_variables: &[ClimateVariable]) -> Vec<ClimateVariable> {
+    if specified_variables.is_empty() {
+        ClimateVariable::ALL.to_vec()
+    } else {
+        specified_variables.to_vec()
+    }
+}
+
+fn resolve_requests(
+    output_keys: &std::collections::BTreeSet<String>,
+    available_scenarios: &[ClimateScenario],
+) -> Result<(Vec<ClimateScenario>, bool, bool)> {
+    let mut should_reflect_inputs = output_keys.is_empty();
+    let mut include_raw_ensemble = false;
+    let mut selected_scenarios = Vec::new();
+
+    // BTreeSet iterates in order, so scenario selection is deterministic.
+    for output_key in output_keys {
+        if output_key == "inputs" {
+            should_reflect_inputs = true;
+            continue;
+        }
+
+        if output_key == "rawEnsembleData" {
+            include_raw_ensemble = true;
+            continue;
+        }
+
+        let mut found = false;
+        for scenario in ClimateScenario::ALL.iter().copied() {
+            if scenario.name() == output_key && available_scenarios.contains(&scenario) {
+                selected_scenarios.push(scenario);
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            anyhow::bail!("Unknown output requested: {output_key}");
+        }
+    }
+
+    if selected_scenarios.is_empty() {
+        selected_scenarios = available_scenarios.to_vec();
+    }
+
+    Ok((
+        selected_scenarios,
+        should_reflect_inputs,
+        include_raw_ensemble,
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use geoengine_api_client::models::RasterOperator;
+    use ogcapi::types::processes::Input;
+    use serde_json::json;
+
+    #[test]
+    fn it_deserializes_the_input() {
+        let payload = json!({
+            "coordinate": {
+                "value": {
+                    "type": "Point",
+                    "coordinates": [12.34, 56.78]
+                },
+                "mediaType": "application/geo+json"
+            },
+            "yearBegin": 2014,
+            "yearRange": 20,
+            "referenceYearBegin": 2020,
+            "variables": ["heatDays", "iceDays"],
+            "models": ["MPI-M-MPI-ESM-LR"],
+            "region": "Eur"
+        });
+
+        let inputs: HashMap<String, Input> = serde_json::from_value(payload).unwrap();
+        let inputs = parse_inputs(&inputs).unwrap();
+        assert_eq!(
+            inputs.variables,
+            vec![ClimateVariable::HeatDays, ClimateVariable::IceDays]
+        );
+        assert_eq!(inputs.reference_year_begin, Year(2020));
+        assert_eq!(inputs.region, Some(CordexRegion::Eur));
+    }
+
+    #[test]
+    fn it_deserializes_omitted_optional_inputs_as_their_defaults() {
+        let payload = json!({
+            "coordinate": {
+                "value": {
+                    "type": "Point",
+                    "coordinates": [12.34, 56.78]
+                },
+                "mediaType": "application/geo+json"
+            },
+            "referenceYearBegin": 2020
+        });
+
+        let inputs: HashMap<String, Input> = serde_json::from_value(payload).unwrap();
+        let inputs = parse_inputs(&inputs).unwrap();
+        assert_eq!(inputs.reference_year_begin, Year(2020));
+        assert_eq!(inputs.region, None);
+    }
+
+    #[test]
+    fn it_rejects_missing_reference_year_begin() {
+        let payload = json!({
+            "coordinate": {
+                "value": {
+                    "type": "Point",
+                    "coordinates": [12.34, 56.78]
+                },
+                "mediaType": "application/geo+json"
+            }
+        });
+
+        let inputs: HashMap<String, Input> = serde_json::from_value(payload).unwrap();
+        let error = format!("{:#}", parse_inputs(&inputs).unwrap_err());
+
+        assert!(error.contains("referenceYearBegin"), "{error}");
+    }
+
+    #[test]
+    fn it_rejects_malformed_inputs_with_context() {
+        let payload = json!({ "coordinate": { "value": { "type": "Point" }, "mediaType": "application/geo+json" } });
+
+        let inputs: HashMap<String, Input> = serde_json::from_value(payload).unwrap();
+        let error = format!("{:#}", parse_inputs(&inputs).unwrap_err());
+
+        assert!(
+            error.contains("Failed to deserialize climate-risk inputs"),
+            "{error}"
+        );
+        assert!(error.contains("coordinate"), "{error}");
+    }
+
+    #[crate::test]
+    async fn it_declares_expected_inputs_and_outputs_in_the_summary(db: DbHandle) {
+        let process = ClimateRiskProcess::new(db).process().unwrap();
+
+        assert_eq!(process.summary.id, "climate-risk");
+        assert_eq!(process.summary.version, "0.2.0");
+
+        assert!(!process.inputs.contains_key("scenarios"));
+        assert!(!process.inputs.contains_key("yearEnd"));
+        assert!(process.inputs.contains_key("variables"));
+        assert!(process.inputs.contains_key("yearRange"));
+        assert!(process.inputs.contains_key("referenceYearBegin"));
+
+        assert!(process.outputs.contains_key("rcp26"));
+        assert!(process.outputs.contains_key("rcp45"));
+        assert!(process.outputs.contains_key("rcp85"));
+        assert!(process.outputs.contains_key("rawEnsembleData"));
+        assert!(!process.outputs.contains_key("climateRisk"));
+        assert_eq!(
+            process.outputs["rcp45"].description_type.title.as_deref(),
+            Some("RCP 4.5 (Intermediate emissions)")
+        );
+    }
+
+    #[crate::test]
+    async fn it_marks_reference_year_begin_as_required_with_a_default(db: DbHandle) {
+        let process = ClimateRiskProcess::new(db).process().unwrap();
+        let input = &process.inputs["referenceYearBegin"];
+
+        assert_eq!(input.schema["type"], json!("integer"));
+        assert!(input.schema.get("anyOf").is_none());
+        assert_eq!(input.schema["default"], json!(2020));
+        assert_eq!(
+            input.description_type.metadata.len(),
+            0,
+            "no metadata should be present: {:#?}",
+            input.description_type.metadata
+        );
+        assert_eq!(input.min_occurs.unwrap_or(1), 1);
+    }
+
+    #[test]
+    fn it_validates_year_ranges() {
+        let cases: &[(Year, YearRange, Year, bool)] = &[
+            (Year(2014), YearRange(4), Year(2020), false),
+            (Year(2014), YearRange(31), Year(2020), false),
+            (Year(2080), YearRange(30), Year(2020), false),
+            (Year(2014), YearRange(20), Year(2005), false),
+            (Year(2005), YearRange(20), Year(2020), false),
+            (Year(2006), YearRange(20), Year(2020), true),
+            (Year(2014), YearRange(20), Year(2090), false),
+            (Year(2014), YearRange(5), Year(2020), true),
+            (Year(2014), YearRange(30), Year(2020), true),
+        ];
+        for &(start, range, reference, expected_ok) in cases {
+            let ok = validate_inputs(start, range, reference).is_ok();
+            assert_eq!(
+                ok, expected_ok,
+                "validate_inputs({start:?}, {range:?}, {reference:?})"
+            );
+        }
+    }
+
+    #[test]
+    fn it_names_dataset_raster_sources() {
+        let region = CordexRegion::Eur.properties();
+        let scenario = ClimateScenario::Rcp45.properties();
+        let model = CordexModel::MpiMmpiEsmLr.properties();
+        let var = ClimateVariable::HeatDays.properties();
+
+        let result = ClimateRiskProcess::dataset_raster_source(&var, &model, &scenario, &region);
+
+        assert!(matches!(result, RasterOperator::GdalSource(_)));
+
+        let value = serde_json::to_value(&result).unwrap();
+        assert_eq!(
+            value["params"]["data"],
+            "cordex_EUR11_rcp45_MPI-M-MPI-ESM-LR_tasmax"
+        );
+    }
+
+    #[test]
+    fn it_resolves_region() {
+        let inside = PointType::from(vec![12.0, 50.0]);
+        let outside = PointType::from(vec![0.0, 0.0]);
+
+        assert_eq!(
+            resolve_region(Some(CordexRegion::Eur), &inside)
+                .unwrap()
+                .region,
+            CordexRegion::Eur
+        );
+        assert!(
+            resolve_region(Some(CordexRegion::Eur), &outside)
+                .unwrap_err()
+                .to_string()
+                .contains("outside of the specified")
+        );
+        assert_eq!(
+            resolve_region(None, &inside).unwrap().region,
+            CordexRegion::Eur
+        );
+        assert!(
+            resolve_region(None, &outside)
+                .unwrap_err()
+                .to_string()
+                .contains("outside of the supported")
+        );
+    }
+
+    #[test]
+    fn it_resolves_models() {
+        let (models, _props, dropped) = resolve_models(&[], CordexRegion::Eur);
+        assert_eq!(models.len(), 2);
+        assert!(dropped.is_empty());
+        assert!(models.contains(&CordexModel::MpiMmpiEsmLr));
+        assert!(models.contains(&CordexModel::MohcHadgem2Es));
+
+        let (models, _props, dropped) =
+            resolve_models(&[CordexModel::MpiMmpiEsmLr], CordexRegion::Eur);
+        assert_eq!(models, vec![CordexModel::MpiMmpiEsmLr]);
+        assert!(dropped.is_empty());
+    }
+
+    #[test]
+    fn it_resolves_available_scenarios() {
+        let model_props = vec![CordexModel::MpiMmpiEsmLr.properties()];
+        assert_eq!(
+            resolve_available_scenarios(&model_props).len(),
+            ClimateScenario::ALL.len()
+        );
+        assert!(resolve_available_scenarios(&[]).is_empty());
+    }
+
+    #[test]
+    fn it_resolves_variables() {
+        assert_eq!(resolve_variables(&[]), ClimateVariable::ALL.to_vec());
+        assert_eq!(
+            resolve_variables(&[ClimateVariable::HeatDays]),
+            vec![ClimateVariable::HeatDays]
+        );
+    }
+
+    #[test]
+    fn it_enriches_the_models_enum_with_display_name_hints() {
+        let mut settings = schemars::generate::SchemaSettings::default();
+        settings.meta_schema = None;
+        let mut generator = settings.into_generator();
+        let schema = models_schema_with_hints(&mut generator);
+        let names = schema["$defs"]["CordexModel"]["enumNames"]
+            .as_array()
+            .unwrap();
+        assert_eq!(names.len(), CordexModel::ALL.len());
+        for name in names {
+            // Each display name carries the scenario availability hint.
+            assert!(name.as_str().unwrap().contains("RCP"), "{name:?}");
+        }
+    }
+
+    #[test]
+    fn it_appends_scenario_availability_to_model_display_names() {
+        let display = model_display_name("MPI-M-MPI-ESM-LR");
+        assert!(display.starts_with("MPI-M-MPI-ESM-LR ("), "{display}");
+        assert!(display.contains("RCP 2.6"), "{display}");
+        assert_eq!(model_display_name("unknown-model"), "unknown-model");
+    }
+
+    #[test]
+    fn it_resolves_requests() {
+        let scenarios = vec![ClimateScenario::Rcp45, ClimateScenario::Rcp85];
+
+        let (selected, should_reflect, include_raw) =
+            resolve_requests(&std::collections::BTreeSet::new(), &scenarios).unwrap();
+        assert_eq!(selected, scenarios);
+        assert!(should_reflect);
+        assert!(!include_raw);
+
+        let keys = std::collections::BTreeSet::from(["rcp45".to_string(), "rcp85".to_string()]);
+        let (selected, should_reflect, _) = resolve_requests(&keys, &scenarios).unwrap();
+        assert_eq!(selected, scenarios);
+        assert!(!should_reflect);
+
+        let keys = std::collections::BTreeSet::from(["inputs".to_string()]);
+        let (_, should_reflect, include_raw) = resolve_requests(&keys, &scenarios).unwrap();
+        assert!(should_reflect);
+        assert!(!include_raw);
+
+        let keys = std::collections::BTreeSet::from(["rawEnsembleData".to_string()]);
+        let (_, should_reflect, include_raw) = resolve_requests(&keys, &scenarios).unwrap();
+        assert!(!should_reflect);
+        assert!(include_raw);
+    }
+
+    #[test]
+    fn it_rejects_invalid_requests() {
+        let scenarios = vec![ClimateScenario::Rcp45];
+        for key in ["nonexistent", "climateRisk"] {
+            let keys = std::collections::BTreeSet::from([key.to_string()]);
+            assert!(
+                resolve_requests(&keys, &scenarios).is_err(),
+                "expected error for key {key}"
+            );
+        }
+    }
+}

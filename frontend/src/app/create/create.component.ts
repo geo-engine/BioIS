@@ -145,7 +145,7 @@ export class CreateComponent {
       this.formModel.update((current) => ({ ...current, inputs }));
     });
 
-    // initially, set all outputs
+    // initially, enable all outputs
     effect(() => {
       const outputDescriptions = this.outputs();
       const outputs = Object.fromEntries(outputDescriptions.map(({ key }) => [key, true]));
@@ -203,13 +203,15 @@ function outputsForRequest(outputs: Record<string, boolean>): Record<string, Out
 }
 
 /**
- * Filter out undefined values from the inputs and return a new object with only defined values.
- * This is necessary because the API expects only defined inputs to be sent.
+ * Map the inputs from the form model to the format expected by the API request.
+ * `undefined` and `null` values are omitted: the API cannot transport `null`
+ * (the OGC API `Input` enum has no null variant), and the backend treats an
+ * absent optional input as its default (e.g. unset `region`).
  *
  * @param inputs - The input object to filter.
  * @returns A new object containing only the defined inputs.
  */
-function inputsForRequest(inputs: Record<string, unknown>): Record<string, Input> {
+export function inputsForRequest(inputs: Record<string, unknown>): Record<string, Input> {
   return Object.fromEntries(
     Object.entries(inputs).filter(([_, value]) => !isNullOrUndefined(value)),
   );
@@ -267,6 +269,7 @@ function compareInputDescriptionsForSorting(
       case FieldType.String:
       case FieldType.RelativeJsonPointer:
       case FieldType.StringEnum:
+      case FieldType.StringArray:
         return 0;
       case FieldType.Coordinate:
       case FieldType.GeoJson:

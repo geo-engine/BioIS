@@ -1,6 +1,6 @@
 use anyhow::Result;
 use geoengine_api_client::models::{BoundingBox2D, Coordinate2D, ProvenanceEntry};
-use geojson::Position;
+use geojson::{PointType, Position};
 use ogcapi::types::{
     common::Crs,
     processes::description::{DescriptionType, InputDescription, Metadata, OutputDescription},
@@ -11,8 +11,9 @@ use std::collections::HashMap;
 use utoipa::ToSchema;
 
 pub use data_resource::{
-    DataResource, DataResourceSchema, Fields, HasTableSchemaType, TableSchemaField,
-    TableSchemaItemType, TableSchemaType,
+    BioISTableSchemaExtension, BioisDisplayKind, BioisDisplayMetadata, DataResource,
+    DataResourceSchema, HasTableSchemaType, TableSchema, TableSchemaField, TableSchemaItemType,
+    TableSchemaType,
 };
 #[cfg(test)]
 pub use geo_json::GeoJsonInputMediaType;
@@ -22,7 +23,9 @@ pub use geo_json::{
 };
 #[cfg(test)]
 pub use units::Hectare;
-pub use units::{Area, Kilometers, Month, Percentage, SquareMeter, UnitForArea, Year};
+pub use units::{
+    Area, Days, Kilometers, Month, Percentage, SquareMeter, UnitForArea, Year, YearRange,
+};
 
 mod data_resource;
 mod geo_json;
@@ -143,7 +146,7 @@ impl TryFrom<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>
             name: "documentation-sources".try_into()?,
             title: Some("Documentation Sources".to_string()),
             data: value,
-            schema: Fields {
+            schema: TableSchema {
                 fields: vec![
                     TableSchemaField {
                         name: DocumentationSource::DATA_FIELD_NAME.to_string(),
@@ -159,6 +162,7 @@ impl TryFrom<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>
                     },
                 ],
                 primary_key: vec![DocumentationSource::DATA_FIELD_NAME.to_string()].into(),
+                ..Default::default()
             },
         })
     }
@@ -256,6 +260,7 @@ impl<const N: usize> ToOutputHashMap for [OutputSpec; N] {
     }
 }
 
+/// A 2D bounding box in WGS84 coordinates.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BoundingBox {
     minx: f64,
@@ -263,6 +268,21 @@ pub struct BoundingBox {
     maxx: f64,
     maxy: f64,
     crs: Crs,
+}
+
+/// Returns the candidate whose bounding box contains `point`, breaking ties by proximity to center.
+pub fn nearest_containing<T>(
+    point: &PointType,
+    candidates: impl IntoIterator<Item = (T, BoundingBox)>,
+) -> Option<T> {
+    candidates
+        .into_iter()
+        .filter(|(_, bounding_box)| bounding_box.contains(point))
+        .min_by(|(_, left), (_, right)| {
+            left.distance_to_center_squared(point)
+                .total_cmp(&right.distance_to_center_squared(point))
+        })
+        .map(|(candidate, _)| candidate)
 }
 
 impl BoundingBox {
@@ -284,6 +304,30 @@ impl BoundingBox {
             maxy: f64::MIN,
             crs,
         }
+    }
+
+    /// Returns true if the point lies within this bounding box (inclusive bounds).
+    pub fn contains(&self, point: &PointType) -> bool {
+        let x = point[0];
+        let y = point[1];
+        x >= self.minx && x <= self.maxx && y >= self.miny && y <= self.maxy
+    }
+
+    fn distance_to_center_squared(&self, point: &PointType) -> f64 {
+        let center_x = f64::midpoint(self.minx, self.maxx);
+        let center_y = f64::midpoint(self.miny, self.maxy);
+        (point[0] - center_x).powi(2) + (point[1] - center_y).powi(2)
+    }
+
+    /// Create a small bounding box around a point with the given half-span.
+    pub fn around_point(point: &PointType, half_span: f64) -> Self {
+        Self::new(
+            point[0] - half_span,
+            point[1] - half_span,
+            point[0] + half_span,
+            point[1] + half_span,
+            Crs::from_epsg(4326),
+        )
     }
 
     pub fn enlarge_by_positions<'p>(&mut self, other: impl Iterator<Item = &'p Position>) {
@@ -426,6 +470,25 @@ mod tests {
         assert_abs_diff_eq!(bbox_2d.lower_left_coordinate.y, 2.0);
         assert_abs_diff_eq!(bbox_2d.upper_right_coordinate.x, 3.0);
         assert_abs_diff_eq!(bbox_2d.upper_right_coordinate.y, 4.0);
+    }
+
+    #[test]
+    fn it_selects_the_nearest_containing_bounding_box() {
+        let point = PointType::from(vec![5.0, 5.0]);
+        let selected = nearest_containing(
+            &point,
+            [
+                (
+                    "left",
+                    BoundingBox::new(0.0, 0.0, 10.0, 10.0, Crs::default2d()),
+                ),
+                (
+                    "right",
+                    BoundingBox::new(4.0, 0.0, 20.0, 10.0, Crs::default2d()),
+                ),
+            ],
+        );
+        assert_eq!(selected, Some("left"));
     }
 
     #[test]

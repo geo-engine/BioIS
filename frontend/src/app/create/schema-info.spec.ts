@@ -1,5 +1,12 @@
 import { InputDescription as ApiInputDescription } from '@geoengine/biois';
-import { retrieveInputDescription, FieldType, jsonSchemaToZod } from './schema-info';
+import {
+  retrieveInputDescription,
+  FieldType,
+  jsonSchemaToZod,
+  defaultInput,
+  defaultInputs,
+} from './schema-info';
+import { enumOptions } from './inputs-visualizer.component';
 
 const testInputs: {
   sites: ApiInputDescription;
@@ -7,7 +14,10 @@ const testInputs: {
   unitForArea: ApiInputDescription;
   previousYearData: ApiInputDescription;
   year: ApiInputDescription;
+  yearRange: ApiInputDescription;
+  referenceYearBegin: ApiInputDescription;
   siteTypeField: ApiInputDescription;
+  region: ApiInputDescription;
 } = {
   sites: {
     title: 'Sites',
@@ -194,6 +204,44 @@ const testInputs: {
       type: 'integer',
     },
   },
+  yearRange: {
+    title: 'Range (years)',
+    description: 'Length of the climate-risk aggregation window in years (5-30).',
+    schema: {
+      $defs: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'GeoJSON FeatureCollection': {
+          $ref: 'https://geojson.org/schema/FeatureCollection.json',
+        },
+        GeoJsonInputMediaType: {
+          enum: ['application/geo+json'],
+          type: 'string',
+        },
+      },
+      default: 20,
+      description: 'Length of the climate-risk aggregation window in years (5-30).',
+      examples: [20],
+      maximum: 30,
+      minimum: 5,
+      title: 'YearRange',
+      type: 'integer',
+    },
+  },
+  referenceYearBegin: {
+    title: 'Reference period start',
+    description:
+      'First year of the reference period used to compute anomalies. Uses the same range as the analysis window.',
+    schema: {
+      description: 'Year of reporting or change (e.g., 2023, 2024, etc.)',
+      examples: [2020],
+      format: 'uint16',
+      maximum: 2100,
+      minimum: 2000,
+      title: 'Year',
+      type: 'integer',
+      default: 2020,
+    },
+  },
   siteTypeField: {
     title: 'Site Type Field',
     description:
@@ -222,6 +270,28 @@ const testInputs: {
       minLength: 1,
       title: 'RelativeJsonPointer',
       type: 'string',
+    },
+  },
+  region: {
+    title: 'CORDEX/CMIP5 region',
+    description: 'The CORDEX/CMIP5 region to use for the climate-risk aggregation.',
+    schema: {
+      $defs: {
+        CordexRegion: {
+          title: 'CordexRegion',
+          type: 'string',
+          enum: ['Eur'],
+        },
+      },
+      anyOf: [
+        {
+          $ref: '#/$defs/CordexRegion',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Nullable_CordexRegion',
     },
   },
 } as const;
@@ -274,6 +344,45 @@ describe('retrieveInputDescription', () => {
     });
   });
 
+  it('should process IntegerWithSmallRange input (yearRange)', () => {
+    const result = retrieveInputDescription('yearRange', testInputs.yearRange);
+
+    expect(result).toMatchObject({
+      key: 'yearRange',
+      title: 'Range (years)',
+      type: FieldType.IntegerWithSmallRange,
+      optional: false,
+    });
+  });
+
+  it('should process non-nullable Integer input with a default (referenceYearBegin)', () => {
+    const result = retrieveInputDescription('referenceYearBegin', testInputs.referenceYearBegin);
+
+    expect(result).toMatchObject({
+      key: 'referenceYearBegin',
+      title: 'Reference period start',
+      type: FieldType.Integer,
+      optional: false,
+    });
+
+    expect(defaultInput(result)).toBe(2020);
+  });
+
+  it('should process nullable StringEnum input (region) with a usable default', () => {
+    const result = retrieveInputDescription('region', testInputs.region);
+
+    expect(result).toMatchObject({
+      key: 'region',
+      title: 'CORDEX/CMIP5 region',
+      type: FieldType.StringEnum,
+      optional: true,
+    });
+
+    expect(defaultInput(result)).toBeNull();
+    expect(defaultInput(result, { ignoreOptional: true })).toBe('Eur');
+    expect(enumOptions(result.schema)).toEqual(['Eur']);
+  });
+
   it('should process nullable input (previousYearData)', () => {
     const result = retrieveInputDescription('previousYearData', testInputs.previousYearData);
 
@@ -307,6 +416,20 @@ describe('retrieveInputDescription', () => {
         },
       },
     });
+  });
+});
+
+describe('defaultInputs', () => {
+  it('keeps optional inputs disabled by default', () => {
+    const input = retrieveInputDescription('region', testInputs.region);
+    const result = defaultInputs([input]);
+    expect(result['region']).toBeNull();
+  });
+
+  it('enables required inputs with their schema default', () => {
+    const input = retrieveInputDescription('referenceYearBegin', testInputs.referenceYearBegin);
+    const result = defaultInputs([input]);
+    expect(result['referenceYearBegin']).toBe(2020);
   });
 });
 

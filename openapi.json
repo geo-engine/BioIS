@@ -749,6 +749,36 @@
         }
       }
     },
+    "/processes/climate-risk/execution": {
+      "post": {
+        "tags": [
+          "Processes"
+        ],
+        "operationId": "execute_climate_risk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClimateRiskProcessParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClimateRiskOutputs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/processes/land-use-sealed-area/execution": {
       "post": {
         "tags": [
@@ -970,6 +1000,137 @@
           }
         }
       },
+      "ClimateRiskInputs": {
+        "type": "object",
+        "description": "User-supplied inputs for the climate risk process.",
+        "required": [
+          "coordinate",
+          "referenceYearBegin"
+        ],
+        "properties": {
+          "coordinate": {
+            "$ref": "#/components/schemas/PointGeoJsonInput"
+          },
+          "yearBegin": {
+            "$ref": "#/components/schemas/Year"
+          },
+          "yearRange": {
+            "$ref": "#/components/schemas/YearRange"
+          },
+          "referenceYearBegin": {
+            "$ref": "#/components/schemas/Year"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClimateVariable"
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CordexModel"
+            }
+          },
+          "region": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CordexRegion"
+              }
+            ]
+          }
+        }
+      },
+      "ClimateRiskOutputs": {
+        "type": "object",
+        "description": "Output of the climate risk process: summary table and raw ensemble data.",
+        "properties": {
+          "inputs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ClimateRiskInputs"
+              }
+            ]
+          },
+          "analysisPeriod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Analysis window as `\"2041–2070\"`, used for display in result headlines."
+          },
+          "referencePeriod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reference window used for anomalies as `\"2006–2025\"`, `None` when no reference period."
+          },
+          "climateRisk": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ]
+          },
+          "rawEnsembleData": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ]
+          }
+        }
+      },
+      "ClimateRiskProcessParams": {
+        "type": "object",
+        "description": "Process execution (Climate Risk)",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/ClimateRiskInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
+          }
+        }
+      },
+      "ClimateVariable": {
+        "type": "string",
+        "title": "ClimateVariable",
+        "description": "Climate variable to compute (WMO-based daily threshold indicators).",
+        "enum": [
+          "heatDays",
+          "iceDays",
+          "tropicalNights",
+          "frostDays",
+          "dryDays",
+          "heavyRainDays"
+        ]
+      },
       "Conformance": {
         "type": "object",
         "description": "The Conformance declaration states the conformance classes from standards or community\nspecifications, identified by a URI, that the API conforms to. Clients can but are not\nrequired to use this information. Accessing the Conformance declaration using HTTP GET\nreturns the list of URIs of conformance classes implemented by the server.",
@@ -984,6 +1145,23 @@
             }
           }
         }
+      },
+      "CordexModel": {
+        "type": "string",
+        "title": "ClimateModel",
+        "description": "CORDEX climate model.",
+        "enum": [
+          "MPI-M-MPI-ESM-LR",
+          "MOHC-HadGEM2-ES"
+        ]
+      },
+      "CordexRegion": {
+        "type": "string",
+        "title": "CordexRegion",
+        "description": "CORDEX climate region.",
+        "enum": [
+          "Eur"
+        ]
       },
       "CreditsForJob": {
         "type": "object",
@@ -2072,6 +2250,12 @@
         "type": "integer",
         "format": "int32",
         "description": "Year of reporting or change (e.g., 2023, 2024, etc.)",
+        "minimum": 0
+      },
+      "YearRange": {
+        "type": "integer",
+        "format": "int32",
+        "description": "Length of a time window in years (e.g., 5 years).",
         "minimum": 0
       }
     }

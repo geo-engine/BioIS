@@ -28,6 +28,10 @@ models/BiodiversitySensitiveAreasProcessOutputs.ts
 models/BiodiversitySensitiveAreasProcessParams.ts
 models/BooleanField.ts
 models/BoundingBox.ts
+models/ClimateRiskInputs.ts
+models/ClimateRiskOutputs.ts
+models/ClimateRiskProcessParams.ts
+models/ClimateVariable.ts
 models/Conformance.ts
 models/Constraints.ts
 models/Constraints1.ts
@@ -48,6 +52,8 @@ models/Constraints6.ts
 models/Constraints7.ts
 models/Constraints8.ts
 models/Constraints9.ts
+models/CordexModel.ts
+models/CordexRegion.ts
 models/CreditsForJob.ts
 models/DataResource.ts
 models/DateField.ts

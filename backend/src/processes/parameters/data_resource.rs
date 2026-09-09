@@ -10,13 +10,13 @@ pub struct DataResourceSchema;
 
 /// Data resources for outputting tabular data with JSON.
 /// Based on <https://datapackage.org/profiles/2.0/dataresource.json>.
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct DataResource<R> {
     /// A resource MUST contain a name property.
     pub name: DataResourceName,
     pub title: Option<String>,
     pub data: R,
-    pub schema: Fields,
+    pub schema: TableSchema,
 }
 
 impl<R: Serialize> DataResource<R> {
@@ -85,11 +85,15 @@ impl AsRef<str> for DataResourceName {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Fields {
+pub struct TableSchema {
+    #[serde(rename = "$schema", default, skip_serializing_if = "Option::is_none")]
+    pub schema: Option<String>,
     pub fields: Vec<TableSchemaField>,
     pub primary_key: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub biois: Option<BioISTableSchemaExtension>,
 }
 
 /// Field specification for Table Schema, based on <https://datapackage.org/standard/table-schema/>.
@@ -133,6 +137,37 @@ pub trait HasTableSchemaType {
     fn table_schema_type() -> TableSchemaType;
 }
 
+/// BioIS-specific metadata for rendering a standard Table Schema field.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BioISTableSchemaExtension {
+    pub display: std::collections::HashMap<String, BioisDisplayMetadata>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hidden_fields: Vec<String>,
+}
+
+/// Rendering hints for a table field: which row properties carry the display label and color.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BioisDisplayMetadata {
+    /// Semantic category of the rendered value, e.g. a risk probability.
+    pub kind: BioisDisplayKind,
+    /// Name of a row property carrying the complete display label for this field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label_field: Option<String>,
+    /// Name of a row property carrying the CSS color for this field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub color_field: Option<String>,
+}
+
+/// Semantic category of a rendered value.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum BioisDisplayKind {
+    RiskProbability,
+    RiskAnomaly,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -161,7 +196,7 @@ mod tests {
 
     #[test]
     fn it_handles_fields_with_primary_key() {
-        let fields = Fields {
+        let fields = TableSchema {
             fields: vec![
                 TableSchemaField {
                     name: "id".to_string(),
@@ -177,10 +212,12 @@ mod tests {
                 },
             ],
             primary_key: Some(vec!["id".to_string()]),
+            schema: None,
+            biois: None,
         };
 
         let json = serde_json::to_value(&fields).unwrap();
-        let deserialized: Fields = serde_json::from_value(json).unwrap();
+        let deserialized: TableSchema = serde_json::from_value(json).unwrap();
 
         assert_eq!(deserialized.fields.len(), 2);
         assert_eq!(deserialized.fields[0].name, "id");
@@ -202,7 +239,7 @@ mod tests {
             name: DataResourceName::new("test_resource").unwrap(),
             title: None,
             data: vec!["item1", "item2"],
-            schema: Fields {
+            schema: TableSchema {
                 fields: vec![TableSchemaField {
                     name: "value".to_string(),
                     r#type: Some(TableSchemaType::String),
@@ -210,6 +247,8 @@ mod tests {
                     item_type: None,
                 }],
                 primary_key: None,
+                schema: None,
+                biois: None,
             },
         };
 
@@ -255,5 +294,45 @@ mod tests {
             let json = serde_json::to_value(&item_type).unwrap();
             assert_eq!(json.as_str(), Some(expected_str));
         }
+    }
+
+    #[test]
+    fn it_serializes_display_metadata_with_label_and_color_fields() {
+        let metadata = BioisDisplayMetadata {
+            kind: BioisDisplayKind::RiskProbability,
+            label_field: Some("occurrenceProbabilityLabel".into()),
+            color_field: Some("occurrenceProbabilityColor".into()),
+        };
+        let json = serde_json::to_value(&metadata).unwrap();
+        assert_eq!(json["kind"], "riskProbability");
+        assert_eq!(json["labelField"], "occurrenceProbabilityLabel");
+        assert_eq!(json["colorField"], "occurrenceProbabilityColor");
+        assert_eq!(
+            serde_json::from_value::<BioisDisplayMetadata>(json).unwrap(),
+            metadata
+        );
+    }
+
+    #[test]
+    fn it_omits_absent_label_and_color_fields() {
+        let json = serde_json::to_value(BioisDisplayMetadata {
+            kind: BioisDisplayKind::RiskAnomaly,
+            label_field: None,
+            color_field: None,
+        })
+        .unwrap();
+        assert_eq!(json["kind"], "riskAnomaly");
+        assert!(json.get("labelField").is_none());
+        assert!(json.get("colorField").is_none());
+    }
+
+    #[test]
+    fn it_serializes_hidden_fields() {
+        let json = serde_json::to_value(BioISTableSchemaExtension {
+            display: std::collections::HashMap::new(),
+            hidden_fields: vec!["helperLabel".into()],
+        })
+        .unwrap();
+        assert_eq!(json["hiddenFields"], serde_json::json!(["helperLabel"]));
     }
 }

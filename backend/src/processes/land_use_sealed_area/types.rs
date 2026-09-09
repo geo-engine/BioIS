@@ -1,5 +1,5 @@
 use crate::processes::parameters::{
-    Area, DataResource, Fields, HasTableSchemaType, Percentage, SquareMeter, TableSchemaField,
+    Area, DataResource, HasTableSchemaType, Percentage, SquareMeter, TableSchema, TableSchemaField,
     TableSchemaType, UnitForArea,
 };
 use anyhow::Result;
@@ -249,6 +249,7 @@ pub fn summary_to_data_resource(
                 },
             ],
             primary_key: vec!["landUseType".to_string()].into(),
+            ..Default::default()
         },
         data: vec![
             land_use_summary_row_to_output(site_rows.total_sealed_area, unit_for_area),
@@ -294,6 +295,7 @@ pub fn site_to_data_resource(
                 },
             ],
             primary_key: vec!["location".to_string()].into(),
+            ..Default::default()
         },
         data: site_rows
             .into_iter()
