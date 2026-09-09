@@ -272,28 +272,6 @@ const testInputs: {
       type: 'string',
     },
   },
-  region: {
-    title: 'CORDEX/CMIP5 region',
-    description: 'The CORDEX/CMIP5 region to use for the climate-risk aggregation.',
-    schema: {
-      $defs: {
-        CordexRegion: {
-          title: 'CordexRegion',
-          type: 'string',
-          enum: ['Eur'],
-        },
-      },
-      anyOf: [
-        {
-          $ref: '#/$defs/CordexRegion',
-        },
-        {
-          type: 'null',
-        },
-      ],
-      title: 'Nullable_CordexRegion',
-    },
-  },
 } as const;
 
 describe('retrieveInputDescription', () => {

@@ -8,20 +8,16 @@ use tracing::instrument;
 
 use super::{ClimateRiskProcess, types::*};
 impl ClimateRiskProcess {
-    /// Builds the GDAL raster source for a variable/model/scenario/region combination.
-    #[instrument(skip(var, model, scenario, region))]
+    /// Builds the GDAL raster source for a variable/model/scenario combination.
+    #[instrument(skip(var, model, scenario))]
     pub(crate) fn dataset_raster_source(
         var: &ClimateVariableProperties,
-        model: &CordexModelProperties,
+        model: &ClimateModelProperties,
         scenario: &ClimateScenarioProperties,
-        region: &CordexRegionProperties,
     ) -> RasterOperator {
         let dataset_name = format!(
-            "cordex_{}_{}_{}_{}",
-            region.dataset_prefix,
-            scenario.dataset_prefix,
-            model.dataset_prefix,
-            var.dataset_variable_suffix
+            "nexgddp_cmip6_{}_{}_{}",
+            model.id, scenario.dataset_prefix, var.dataset_variable_suffix
         );
         RasterOperator::GdalSource(
             GdalSource {
@@ -39,9 +35,8 @@ impl ClimateRiskProcess {
     /// Builds the daily threshold expression (e.g. heat-day indicator) for a variable.
     pub(crate) fn build_variable_day_expression(
         var: &ClimateVariableProperties,
-        model: &CordexModelProperties,
+        model: &ClimateModelProperties,
         scenario: &ClimateScenarioProperties,
-        region: &CordexRegionProperties,
     ) -> RasterOperator {
         RasterOperator::Expression(
             Expression {
@@ -68,7 +63,7 @@ impl ClimateRiskProcess {
                 }
                 .into(),
                 sources: SingleRasterSource {
-                    raster: Self::dataset_raster_source(var, model, scenario, region).into(),
+                    raster: Self::dataset_raster_source(var, model, scenario).into(),
                 }
                 .into(),
             }
@@ -79,9 +74,8 @@ impl ClimateRiskProcess {
     /// Builds the yearly sum aggregation workflow (sums daily values per calendar year).
     pub(crate) fn build_variable_year_agg_workflow(
         var: &ClimateVariableProperties,
-        model: &CordexModelProperties,
+        model: &ClimateModelProperties,
         scenario: &ClimateScenarioProperties,
-        region: &CordexRegionProperties,
     ) -> RasterOperator {
         RasterOperator::TemporalRasterAggregation(
             TemporalRasterAggregation {
@@ -104,8 +98,7 @@ impl ClimateRiskProcess {
                 }
                 .into(),
                 sources: SingleRasterSource {
-                    raster: Self::build_variable_day_expression(var, model, scenario, region)
-                        .into(),
+                    raster: Self::build_variable_day_expression(var, model, scenario).into(),
                 }
                 .into(),
             }
@@ -120,17 +113,20 @@ mod tests {
 
     #[test]
     fn it_builds_variable_workflow_chains() {
-        let region = CordexRegion::Eur.properties();
-        let scenario = ClimateScenario::Rcp45.properties();
-        let model = CordexModel::MpiMmpiEsmLr.properties();
+        let scenario = ClimateScenario::Ssp245.properties();
+        let model = ClimateModelProperties {
+            id: "ACCESS-CM2".to_string(),
+            variant: "r1i1p1f1".to_string(),
+            grid: "gn".to_string(),
+            scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
+        };
         let var = ClimateVariable::HeatDays.properties();
 
-        let day_expr =
-            ClimateRiskProcess::build_variable_day_expression(&var, &model, &scenario, &region);
+        let day_expr = ClimateRiskProcess::build_variable_day_expression(&var, &model, &scenario);
         assert!(matches!(day_expr, RasterOperator::Expression(_)));
 
         let year_agg =
-            ClimateRiskProcess::build_variable_year_agg_workflow(&var, &model, &scenario, &region);
+            ClimateRiskProcess::build_variable_year_agg_workflow(&var, &model, &scenario);
         assert!(matches!(
             year_agg,
             RasterOperator::TemporalRasterAggregation(_)

@@ -1,59 +1,11 @@
 use crate::processes::parameters::{
-    BoundingBox, DataResource, DataResourceSchema, Days, PointGeoJsonInput, Year, YearRange,
-    nearest_containing,
+    DataResource, DataResourceSchema, Days, PointGeoJsonInput, Year, YearRange,
 };
 use geoengine_api_client::models::RasterDataType;
-use geojson::PointType;
-use ogcapi::types::common::Crs;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::ToSchema;
-
-/// CORDEX climate region.
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq, Eq, Hash)]
-#[schema(title = "CordexRegion")]
-pub enum CordexRegion {
-    Eur,
-}
-
-impl CordexRegion {
-    pub const ALL: &'static [Self] = &[Self::Eur];
-
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::Eur => "Eur",
-        }
-    }
-    pub fn properties(self) -> CordexRegionProperties {
-        match self {
-            CordexRegion::Eur => CordexRegionProperties {
-                name: "Europe",
-                dataset_prefix: "EUR11",
-                bounding_box: BoundingBox::new(-10.0, 34.0, 30.0, 72.0, Crs::from_epsg(4326)),
-                region: CordexRegion::Eur,
-            },
-        }
-    }
-
-    pub fn point_to_region(point: &PointType) -> Option<Self> {
-        nearest_containing(
-            point,
-            Self::ALL
-                .iter()
-                .map(|region| (*region, region.properties().bounding_box)),
-        )
-    }
-}
-
-/// Resolved properties for a CORDEX region (dataset prefix, bounding box, display name).
-#[derive(Debug)]
-pub struct CordexRegionProperties {
-    pub name: &'static str,
-    pub dataset_prefix: &'static str,
-    pub bounding_box: BoundingBox,
-    pub region: CordexRegion,
-}
 
 /// Climate variable to compute (WMO-based daily threshold indicators).
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq, Eq, Hash)]
@@ -143,135 +95,96 @@ impl ClimateVariableRequest {
     }
 }
 
-/// CORDEX climate model.
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Clone, PartialEq, Eq, Copy, Hash)]
-#[schema(title = "ClimateModel")]
-pub enum CordexModel {
-    #[serde(rename = "MPI-M-MPI-ESM-LR")]
-    MpiMmpiEsmLr,
-    #[serde(rename = "MOHC-HadGEM2-ES")]
-    MohcHadgem2Es,
-}
-
-impl CordexModel {
-    pub const ALL: &'static [Self] = &[Self::MpiMmpiEsmLr, Self::MohcHadgem2Es];
-
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::MpiMmpiEsmLr => "MPI-M-MPI-ESM-LR",
-            Self::MohcHadgem2Es => "MOHC-HadGEM2-ES",
-        }
-    }
-    pub fn properties(self) -> CordexModelProperties {
-        match self {
-            CordexModel::MpiMmpiEsmLr => CordexModelProperties {
-                name: "MPI-M-MPI-ESM-LR",
-                dataset_prefix: "MPI-M-MPI-ESM-LR",
-                region: CordexRegion::Eur,
-                scenarios: vec![
-                    ClimateScenario::Rcp26,
-                    ClimateScenario::Rcp45,
-                    ClimateScenario::Rcp85,
-                ],
-                model: CordexModel::MpiMmpiEsmLr,
-            },
-            CordexModel::MohcHadgem2Es => CordexModelProperties {
-                name: "MOHC-HadGEM2-ES",
-                dataset_prefix: "MOHC-HadGEM2-ES",
-                region: CordexRegion::Eur,
-                scenarios: vec![
-                    ClimateScenario::Rcp26,
-                    ClimateScenario::Rcp45,
-                    ClimateScenario::Rcp85,
-                ],
-                model: CordexModel::MohcHadgem2Es,
-            },
-        }
-    }
-}
-
-/// Resolved properties for a CORDEX model (dataset prefix, supported scenarios, region).
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CordexModelProperties {
-    pub name: &'static str,
-    pub dataset_prefix: &'static str,
-    pub region: CordexRegion,
+/// NEX-GDDP-CMIP6 climate model (loaded from registry).
+#[derive(Debug, Clone)]
+pub struct ClimateModelProperties {
+    pub id: String,
+    pub variant: String,
+    pub grid: String,
     pub scenarios: Vec<ClimateScenario>,
-    pub model: CordexModel,
 }
 
-/// Representative Concentration Pathway scenario.
+/// Shared Socioeconomic Pathway scenario.
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq, Eq, Hash)]
 #[schema(title = "ClimateScenario")]
 #[serde(rename_all = "lowercase")]
 pub enum ClimateScenario {
-    Rcp26,
-    Rcp45,
-    Rcp85,
+    Historical,
+    Ssp245,
+    Ssp585,
 }
 
 impl ClimateScenario {
-    pub const ALL: &'static [Self] = &[Self::Rcp26, Self::Rcp45, Self::Rcp85];
+    pub const ALL: &'static [Self] = &[Self::Historical, Self::Ssp245, Self::Ssp585];
+
+    pub const FUTURE: &'static [Self] = &[Self::Ssp245, Self::Ssp585];
 
     pub fn name(self) -> &'static str {
         match self {
-            Self::Rcp26 => "rcp26",
-            Self::Rcp45 => "rcp45",
-            Self::Rcp85 => "rcp85",
+            Self::Historical => "historical",
+            Self::Ssp245 => "ssp245",
+            Self::Ssp585 => "ssp585",
         }
     }
     pub fn properties(self) -> ClimateScenarioProperties {
         match self {
-            ClimateScenario::Rcp26 => ClimateScenarioProperties {
-                name: "RCP 2.6 (Low emissions)",
-                dataset_prefix: "rcp26",
-                scenario: ClimateScenario::Rcp26,
+            ClimateScenario::Historical => ClimateScenarioProperties {
+                name: "Historical (1950–2014)",
+                dataset_prefix: "historical",
+                scenario: ClimateScenario::Historical,
             },
-            ClimateScenario::Rcp45 => ClimateScenarioProperties {
-                name: "RCP 4.5 (Intermediate emissions)",
-                dataset_prefix: "rcp45",
-                scenario: ClimateScenario::Rcp45,
+            ClimateScenario::Ssp245 => ClimateScenarioProperties {
+                name: "SSP2-4.5 (Intermediate emissions)",
+                dataset_prefix: "ssp245",
+                scenario: ClimateScenario::Ssp245,
             },
-            ClimateScenario::Rcp85 => ClimateScenarioProperties {
-                name: "RCP 8.5 (High emissions)",
-                dataset_prefix: "rcp85",
-                scenario: ClimateScenario::Rcp85,
+            ClimateScenario::Ssp585 => ClimateScenarioProperties {
+                name: "SSP5-8.5 (High emissions)",
+                dataset_prefix: "ssp585",
+                scenario: ClimateScenario::Ssp585,
             },
         }
     }
 }
 
 /// Resolved properties for a climate scenario (dataset prefix, display name).
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct ClimateScenarioProperties {
     pub name: &'static str,
     pub dataset_prefix: &'static str,
     pub scenario: ClimateScenario,
 }
 
-fn default_year_begin() -> Year {
-    Year(2014)
+pub(crate) fn default_year_begin() -> Year {
+    Year(2050)
 }
 
-/// First year with available CORDEX/CMIP5 data.
-pub(crate) const DATA_START_YEAR: u16 = 2006;
+/// First year with available NEX-GDDP-CMIP6 future data.
+pub(crate) const FUTURE_START_YEAR: u16 = 2015;
+/// Last year with available NEX-GDDP-CMIP6 future data.
+pub(crate) const FUTURE_END_YEAR: u16 = 2100;
+/// First year with available NEX-GDDP-CMIP6 historical data.
+pub(crate) const HISTORICAL_START_YEAR: u16 = 1950;
+/// Last year with available NEX-GDDP-CMIP6 historical data.
+pub(crate) const HISTORICAL_END_YEAR: u16 = 2014;
 /// Days in a Julian year (IAU: 365 d + 1 leap day / 4). Used to convert annual occurrence counts to probabilities.
 pub(crate) const DAYS_PER_JULIAN_YEAR: f64 = 365.25;
 
 pub(crate) fn default_reference_year_begin() -> Year {
-    Year(2020)
+    Year(1981)
 }
 
 fn default_year_range() -> YearRange {
-    YearRange(20)
+    YearRange(30)
 }
 
 fn default_variables() -> Vec<ClimateVariable> {
     ClimateVariable::ALL.to_vec()
 }
 
-fn default_models() -> Vec<CordexModel> {
-    CordexModel::ALL.to_vec()
+// ponytail: default models loaded from registry at startup; empty here, populated in mod.rs
+fn default_models() -> Vec<String> {
+    Vec::new()
 }
 
 /// User-supplied inputs for the climate risk process.
@@ -280,20 +193,18 @@ fn default_models() -> Vec<CordexModel> {
 pub struct ClimateRiskInputs {
     pub coordinate: PointGeoJsonInput,
     #[serde(default = "default_year_begin")]
-    #[schema(minimum = 2006, maximum = 2100)]
+    #[schema(minimum = 2015, maximum = 2100)]
     pub year_begin: Year,
     #[serde(default = "default_year_range")]
     #[schemars(default = "default_year_range")]
     pub year_range: YearRange,
     #[schemars(default = "default_reference_year_begin")]
-    #[schema(minimum = 2006, maximum = 2100)]
+    #[schema(minimum = 1950, maximum = 2014)]
     pub reference_year_begin: Year,
     #[serde(default = "default_variables")]
     pub variables: Vec<ClimateVariable>,
     #[serde(default = "default_models")]
-    pub models: Vec<CordexModel>,
-    #[serde(default)]
-    pub region: Option<CordexRegion>,
+    pub models: Vec<String>,
 }
 
 /// Aggregated statistics for a single climate variable across models.
@@ -611,80 +522,29 @@ mod tests {
     }
 
     #[test]
-    fn it_exposes_cordex_model_properties() {
-        for (model, expected_name, expected_prefix) in [
-            (
-                CordexModel::MpiMmpiEsmLr,
-                "MPI-M-MPI-ESM-LR",
-                "MPI-M-MPI-ESM-LR",
-            ),
-            (
-                CordexModel::MohcHadgem2Es,
-                "MOHC-HadGEM2-ES",
-                "MOHC-HadGEM2-ES",
-            ),
-        ] {
-            let props = model.properties();
-            assert_eq!(props.model, model);
-            assert_eq!(props.name, expected_name);
-            assert_eq!(props.dataset_prefix, expected_prefix);
-            assert_eq!(props.region, CordexRegion::Eur);
-            assert_eq!(
-                props.scenarios,
-                vec![
-                    ClimateScenario::Rcp26,
-                    ClimateScenario::Rcp45,
-                    ClimateScenario::Rcp85
-                ]
-            );
-        }
-    }
-
-    #[test]
     fn it_exposes_climate_scenario_properties() {
         for (scenario, expected_name, expected_prefix) in [
-            (ClimateScenario::Rcp26, "RCP 2.6 (Low emissions)", "rcp26"),
             (
-                ClimateScenario::Rcp45,
-                "RCP 4.5 (Intermediate emissions)",
-                "rcp45",
+                ClimateScenario::Historical,
+                "Historical (1950–2014)",
+                "historical",
             ),
-            (ClimateScenario::Rcp85, "RCP 8.5 (High emissions)", "rcp85"),
+            (
+                ClimateScenario::Ssp245,
+                "SSP2-4.5 (Intermediate emissions)",
+                "ssp245",
+            ),
+            (
+                ClimateScenario::Ssp585,
+                "SSP5-8.5 (High emissions)",
+                "ssp585",
+            ),
         ] {
             let props = scenario.properties();
             assert_eq!(props.scenario, scenario);
             assert_eq!(props.name, expected_name);
             assert_eq!(props.dataset_prefix, expected_prefix);
         }
-    }
-
-    #[test]
-    fn it_exposes_cordex_region_properties() {
-        let props = CordexRegion::Eur.properties();
-        assert_eq!(props.region, CordexRegion::Eur);
-        assert_eq!(props.name, "Europe");
-        assert_eq!(props.dataset_prefix, "EUR11");
-        assert_eq!(props.bounding_box.wfs_string(), "-10,34,30,72");
-    }
-
-    #[test]
-    fn it_resolves_points_to_regions() {
-        assert_eq!(
-            CordexRegion::point_to_region(&PointType::from(vec![12.34, 56.78])),
-            Some(CordexRegion::Eur)
-        );
-        assert_eq!(
-            CordexRegion::point_to_region(&PointType::from(vec![0.0, 0.0])),
-            None
-        );
-    }
-
-    #[test]
-    fn it_builds_a_bounding_box_around_a_point() {
-        let point = PointType::from(vec![10.0, 50.0]);
-        let bbox = BoundingBox::around_point(&point, 0.0001);
-        assert_eq!(bbox.wfs_string(), "9.9999,49.9999,10.0001,50.0001");
-        assert!(bbox.contains(&point));
     }
 
     #[test]
@@ -704,18 +564,14 @@ mod tests {
     }
 
     #[test]
-    fn it_exposes_region_and_scenario_names() {
-        for region in CordexRegion::ALL {
-            assert!(!region.name().is_empty());
-            assert!(!region.properties().name.is_empty());
-        }
+    fn it_exposes_scenario_names() {
         for scenario in ClimateScenario::ALL {
             assert_eq!(
                 scenario.properties().name,
                 match scenario {
-                    ClimateScenario::Rcp26 => "RCP 2.6 (Low emissions)",
-                    ClimateScenario::Rcp45 => "RCP 4.5 (Intermediate emissions)",
-                    ClimateScenario::Rcp85 => "RCP 8.5 (High emissions)",
+                    ClimateScenario::Historical => "Historical (1950–2014)",
+                    ClimateScenario::Ssp245 => "SSP2-4.5 (Intermediate emissions)",
+                    ClimateScenario::Ssp585 => "SSP5-8.5 (High emissions)",
                 }
             );
         }

@@ -400,23 +400,42 @@ fn build_inputs_value(inputs: &ClimateRiskInputs) -> Option<ExecuteResult> {
 }
 /// One geoengine workflow together with the metadata needed to interpret its results.
 struct WorkflowRequest {
-    models: Vec<CordexModelProperties>,
+    models: Vec<ClimateModelProperties>,
     variable: ClimateVariable,
     scenario: ClimateScenarioProperties,
     workflow: geoengine_api_client::models::Workflow,
 }
 
 /// Builds one workflow per (variable, scenario) pair, using only models that support the scenario.
+/// When `scenario_filter` is set, only builds workflows for that scenario regardless of what the
+/// requests contain — used to build historical-reference workflows for the anomaly baseline.
 fn build_workflows(
     coordinate: &PointType,
     requests: &[(ClimateVariableRequest, ClimateScenarioProperties)],
-    models: &[CordexModelProperties],
-    region: &CordexRegionProperties,
+    models: &[ClimateModelProperties],
+    scenario_filter: Option<&ClimateScenarioProperties>,
 ) -> Vec<WorkflowRequest> {
-    requests
+    let effective_requests: Vec<_> = if let Some(filter) = scenario_filter {
+        // Build one request per unique variable, all targeting the same (historical) scenario.
+        let mut seen = std::collections::HashSet::new();
+        requests
+            .iter()
+            .filter_map(|(var_req, _)| {
+                if seen.insert(var_req.variable) {
+                    Some((var_req.clone(), filter.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    } else {
+        requests.to_vec()
+    };
+
+    effective_requests
         .iter()
         .filter_map(|(var_req, scenario_props)| {
-            let compatible_models: Vec<CordexModelProperties> = models
+            let compatible_models: Vec<ClimateModelProperties> = models
                 .iter()
                 .filter(|model| model.scenarios.contains(&scenario_props.scenario))
                 .cloned()
@@ -433,13 +452,12 @@ fn build_workflows(
                         &variable_properties,
                         model,
                         scenario_props,
-                        region,
                     )
                 })
                 .collect::<Vec<_>>();
             let model_var_names: Vec<String> = compatible_models
                 .iter()
-                .map(|model| model.model.name().to_string())
+                .map(|model| model.id.clone())
                 .collect();
 
             let workflow = to_api_vector_process(&VectorOperator::RasterVectorJoin(
@@ -548,7 +566,15 @@ fn aggregate_rows(
     analysis_results: &[WfsQueryResult],
     reference_results: Option<&[WfsQueryResult]>,
     workflow_requests: &[WorkflowRequest],
+    reference_workflow_requests: &[WorkflowRequest],
 ) -> Result<(Vec<ClimateRiskRow>, Vec<ClimateRiskRawRow>)> {
+    // Build a lookup from variable name to reference result index.
+    let reference_by_variable: HashMap<String, usize> = reference_workflow_requests
+        .iter()
+        .enumerate()
+        .map(|(i, r)| (r.variable.properties().name_string(), i))
+        .collect();
+
     let mut rows = Vec::new();
     let mut raw_rows = Vec::new();
     for (i, analysis) in analysis_results.iter().enumerate() {
@@ -556,24 +582,21 @@ fn aggregate_rows(
         let var_props = request.variable.properties();
         let model_values = outputs_from_feature_collection(&analysis.geo_json, &request.models)?;
         if let Some(aggregated) = aggregate_from_list(&model_values) {
-            let reference =
-                reference_results.and_then(
-                    |reference_results| match outputs_from_feature_collection(
-                        &reference_results[i].geo_json,
-                        &request.models,
-                    ) {
-                        Ok(reference_values) => {
+            let reference = reference_results.and_then(|reference_results| {
+                reference_by_variable
+                    .get(var_props.name_string().as_str())
+                    .and_then(|&ref_idx| {
+                        outputs_from_feature_collection(
+                            &reference_results[ref_idx].geo_json,
+                            &request.models,
+                        )
+                        .ok()
+                        .and_then(|reference_values| {
                             aggregate_from_list(&reference_values).map(|r| r.mean)
-                        }
-                        Err(error) => {
-                            tracing::warn!(
-                                "Failed to compute reference-period values for {}: {error}",
-                                var_props.name_string()
-                            );
-                            None
-                        }
-                    },
-                );
+                        })
+                        .or_else(|| None)
+                    })
+            });
             let anomaly =
                 reference.map(|reference_mean| Days(aggregated.mean.0 - reference_mean.0));
             let anomaly_pct =
@@ -657,8 +680,7 @@ pub(crate) async fn compute_climate(
     coordinate: &PointType,
     periods: &ClimatePeriods,
     requests: &[(ClimateVariableRequest, ClimateScenarioProperties)],
-    models: &[CordexModelProperties],
-    region: &CordexRegionProperties,
+    models: &[ClimateModelProperties],
 ) -> Result<(ClimateRiskOutputs, Vec<ComputationId>)> {
     let Year(start_year) = periods.analysis_start;
     let YearRange(range) = periods.range;
@@ -681,7 +703,7 @@ pub(crate) async fn compute_climate(
     let bbox = BoundingBox::around_point(coordinate, POINT_BBOX_HALF_SPAN);
     let bbox_string = bbox.wfs_string();
 
-    let workflow_requests = build_workflows(coordinate, requests, models, region);
+    let workflow_requests = build_workflows(coordinate, requests, models, None);
     let workflow_ids = register_workflows(configuration, &workflow_requests).await?;
     log_registered_workflows(&workflow_ids, &workflow_requests);
 
@@ -693,9 +715,26 @@ pub(crate) async fn compute_climate(
     )
     .await?;
 
-    let reference_results =
-        Some(query_workflows(configuration, &workflow_ids, &bbox_string, &reference_time).await?);
-    log_wfs_results(&workflow_requests, &analysis_results);
+    // Build separate historical workflows for the reference period so the anomaly
+    // baseline is computed against the historical tier (1950–2014) data.
+    let historical_props = ClimateScenario::Historical.properties();
+    let reference_workflow_requests =
+        build_workflows(coordinate, requests, models, Some(&historical_props));
+    let reference_workflow_ids =
+        register_workflows(configuration, &reference_workflow_requests).await?;
+    let reference_results = Some(
+        query_workflows(
+            configuration,
+            &reference_workflow_ids,
+            &bbox_string,
+            &reference_time,
+        )
+        .await?,
+    );
+    log_wfs_results(
+        &reference_workflow_requests,
+        &reference_results.as_ref().unwrap(),
+    );
 
     // Every WFS query is a geoengine computation that must be reported for credit accounting.
     let computation_ids: Vec<ComputationId> = analysis_results
@@ -708,6 +747,7 @@ pub(crate) async fn compute_climate(
         &analysis_results,
         reference_results.as_deref(),
         &workflow_requests,
+        &reference_workflow_requests,
     )?;
 
     let climate_risk = Some(climate_risk_data_resource(
@@ -799,7 +839,7 @@ pub(crate) fn vector_source(coordinate: &PointType) -> VectorOperator {
     reason = "Averaging over at most a few dozen model values cannot lose relevant precision."
 )]
 pub(crate) fn aggregate_from_list(
-    model_values: &HashMap<CordexModel, f64>,
+    model_values: &HashMap<String, f64>,
 ) -> Option<ClimateVariableResult> {
     if model_values.is_empty() {
         return None;
@@ -819,10 +859,7 @@ pub(crate) fn aggregate_from_list(
         sorted[mid]
     };
 
-    let raw_members = model_values
-        .iter()
-        .map(|(k, v)| (k.name().to_string(), *v))
-        .collect();
+    let raw_members = model_values.iter().map(|(k, v)| (k.clone(), *v)).collect();
 
     Some(ClimateVariableResult {
         max: Days(max),
@@ -844,15 +881,15 @@ const NO_MODEL_COVERAGE_ERROR: &str =
 )]
 pub(crate) fn outputs_from_feature_collection(
     feature_collection: &GeoJson,
-    variables: &[CordexModelProperties],
-) -> Result<HashMap<CordexModel, f64>> {
+    variables: &[ClimateModelProperties],
+) -> Result<HashMap<String, f64>> {
     if feature_collection.features.is_empty() {
         anyhow::bail!(NO_MODEL_COVERAGE_ERROR);
     }
 
     // One feature per time step (year); average each model's per-year values to get the
     // multi-year mean.
-    let mut acc: HashMap<CordexModel, Vec<f64>> = HashMap::new();
+    let mut acc: HashMap<String, Vec<f64>> = HashMap::new();
     let mut models_without_data = Vec::new();
     let mut models_with_invalid_data = Vec::new();
 
@@ -862,15 +899,15 @@ pub(crate) fn outputs_from_feature_collection(
         };
 
         for model in variables {
-            let model_name = model.model.name();
-            if let Some(value) = properties.get(model_name) {
+            let model_name = &model.id;
+            if let Some(value) = properties.get(model_name.as_str()) {
                 if let Some(value) = value.as_f64().or_else(|| value.as_i64().map(|v| v as f64)) {
-                    acc.entry(model.model).or_default().push(value);
-                } else if !models_with_invalid_data.contains(&model_name) {
-                    models_with_invalid_data.push(model_name);
+                    acc.entry(model_name.clone()).or_default().push(value);
+                } else if !models_with_invalid_data.contains(model_name) {
+                    models_with_invalid_data.push(model_name.clone());
                 }
-            } else if !models_without_data.contains(&model_name) {
-                models_without_data.push(model_name);
+            } else if !models_without_data.contains(model_name) {
+                models_without_data.push(model_name.clone());
             }
         }
     }
@@ -921,15 +958,15 @@ mod tests {
         let outputs = ClimateRiskOutputs {
             inputs: None,
             analysis_period: Some("2041–2070".to_string()),
-            reference_period: Some("2006–2025".to_string()),
+            reference_period: Some("1981–2010".to_string()),
             climate_risk: Some(climate_risk_data_resource(
                 vec![
-                    row("RCP 2.6 (Low emissions)"),
-                    row("RCP 4.5 (Intermediate emissions)"),
-                    row("RCP 2.6 (Low emissions)"),
+                    row("SSP2-4.5 (Intermediate emissions)"),
+                    row("SSP5-8.5 (High emissions)"),
+                    row("SSP2-4.5 (Intermediate emissions)"),
                 ],
                 "2041–2070",
-                Some("2006–2025"),
+                Some("1981–2010"),
             )),
             raw_ensemble_data: None,
         };
@@ -937,46 +974,46 @@ mod tests {
         let result: ExecuteResults = outputs.try_into().unwrap();
         // Keys must be the output ids declared in the process description, not the
         // display names the rows carry.
-        assert!(result.contains_key("rcp26"));
-        assert!(result.contains_key("rcp45"));
-        assert!(!result.contains_key("rcp85"));
-        assert!(!result.contains_key("RCP 2.6 (Low emissions)"));
+        assert!(result.contains_key("ssp245"));
+        assert!(result.contains_key("ssp585"));
+        assert!(!result.contains_key("historical"));
+        assert!(!result.contains_key("SSP2-4.5 (Intermediate emissions)"));
 
-        let InlineOrRefData::QualifiedInputValue(qualified) = &result["rcp26"].data else {
+        let InlineOrRefData::QualifiedInputValue(qualified) = &result["ssp245"].data else {
             panic!("expected qualified input value");
         };
         let resource: DataResource<Vec<ClimateRiskRow>> =
             serde_json::from_value(serde_json::to_value(&qualified.value).unwrap()).unwrap();
         assert_eq!(resource.data.len(), 2);
-        assert_eq!(resource.name.as_str(), "climate-risk-rcp26");
+        assert_eq!(resource.name.as_str(), "climate-risk-ssp245");
         assert_eq!(
             resource.title.as_deref(),
-            Some("RCP 2.6 (Low emissions) · 2041–2070")
+            Some("SSP2-4.5 (Intermediate emissions) · 2041–2070")
         );
         assert!(
             resource
                 .data
                 .iter()
-                .all(|r| r.scenario == "RCP 2.6 (Low emissions)")
+                .all(|r| r.scenario == "SSP2-4.5 (Intermediate emissions)")
         );
     }
 
     #[test]
     fn it_scenario_output_id_maps_display_name_to_declared_output_id() {
         assert_eq!(
-            scenario_output_id("RCP 4.5 (Intermediate emissions)"),
-            "rcp45"
+            scenario_output_id("SSP2-4.5 (Intermediate emissions)"),
+            "ssp245"
         );
-        assert_eq!(scenario_output_id("RCP 8.5 (High emissions)"), "rcp85");
+        assert_eq!(scenario_output_id("SSP5-8.5 (High emissions)"), "ssp585");
         // Unknown names pass through, so rows already carrying output ids keep working.
-        assert_eq!(scenario_output_id("rcp45"), "rcp45");
+        assert_eq!(scenario_output_id("ssp245"), "ssp245");
     }
 
     #[test]
     fn it_aggregate_from_list_aggregates_values() {
-        let mut values: HashMap<CordexModel, f64> = HashMap::new();
-        values.insert(CordexModel::MpiMmpiEsmLr, 10.0);
-        values.insert(CordexModel::MohcHadgem2Es, 20.0);
+        let mut values: HashMap<String, f64> = HashMap::new();
+        values.insert("MPI-M-MPI-ESM-LR".to_string(), 10.0);
+        values.insert("MOHC-HadGEM2-ES".to_string(), 20.0);
 
         let result = aggregate_from_list(&values).unwrap();
         assert_abs_diff_eq!(result.min.0, 10.0);
@@ -986,7 +1023,7 @@ mod tests {
         assert_eq!(result.raw_members.as_ref().unwrap().len(), 2);
         assert_abs_diff_eq!(result.occurrence_probability.unwrap(), 15.0 / 365.25);
 
-        let empty: HashMap<CordexModel, f64> = HashMap::new();
+        let empty: HashMap<String, f64> = HashMap::new();
         assert!(aggregate_from_list(&empty).is_none());
     }
 
@@ -1134,7 +1171,7 @@ mod tests {
     fn it_climate_risk_scenario_data_resource_annotates_periods() {
         let rows = vec![ClimateRiskRow {
             variable: "Heat Days".to_string(),
-            scenario: "RCP 2.6 (Low emissions)".to_string(),
+            scenario: "SSP2-4.5 (Intermediate emissions)".to_string(),
             max: Days(100.0),
             min: Days(0.0),
             mean: Days(50.0),
@@ -1144,16 +1181,16 @@ mod tests {
             ..Default::default()
         }];
         let resource = climate_risk_scenario_data_resource(
-            "RCP 2.6 (Low emissions)",
+            "SSP2-4.5 (Intermediate emissions)",
             rows,
             "2041–2070",
             Some("2006–2025"),
         );
 
-        assert_eq!(resource.name.as_str(), "climate-risk-rcp26");
+        assert_eq!(resource.name.as_str(), "climate-risk-ssp245");
         assert_eq!(
             resource.title.as_deref(),
-            Some("RCP 2.6 (Low emissions) · 2041–2070")
+            Some("SSP2-4.5 (Intermediate emissions) · 2041–2070")
         );
         let title = |name: &str| {
             resource
@@ -1172,10 +1209,10 @@ mod tests {
         );
 
         let resource = climate_risk_scenario_data_resource(
-            "RCP 2.6 (Low emissions)",
+            "SSP2-4.5 (Intermediate emissions)",
             vec![ClimateRiskRow {
                 variable: "Heat Days".to_string(),
-                scenario: "RCP 2.6 (Low emissions)".to_string(),
+                scenario: "SSP2-4.5 (Intermediate emissions)".to_string(),
                 max: Days(100.0),
                 min: Days(0.0),
                 mean: Days(50.0),
@@ -1187,8 +1224,11 @@ mod tests {
             "",
             None,
         );
-        assert_eq!(resource.name.as_str(), "climate-risk-rcp26");
-        assert_eq!(resource.title.as_deref(), Some("RCP 2.6 (Low emissions)"));
+        assert_eq!(resource.name.as_str(), "climate-risk-ssp245");
+        assert_eq!(
+            resource.title.as_deref(),
+            Some("SSP2-4.5 (Intermediate emissions)")
+        );
         assert!(resource.schema.fields.iter().all(|f| f.name != "anomaly"));
     }
 
@@ -1196,7 +1236,7 @@ mod tests {
     fn it_converts_outputs_into_execute_results() {
         let rows = vec![ClimateRiskRow {
             variable: "Heat Days".to_string(),
-            scenario: "rcp45".to_string(),
+            scenario: "ssp245".to_string(),
             max: Days(100.0),
             min: Days(0.0),
             mean: Days(50.0),
@@ -1207,8 +1247,8 @@ mod tests {
         }];
         let raw_rows = vec![ClimateRiskRawRow {
             variable: "Heat Days".to_string(),
-            scenario: "rcp45".to_string(),
-            model: "MPI-M-MPI-ESM-LR".to_string(),
+            scenario: "ssp245".to_string(),
+            model: "ACCESS-CM2".to_string(),
             value: 42.0,
         }];
         let outputs = ClimateRiskOutputs {
@@ -1219,17 +1259,26 @@ mod tests {
             raw_ensemble_data: Some(raw_ensemble_data_resource(raw_rows)),
         };
         let results: ExecuteResults = outputs.try_into().unwrap();
-        assert!(results.contains_key("rcp45"));
-        assert!(!results.contains_key("rcp26"));
-        assert!(!results.contains_key("rcp85"));
+        assert!(results.contains_key("ssp245"));
+        assert!(!results.contains_key("ssp585"));
         assert!(results.contains_key("rawEnsembleData"));
     }
 
     #[test]
     fn it_averages_per_model_values_from_feature_collection() {
         let models = vec![
-            CordexModel::MpiMmpiEsmLr.properties(),
-            CordexModel::MohcHadgem2Es.properties(),
+            ClimateModelProperties {
+                id: "MPI-M-MPI-ESM-LR".to_string(),
+                variant: "r1i1p1f1".to_string(),
+                grid: "gn".to_string(),
+                scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
+            },
+            ClimateModelProperties {
+                id: "MOHC-HadGEM2-ES".to_string(),
+                variant: "r1i1p1f1".to_string(),
+                grid: "gn".to_string(),
+                scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
+            },
         ];
 
         let geo_json = GeoJson {
@@ -1241,8 +1290,8 @@ mod tests {
         };
         let result = outputs_from_feature_collection(&geo_json, &models).unwrap();
         assert_eq!(result.len(), 2);
-        assert_abs_diff_eq!(result[&CordexModel::MpiMmpiEsmLr], 50.0);
-        assert_abs_diff_eq!(result[&CordexModel::MohcHadgem2Es], 20.0);
+        assert_abs_diff_eq!(result["MPI-M-MPI-ESM-LR"], 50.0);
+        assert_abs_diff_eq!(result["MOHC-HadGEM2-ES"], 20.0);
 
         assert!(outputs_from_feature_collection(&GeoJson::default(), &models).is_err());
 
@@ -1334,50 +1383,41 @@ mod tests {
 
     #[test]
     fn it_filters_models_per_scenario_when_building_workflows() {
-        use ogcapi::types::common::Crs;
-
         let point = PointType::from(vec![8.0, 50.0]);
-        let region = CordexRegionProperties {
-            name: "Europe",
-            dataset_prefix: "europe",
-            bounding_box: BoundingBox::new(-10.0, 34.0, 30.0, 72.0, Crs::from_epsg(4326)),
-            region: CordexRegion::Eur,
-        };
-        // Only supports RCP 2.6, so RCP 4.5 requests must be filtered out.
-        let models = vec![CordexModelProperties {
-            name: "LIMITED-MODEL",
-            dataset_prefix: "limited-model",
-            region: CordexRegion::Eur,
-            scenarios: vec![ClimateScenario::Rcp26],
-            model: CordexModel::MpiMmpiEsmLr,
+        // Only supports SSP245, so SSP585 requests must be filtered out.
+        let models = vec![ClimateModelProperties {
+            id: "LIMITED-MODEL".to_string(),
+            variant: "r1i1p1f1".to_string(),
+            grid: "gn".to_string(),
+            scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
         }];
         let requests = vec![
             (
                 ClimateVariableRequest::new(ClimateVariable::HeatDays),
-                ClimateScenario::Rcp26.properties(),
+                ClimateScenario::Ssp245.properties(),
             ),
             (
                 ClimateVariableRequest::new(ClimateVariable::HeatDays),
-                ClimateScenario::Rcp45.properties(),
+                ClimateScenario::Ssp585.properties(),
             ),
             (
                 ClimateVariableRequest::new(ClimateVariable::IceDays),
-                ClimateScenario::Rcp26.properties(),
+                ClimateScenario::Ssp245.properties(),
             ),
         ];
 
-        let workflows = build_workflows(&point, &requests, &models, &region);
+        let workflows = build_workflows(&point, &requests, &models, None);
 
         assert_eq!(workflows.len(), 2);
         assert!(
             workflows
                 .iter()
-                .all(|w| w.scenario.scenario == ClimateScenario::Rcp26)
+                .all(|w| w.scenario.scenario == ClimateScenario::Ssp245)
         );
         assert_eq!(workflows[0].variable, ClimateVariable::HeatDays);
         assert_eq!(workflows[1].variable, ClimateVariable::IceDays);
         assert_eq!(workflows[0].models.len(), 1);
-        assert_eq!(workflows[0].models[0].name, "LIMITED-MODEL");
+        assert_eq!(workflows[0].models[0].id, "LIMITED-MODEL");
     }
 
     #[test]
@@ -1419,7 +1459,16 @@ mod tests {
 
     fn workflow_request(variable: ClimateVariable, scenario: ClimateScenario) -> WorkflowRequest {
         WorkflowRequest {
-            models: vec![CordexModel::MpiMmpiEsmLr.properties()],
+            models: vec![ClimateModelProperties {
+                id: "ACCESS-CM2".to_string(),
+                variant: "r1i1p1f1".to_string(),
+                grid: "gn".to_string(),
+                scenarios: vec![
+                    ClimateScenario::Historical,
+                    ClimateScenario::Ssp245,
+                    ClimateScenario::Ssp585,
+                ],
+            }],
             variable,
             scenario: scenario.properties(),
             workflow: geoengine_api_client::models::Workflow::default(),
@@ -1435,13 +1484,13 @@ mod tests {
 
     #[test]
     fn it_derives_anomalies_and_raw_members_from_reference_values() {
-        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Rcp45);
+        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Ssp245);
         let analysis = WfsQueryResult {
-            geo_json: single_feature_collection(&serde_json::json!({"MPI-M-MPI-ESM-LR": 20.0})),
+            geo_json: single_feature_collection(&serde_json::json!({"ACCESS-CM2": 20.0})),
             computation_id: None,
         };
         let reference = WfsQueryResult {
-            geo_json: single_feature_collection(&serde_json::json!({"MPI-M-MPI-ESM-LR": 12.5})),
+            geo_json: single_feature_collection(&serde_json::json!({"ACCESS-CM2": 12.5})),
             computation_id: None,
         };
 
@@ -1449,6 +1498,10 @@ mod tests {
             std::slice::from_ref(&analysis),
             Some(&[reference]),
             &[request],
+            &[workflow_request(
+                ClimateVariable::HeatDays,
+                ClimateScenario::Historical,
+            )],
         )
         .unwrap();
 
@@ -1461,15 +1514,15 @@ mod tests {
         // A single model yields an odd member count; the median is the middle value.
         assert_abs_diff_eq!(row.median.0, 20.0);
         assert_eq!(raw_rows.len(), 1);
-        assert_eq!(raw_rows[0].model, "MPI-M-MPI-ESM-LR");
+        assert_eq!(raw_rows[0].model, "ACCESS-CM2");
         assert_abs_diff_eq!(raw_rows[0].value, 20.0);
     }
 
     #[test]
     fn it_omits_the_anomaly_without_reference_values() {
-        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Rcp45);
+        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Ssp245);
         let analysis = WfsQueryResult {
-            geo_json: single_feature_collection(&serde_json::json!({"MPI-M-MPI-ESM-LR": 20.0})),
+            geo_json: single_feature_collection(&serde_json::json!({"ACCESS-CM2": 20.0})),
             computation_id: None,
         };
         // An empty feature collection cannot yield reference values.
@@ -1482,6 +1535,10 @@ mod tests {
             std::slice::from_ref(&analysis),
             Some(&[broken_reference]),
             &[request],
+            &[workflow_request(
+                ClimateVariable::HeatDays,
+                ClimateScenario::Historical,
+            )],
         )
         .unwrap();
 
@@ -1493,24 +1550,24 @@ mod tests {
 
     #[test]
     fn it_fails_without_analysis_values() {
-        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Rcp45);
+        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Ssp245);
         let empty = WfsQueryResult {
             geo_json: GeoJson::default(),
             computation_id: None,
         };
 
-        let result = aggregate_rows(&[empty], None, &[request]);
+        let result = aggregate_rows(&[empty], None, &[request], &[]);
 
         assert!(result.is_err());
     }
 
     #[test]
     fn it_logs_workflow_requests_and_results() {
-        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Rcp45);
+        let request = workflow_request(ClimateVariable::HeatDays, ClimateScenario::Ssp245);
         log_registered_workflows(&["wf-id".to_string()], std::slice::from_ref(&request));
 
         let result = WfsQueryResult {
-            geo_json: single_feature_collection(&serde_json::json!({"MPI-M-MPI-ESM-LR": 1.0})),
+            geo_json: single_feature_collection(&serde_json::json!({"ACCESS-CM2": 1.0})),
             computation_id: None,
         };
         log_wfs_results(std::slice::from_ref(&request), &[result]);
@@ -1519,8 +1576,18 @@ mod tests {
     #[test]
     fn it_skips_missing_or_invalid_model_columns() {
         let models = vec![
-            CordexModel::MpiMmpiEsmLr.properties(),
-            CordexModel::MohcHadgem2Es.properties(),
+            ClimateModelProperties {
+                id: "MPI-M-MPI-ESM-LR".to_string(),
+                variant: "r1i1p1f1".to_string(),
+                grid: "gn".to_string(),
+                scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
+            },
+            ClimateModelProperties {
+                id: "MOHC-HadGEM2-ES".to_string(),
+                variant: "r1i1p1f1".to_string(),
+                grid: "gn".to_string(),
+                scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
+            },
         ];
         let geo_json = GeoJson {
             features: vec![
@@ -1532,7 +1599,7 @@ mod tests {
 
         let result = outputs_from_feature_collection(&geo_json, &models).unwrap();
 
-        assert_abs_diff_eq!(result[&CordexModel::MpiMmpiEsmLr], 8.0);
-        assert_abs_diff_eq!(result[&CordexModel::MohcHadgem2Es], 4.0);
+        assert_abs_diff_eq!(result["MPI-M-MPI-ESM-LR"], 8.0);
+        assert_abs_diff_eq!(result["MOHC-HadGEM2-ES"], 4.0);
     }
 }
