@@ -99,7 +99,14 @@ impl ClimateVariableRequest {
 #[derive(Debug, Clone)]
 pub struct ClimateModelProperties {
     pub id: String,
+    // variant + grid identify the CMIP6 realization; consumed by the ingestion notebook when
+    // building kerchunk reference paths, not by the backend query path.
+    #[allow(
+        dead_code,
+        reason = "CMIP6 realization identity, used for data ingestion only"
+    )]
     pub variant: String,
+    #[allow(dead_code, reason = "CMIP6 grid label, used for data ingestion only")]
     pub grid: String,
     pub scenarios: Vec<ClimateScenario>,
 }

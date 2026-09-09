@@ -42,7 +42,7 @@ static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> = LazyL
     let mut entries: Vec<(String, ClimateModelProperties)> = registry
         .model
         .into_iter()
-        .filter_map(|entry| {
+        .map(|entry| {
             let scenarios: Vec<ClimateScenario> = entry
                 .scenarios
                 .into_iter()
@@ -53,7 +53,7 @@ static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> = LazyL
                     _ => None,
                 })
                 .collect();
-            Some((
+            (
                 entry.id.clone(),
                 ClimateModelProperties {
                     id: entry.id,
@@ -61,7 +61,7 @@ static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> = LazyL
                     grid: entry.grid,
                     scenarios,
                 },
-            ))
+            )
         })
         .collect();
     // ponytail: sort by model id for deterministic iteration order
@@ -101,17 +101,17 @@ fn models_schema_with_hints(generator: &mut schemars::SchemaGenerator) -> serde_
     let model_ids: Vec<&String> = MODEL_REGISTRY.keys().collect();
     let enum_values: Vec<serde_json::Value> = model_ids
         .iter()
-        .map(|id| serde_json::Value::String(id.to_string()))
+        .map(|id| serde_json::Value::String((**id).clone()))
         .collect();
     let enum_names: Vec<String> = model_ids.iter().map(|id| model_display_name(id)).collect();
 
     let mut schema = generator.root_schema_for::<Vec<String>>().to_value();
-    if let Some(items) = schema.get_mut("items") {
-        items
-            .as_object_mut()
-            .unwrap()
-            .insert("enum".to_string(), serde_json::Value::Array(enum_values));
-        items.as_object_mut().unwrap().insert(
+    if let Some(items) = schema
+        .get_mut("items")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        items.insert("enum".to_string(), serde_json::Value::Array(enum_values));
+        items.insert(
             "enumNames".to_string(),
             serde_json::to_value(enum_names).unwrap_or_default(),
         );
@@ -735,7 +735,7 @@ mod tests {
         assert!(dropped.is_empty());
 
         let first_model = models[0].clone();
-        let (models, _props, dropped) = resolve_models(&[first_model.clone()]);
+        let (models, _props, dropped) = resolve_models(std::slice::from_ref(&first_model));
         assert_eq!(models, vec![first_model]);
         assert!(dropped.is_empty());
 

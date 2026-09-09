@@ -594,7 +594,6 @@ fn aggregate_rows(
                         .and_then(|reference_values| {
                             aggregate_from_list(&reference_values).map(|r| r.mean)
                         })
-                        .or_else(|| None)
                     })
             });
             let anomaly =
@@ -722,30 +721,25 @@ pub(crate) async fn compute_climate(
         build_workflows(coordinate, requests, models, Some(&historical_props));
     let reference_workflow_ids =
         register_workflows(configuration, &reference_workflow_requests).await?;
-    let reference_results = Some(
-        query_workflows(
-            configuration,
-            &reference_workflow_ids,
-            &bbox_string,
-            &reference_time,
-        )
-        .await?,
-    );
-    log_wfs_results(
-        &reference_workflow_requests,
-        &reference_results.as_ref().unwrap(),
-    );
+    let reference_results = query_workflows(
+        configuration,
+        &reference_workflow_ids,
+        &bbox_string,
+        &reference_time,
+    )
+    .await?;
+    log_wfs_results(&reference_workflow_requests, &reference_results);
 
     // Every WFS query is a geoengine computation that must be reported for credit accounting.
     let computation_ids: Vec<ComputationId> = analysis_results
         .iter()
-        .chain(reference_results.iter().flatten())
+        .chain(reference_results.iter())
         .filter_map(|result| result.computation_id)
         .collect();
 
     let (rows, raw_rows) = aggregate_rows(
         &analysis_results,
-        reference_results.as_deref(),
+        Some(reference_results.as_slice()),
         &workflow_requests,
         &reference_workflow_requests,
     )?;
