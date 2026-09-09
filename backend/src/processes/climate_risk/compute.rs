@@ -2,8 +2,9 @@ use crate::db::model::ComputationId;
 use crate::profile::CLIMATE_RISK_TABLE_SCHEMA_PROFILE;
 use crate::{
     processes::parameters::{
-        BioISTableSchemaExtension, BioisDisplayKind, BioisDisplayMetadata, BoundingBox,
-        DataResource, Days, TableSchema, TableSchemaField, TableSchemaType, Year, YearRange,
+        BioisDisplayKind, BioisDisplayMetadata, BioisTableSchemaExtension, BoundingBox,
+        DataResource, DataResourceName, Days, Fields, TableSchemaField, TableSchemaType, Year,
+        YearRange,
     },
     util::{error_response, to_api_vector_process},
 };
@@ -43,16 +44,17 @@ pub(crate) fn climate_risk_data_resource(
         ..Default::default()
     }];
     fields.extend(risk_fields(&rows, reference_period));
-    let name = if analysis_period.is_empty() {
+    let title = if analysis_period.is_empty() {
         "Climate Risk".to_string()
     } else {
         format!("Climate Risk · {analysis_period}")
     };
     let biois = climate_display_extension(&rows);
     DataResource {
-        name,
+        name: DataResourceName::new("climate-risk").expect("static resource name is a valid slug"),
+        title: Some(title),
         data: rows,
-        schema: TableSchema {
+        schema: Fields {
             fields,
             primary_key: Some(vec!["variable".to_string(), "scenario".to_string()]),
             schema: Some(CLIMATE_RISK_TABLE_SCHEMA_PROFILE.to_string()),
@@ -68,16 +70,21 @@ pub(crate) fn climate_risk_scenario_data_resource(
     reference_period: Option<&str>,
 ) -> DataResource<Vec<ClimateRiskRow>> {
     let fields = risk_fields(&rows, reference_period);
-    let name = if analysis_period.is_empty() {
+    let title = if analysis_period.is_empty() {
         scenario_name.to_string()
     } else {
         format!("{scenario_name} · {analysis_period}")
     };
     let biois = climate_display_extension(&rows);
     DataResource {
-        name,
+        name: DataResourceName::new(format!(
+            "climate-risk-{}",
+            scenario_output_id(scenario_name)
+        ))
+        .expect("scenario output ids are valid slugs"),
+        title: Some(title),
         data: rows,
-        schema: TableSchema {
+        schema: Fields {
             fields,
             primary_key: Some(vec!["variable".to_string()]),
             schema: Some(CLIMATE_RISK_TABLE_SCHEMA_PROFILE.to_string()),
@@ -164,9 +171,11 @@ pub(crate) fn raw_ensemble_data_resource(
         (&a.variable, &a.scenario, &a.model).cmp(&(&b.variable, &b.scenario, &b.model))
     });
     DataResource {
-        name: "Raw Ensemble Data".to_string(),
+        name: DataResourceName::new("raw-ensemble-data")
+            .expect("static resource name is a valid slug"),
+        title: Some("Raw Ensemble Data".to_string()),
         data: rows,
-        schema: TableSchema {
+        schema: Fields {
             fields: vec![
                 TableSchemaField {
                     name: "variable".into(),
@@ -203,7 +212,7 @@ pub(crate) fn raw_ensemble_data_resource(
     }
 }
 
-fn climate_display_extension(rows: &[ClimateRiskRow]) -> BioISTableSchemaExtension {
+fn climate_display_extension(rows: &[ClimateRiskRow]) -> BioisTableSchemaExtension {
     let has_anomaly = rows.iter().any(|row| row.anomaly.is_some());
     let mut display = HashMap::from([(
         "occurrenceProbability".to_string(),
@@ -223,7 +232,7 @@ fn climate_display_extension(rows: &[ClimateRiskRow]) -> BioISTableSchemaExtensi
             },
         );
     }
-    BioISTableSchemaExtension {
+    BioisTableSchemaExtension {
         display,
         hidden_fields: [
             "occurrenceProbabilityLabel",
@@ -245,8 +254,10 @@ fn climate_display_extension(rows: &[ClimateRiskRow]) -> BioISTableSchemaExtensi
     }
 }
 
-impl From<ClimateRiskOutputs> for ExecuteResults {
-    fn from(outputs: ClimateRiskOutputs) -> Self {
+impl TryFrom<ClimateRiskOutputs> for ExecuteResults {
+    type Error = anyhow::Error;
+
+    fn try_from(outputs: ClimateRiskOutputs) -> anyhow::Result<Self> {
         let mut result = ExecuteResults::default();
 
         if let Some(inputs) = outputs.inputs
@@ -332,7 +343,7 @@ impl From<ClimateRiskOutputs> for ExecuteResults {
             }
         }
 
-        result
+        Ok(result)
     }
 }
 
@@ -923,7 +934,7 @@ mod tests {
             raw_ensemble_data: None,
         };
 
-        let result: ExecuteResults = outputs.into();
+        let result: ExecuteResults = outputs.try_into().unwrap();
         // Keys must be the output ids declared in the process description, not the
         // display names the rows carry.
         assert!(result.contains_key("rcp26"));
@@ -937,7 +948,11 @@ mod tests {
         let resource: DataResource<Vec<ClimateRiskRow>> =
             serde_json::from_value(serde_json::to_value(&qualified.value).unwrap()).unwrap();
         assert_eq!(resource.data.len(), 2);
-        assert_eq!(resource.name, "RCP 2.6 (Low emissions) · 2041–2070");
+        assert_eq!(resource.name.as_str(), "climate-risk-rcp26");
+        assert_eq!(
+            resource.title.as_deref(),
+            Some("RCP 2.6 (Low emissions) · 2041–2070")
+        );
         assert!(
             resource
                 .data
@@ -1135,7 +1150,11 @@ mod tests {
             Some("2006–2025"),
         );
 
-        assert_eq!(resource.name, "RCP 2.6 (Low emissions) · 2041–2070");
+        assert_eq!(resource.name.as_str(), "climate-risk-rcp26");
+        assert_eq!(
+            resource.title.as_deref(),
+            Some("RCP 2.6 (Low emissions) · 2041–2070")
+        );
         let title = |name: &str| {
             resource
                 .schema
@@ -1168,7 +1187,8 @@ mod tests {
             "",
             None,
         );
-        assert_eq!(resource.name, "RCP 2.6 (Low emissions)");
+        assert_eq!(resource.name.as_str(), "climate-risk-rcp26");
+        assert_eq!(resource.title.as_deref(), Some("RCP 2.6 (Low emissions)"));
         assert!(resource.schema.fields.iter().all(|f| f.name != "anomaly"));
     }
 
@@ -1198,7 +1218,7 @@ mod tests {
             climate_risk: Some(climate_risk_data_resource(rows, "", None)),
             raw_ensemble_data: Some(raw_ensemble_data_resource(raw_rows)),
         };
-        let results: ExecuteResults = outputs.into();
+        let results: ExecuteResults = outputs.try_into().unwrap();
         assert!(results.contains_key("rcp45"));
         assert!(!results.contains_key("rcp26"));
         assert!(!results.contains_key("rcp85"));
@@ -1300,7 +1320,7 @@ mod tests {
             raw_ensemble_data: None,
         };
 
-        let results: ExecuteResults = outputs.into();
+        let results: ExecuteResults = outputs.try_into().unwrap();
 
         assert!(results.contains_key("inputs"));
         let InlineOrRefData::QualifiedInputValue(qualified) = &results["inputs"].data else {

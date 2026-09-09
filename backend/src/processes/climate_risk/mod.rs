@@ -12,7 +12,7 @@ use ogcapi::{
     types::{
         common::Link,
         processes::{
-            Execute, ExecuteResults, JobControlOptions, Process, ProcessSummary, TransmissionMode,
+            Execute, JobControlOptions, Process, ProcessSummary, TransmissionMode,
             description::{DescriptionType, InputDescription, OutputDescription},
         },
     },
@@ -250,6 +250,9 @@ fn build_outputs(generator: &mut schemars::SchemaGenerator) -> HashMap<String, O
 
 #[async_trait::async_trait]
 impl Processor for ClimateRiskProcess {
+    type Input = ClimateRiskProcessParams;
+    type Output = ClimateRiskOutputs;
+
     fn id(&self) -> &'static str {
         "climate-risk"
     }
@@ -258,7 +261,7 @@ impl Processor for ClimateRiskProcess {
         "0.2.0"
     }
 
-    fn process(&self) -> Result<Process> {
+    async fn process(&self) -> Result<Process> {
         let mut settings = SchemaSettings::default();
         settings.meta_schema = None;
         let mut generator = settings.into_generator();
@@ -294,8 +297,16 @@ impl Processor for ClimateRiskProcess {
         })
     }
 
-    async fn execute(&self, execute: Execute) -> Result<ExecuteResults> {
-        let mut inputs = parse_inputs(&execute.inputs)?;
+    async fn parse(&self, execute: Execute) -> Result<Self::Input> {
+        Ok(ClimateRiskProcessParams {
+            inputs: parse_inputs(&execute.inputs)?,
+            requested_outputs: execute.outputs,
+        })
+    }
+
+    async fn execute(&self, input: Self::Input) -> Result<Self::Output> {
+        let mut inputs = input.inputs;
+        let requested_outputs = input.requested_outputs;
 
         validate_inputs(
             inputs.year_begin,
@@ -346,7 +357,7 @@ impl Processor for ClimateRiskProcess {
             scenario_props.iter().map(|s| s.scenario).collect();
 
         let output_keys: std::collections::BTreeSet<String> =
-            execute.outputs.keys().cloned().collect();
+            requested_outputs.keys().cloned().collect();
         let (selected_scenarios, should_reflect_inputs, include_raw_ensemble) =
             resolve_requests(&output_keys, &available_scenarios)?;
 
@@ -392,8 +403,14 @@ impl Processor for ClimateRiskProcess {
                 .await?;
         }
 
-        Ok(outputs.into())
+        Ok(outputs)
     }
+}
+
+/// Parsed and validated [`Execute`] payload for the climate-risk process.
+pub struct ClimateRiskProcessParams {
+    pub inputs: ClimateRiskInputs,
+    pub requested_outputs: HashMap<String, ogcapi::types::processes::Output>,
 }
 
 fn parse_inputs(
@@ -628,7 +645,7 @@ mod tests {
 
     #[crate::test]
     async fn it_declares_expected_inputs_and_outputs_in_the_summary(db: DbHandle) {
-        let process = ClimateRiskProcess::new(db).process().unwrap();
+        let process = ClimateRiskProcess::new(db).process().await.unwrap();
 
         assert_eq!(process.summary.id, "climate-risk");
         assert_eq!(process.summary.version, "0.2.0");
@@ -652,7 +669,7 @@ mod tests {
 
     #[crate::test]
     async fn it_marks_reference_year_begin_as_required_with_a_default(db: DbHandle) {
-        let process = ClimateRiskProcess::new(db).process().unwrap();
+        let process = ClimateRiskProcess::new(db).process().await.unwrap();
         let input = &process.inputs["referenceYearBegin"];
 
         assert_eq!(input.schema["type"], json!("integer"));

@@ -51,7 +51,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .get_openapi_mut()
         .merge(ProcessesOpenApiSpec::openapi());
 
-let mut processors: Vec<Arc<dyn DynProcessor>> = vec![
+    let mut processors: Vec<Arc<dyn DynProcessor>> = vec![
         Arc::new(Echo),
         Arc::new(NDVIProcess::new(db_pool.clone())),
         Arc::new(ClimateRiskProcess::new(db_pool.clone())),

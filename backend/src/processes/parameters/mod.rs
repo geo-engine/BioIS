@@ -11,9 +11,9 @@ use std::collections::HashMap;
 use utoipa::ToSchema;
 
 pub use data_resource::{
-    BioISTableSchemaExtension, BioisDisplayKind, BioisDisplayMetadata, DataResource,
-    DataResourceSchema, HasTableSchemaType, TableSchema, TableSchemaField, TableSchemaItemType,
-    TableSchemaType,
+    BioisDisplayKind, BioisDisplayMetadata, BioisTableSchemaExtension, DataResource,
+    DataResourceName, DataResourceSchema, Fields, HasTableSchemaType, TableSchemaField,
+    TableSchemaItemType, TableSchemaType,
 };
 #[cfg(test)]
 pub use geo_json::GeoJsonInputMediaType;
@@ -146,7 +146,7 @@ impl TryFrom<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>
             name: "documentation-sources".try_into()?,
             title: Some("Documentation Sources".to_string()),
             data: value,
-            schema: TableSchema {
+            schema: Fields {
                 fields: vec![
                     TableSchemaField {
                         name: DocumentationSource::DATA_FIELD_NAME.to_string(),

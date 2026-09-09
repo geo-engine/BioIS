@@ -1,5 +1,5 @@
 use crate::processes::parameters::{
-    Area, DataResource, HasTableSchemaType, Percentage, SquareMeter, TableSchema, TableSchemaField,
+    Area, DataResource, Fields, HasTableSchemaType, Percentage, SquareMeter, TableSchemaField,
     TableSchemaType, UnitForArea,
 };
 use anyhow::Result;
