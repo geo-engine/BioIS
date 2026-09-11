@@ -12,6 +12,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -244,6 +248,15 @@ export interface ProcessesApiExecuteBiodiversitySensitiveAreasRequest {
     biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams
 }
 
+export interface ProcessesApiExecuteClimateRiskRequest {
+    /**
+     * 
+     * @type ClimateRiskProcessParams
+     * @memberof ProcessesApiexecuteClimateRisk
+     */
+    climateRiskProcessParams: ClimateRiskProcessParams
+}
+
 export interface ProcessesApiExecuteHabitatDistanceRequest {
     /**
      * 
@@ -381,6 +394,20 @@ export class ObjectProcessesApi {
     /**
      * @param param the request object
      */
+    public executeClimateRiskWithHttpInfo(param: ProcessesApiExecuteClimateRiskRequest, options?: ConfigurationOptions): Promise<HttpInfo<ClimateRiskOutputs>> {
+        return this.api.executeClimateRiskWithHttpInfo(param.climateRiskProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
+    public executeClimateRisk(param: ProcessesApiExecuteClimateRiskRequest, options?: ConfigurationOptions): Promise<ClimateRiskOutputs> {
+        return this.api.executeClimateRisk(param.climateRiskProcessParams,  options).toPromise();
+    }
+
+    /**
+     * @param param the request object
+     */
     public executeHabitatDistanceWithHttpInfo(param: ProcessesApiExecuteHabitatDistanceRequest, options?: ConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
         return this.api.executeHabitatDistanceWithHttpInfo(param.habitatDistanceProcessParams,  options).toPromise();
     }
@@ -421,20 +448,20 @@ export class ObjectProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param param the request object
      */
-    public executionWithHttpInfo(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<HttpInfo<Results>> {
+    public executionWithHttpInfo(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<HttpInfo<Results | StatusInfo>> {
         return this.api.executionWithHttpInfo(param.processID, param.execute,  options).toPromise();
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param param the request object
      */
-    public execution(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<Results> {
+    public execution(param: ProcessesApiExecutionRequest, options?: ConfigurationOptions): Promise<Results | StatusInfo> {
         return this.api.execution(param.processID, param.execute,  options).toPromise();
     }
 

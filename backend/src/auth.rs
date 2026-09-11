@@ -139,6 +139,7 @@ impl<S> GeoEngineAuthMiddleware<S> {
                     const_concat!("/processes/", BiodiversitySensitiveAreasProcess::ID),
                     const_concat!("/processes/", HabitatDistanceProcess::ID),
                     const_concat!("/processes/", LandUseSealedAreaProcess::ID),
+                    "/profiles/table-schema/climate-risk/1.0/schema.json",
                 ],
                 prefix: vec!["/api", "/swagger", "/auth/"],
             },

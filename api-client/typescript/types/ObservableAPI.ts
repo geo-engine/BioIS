@@ -13,6 +13,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -360,6 +364,36 @@ export class ObservableProcessesApi {
     }
 
     /**
+     * @param climateRiskProcessParams
+     */
+    public executeClimateRiskWithHttpInfo(climateRiskProcessParams: ClimateRiskProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<ClimateRiskOutputs>> {
+        const _config = mergeConfiguration(this.configuration, _options);
+
+        const requestContextPromise = this.requestFactory.executeClimateRisk(climateRiskProcessParams, _config);
+        // build promise chain
+        let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+        for (const middleware of _config.middleware) {
+            middlewarePreObservable = middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => middleware.pre(ctx)));
+        }
+
+        return middlewarePreObservable.pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx))).
+            pipe(mergeMap((response: ResponseContext) => {
+                let middlewarePostObservable = of(response);
+                for (const middleware of _config.middleware.reverse()) {
+                    middlewarePostObservable = middlewarePostObservable.pipe(mergeMap((rsp: ResponseContext) => middleware.post(rsp)));
+                }
+                return middlewarePostObservable.pipe(map((rsp: ResponseContext) => this.responseProcessor.executeClimateRiskWithHttpInfo(rsp)));
+            }));
+    }
+
+    /**
+     * @param climateRiskProcessParams
+     */
+    public executeClimateRisk(climateRiskProcessParams: ClimateRiskProcessParams, _options?: ConfigurationOptions): Observable<ClimateRiskOutputs> {
+        return this.executeClimateRiskWithHttpInfo(climateRiskProcessParams, _options).pipe(map((apiResponse: HttpInfo<ClimateRiskOutputs>) => apiResponse.data));
+    }
+
+    /**
      * @param habitatDistanceProcessParams
      */
     public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: ConfigurationOptions): Observable<HttpInfo<HabitatDistanceProcessOutputs>> {
@@ -450,12 +484,12 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<Results>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<Results | StatusInfo>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
         const requestContextPromise = this.requestFactory.execution(processID, execute, _config);
@@ -476,13 +510,13 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<Results> {
-        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<Results>) => apiResponse.data));
+    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<Results | StatusInfo> {
+        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<Results | StatusInfo>) => apiResponse.data));
     }
 
     /**

@@ -12,6 +12,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -286,6 +290,24 @@ export class PromiseProcessesApi {
     }
 
     /**
+     * @param climateRiskProcessParams
+     */
+    public executeClimateRiskWithHttpInfo(climateRiskProcessParams: ClimateRiskProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<ClimateRiskOutputs>> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeClimateRiskWithHttpInfo(climateRiskProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
+     * @param climateRiskProcessParams
+     */
+    public executeClimateRisk(climateRiskProcessParams: ClimateRiskProcessParams, _options?: PromiseConfigurationOptions): Promise<ClimateRiskOutputs> {
+        const observableOptions = wrapOptions(_options);
+        const result = this.api.executeClimateRisk(climateRiskProcessParams, observableOptions);
+        return result.toPromise();
+    }
+
+    /**
      * @param habitatDistanceProcessParams
      */
     public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
@@ -340,24 +362,24 @@ export class PromiseProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results | StatusInfo>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executionWithHttpInfo(processID, execute, observableOptions);
         return result.toPromise();
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results> {
+    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results | StatusInfo> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.execution(processID, execute, observableOptions);
         return result.toPromise();

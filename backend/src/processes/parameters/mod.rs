@@ -1,6 +1,6 @@
 use anyhow::Result;
 use geoengine_api_client::models::{BoundingBox2D, Coordinate2D, ProvenanceEntry};
-use geojson::Position;
+use geojson::{PointType, Position};
 use ogcapi::types::{
     common::Crs,
     processes::description::{DescriptionType, InputDescription, Metadata, OutputDescription},
@@ -11,7 +11,8 @@ use std::collections::HashMap;
 use utoipa::ToSchema;
 
 pub use data_resource::{
-    DataResource, DataResourceSchema, Fields, HasTableSchemaType, TableSchemaField,
+    BioisDisplayKind, BioisDisplayMetadata, BioisTableSchemaExtension, DataResource,
+    DataResourceName, DataResourceSchema, Fields, HasTableSchemaType, TableSchemaField,
     TableSchemaItemType, TableSchemaType,
 };
 #[cfg(test)]
@@ -22,7 +23,9 @@ pub use geo_json::{
 };
 #[cfg(test)]
 pub use units::Hectare;
-pub use units::{Area, Kilometers, Month, Percentage, SquareMeter, UnitForArea, Year};
+pub use units::{
+    Area, Days, Kilometers, Month, Percentage, SquareMeter, UnitForArea, Year, YearRange,
+};
 
 mod data_resource;
 mod geo_json;
@@ -159,6 +162,7 @@ impl TryFrom<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>
                     },
                 ],
                 primary_key: vec![DocumentationSource::DATA_FIELD_NAME.to_string()].into(),
+                ..Default::default()
             },
         })
     }
@@ -256,6 +260,7 @@ impl<const N: usize> ToOutputHashMap for [OutputSpec; N] {
     }
 }
 
+/// A 2D bounding box in WGS84 coordinates.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BoundingBox {
     minx: f64,
@@ -284,6 +289,17 @@ impl BoundingBox {
             maxy: f64::MIN,
             crs,
         }
+    }
+
+    /// Create a small bounding box around a point with the given half-span.
+    pub fn around_point(point: &PointType, half_span: f64) -> Self {
+        Self::new(
+            point[0] - half_span,
+            point[1] - half_span,
+            point[0] + half_span,
+            point[1] + half_span,
+            Crs::from_epsg(4326),
+        )
     }
 
     pub fn enlarge_by_positions<'p>(&mut self, other: impl Iterator<Item = &'p Position>) {

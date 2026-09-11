@@ -10,7 +10,7 @@ pub struct DataResourceSchema;
 
 /// Data resources for outputting tabular data with JSON.
 /// Based on <https://datapackage.org/profiles/2.0/dataresource.json>.
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DataResource<R> {
     /// A resource MUST contain a name property.
     pub name: DataResourceName,
@@ -85,11 +85,16 @@ impl AsRef<str> for DataResourceName {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
+#[allow(clippy::struct_field_names)]
 pub struct Fields {
+    #[serde(rename = "$schema", default, skip_serializing_if = "Option::is_none")]
+    pub schema: Option<String>,
     pub fields: Vec<TableSchemaField>,
     pub primary_key: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub biois: Option<BioisTableSchemaExtension>,
 }
 
 /// Field specification for Table Schema, based on <https://datapackage.org/standard/table-schema/>.
@@ -131,6 +136,35 @@ pub enum TableSchemaItemType {
 /// Trait that provides a method to get the table schema type of a struct.
 pub trait HasTableSchemaType {
     fn table_schema_type() -> TableSchemaType;
+}
+
+/// BioIS-specific metadata for rendering a standard Table Schema field.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BioisTableSchemaExtension {
+    pub display: std::collections::HashMap<String, BioisDisplayMetadata>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hidden_fields: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BioisDisplayMetadata {
+    /// Semantic category of the rendered value, e.g. a risk probability.
+    pub kind: BioisDisplayKind,
+    /// Name of a row property carrying the complete display label for this field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label_field: Option<String>,
+    /// Name of a row property carrying the CSS color for this field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub color_field: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum BioisDisplayKind {
+    RiskProbability,
+    RiskAnomaly,
 }
 
 #[cfg(test)]
@@ -177,6 +211,7 @@ mod tests {
                 },
             ],
             primary_key: Some(vec!["id".to_string()]),
+            ..Default::default()
         };
 
         let json = serde_json::to_value(&fields).unwrap();
@@ -210,6 +245,7 @@ mod tests {
                     item_type: None,
                 }],
                 primary_key: None,
+                ..Default::default()
             },
         };
 

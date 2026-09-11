@@ -8,6 +8,10 @@ export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
 export * from '../models/BiodiversitySensitiveAreasProcessParams';
 export * from '../models/BooleanField';
 export * from '../models/BoundingBox';
+export * from '../models/ClimateRiskInputs';
+export * from '../models/ClimateRiskOutputs';
+export * from '../models/ClimateRiskProcessParams';
+export * from '../models/ClimateVariable';
 export * from '../models/Conformance';
 export * from '../models/Constraints';
 export * from '../models/Constraints1';
@@ -126,6 +130,10 @@ import { BiodiversitySensitiveAreasProcessOutputs } from '../models/Biodiversity
 import { BiodiversitySensitiveAreasProcessParams    } from '../models/BiodiversitySensitiveAreasProcessParams';
 import { BooleanField     , BooleanFieldTypeEnum  , BooleanFieldFormatEnum       } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
+import { ClimateRiskInputs } from '../models/ClimateRiskInputs';
+import { ClimateRiskOutputs } from '../models/ClimateRiskOutputs';
+import { ClimateRiskProcessParams    } from '../models/ClimateRiskProcessParams';
+import { ClimateVariable } from '../models/ClimateVariable';
 import { Conformance } from '../models/Conformance';
 import { Constraints } from '../models/Constraints';
 import { Constraints1 } from '../models/Constraints1';
@@ -252,6 +260,7 @@ let enumsMap: Set<string> = new Set<string>([
     "ArrayFieldFormatEnum",
     "BooleanFieldTypeEnum",
     "BooleanFieldFormatEnum",
+    "ClimateVariable",
     "DateFieldTypeEnum",
     "DateTimeFieldTypeEnum",
     "DurationFieldTypeEnum",
@@ -308,6 +317,9 @@ let typeMap: {[index: string]: any} = {
     "BiodiversitySensitiveAreasProcessParams": BiodiversitySensitiveAreasProcessParams,
     "BooleanField": BooleanField,
     "BoundingBox": BoundingBox,
+    "ClimateRiskInputs": ClimateRiskInputs,
+    "ClimateRiskOutputs": ClimateRiskOutputs,
+    "ClimateRiskProcessParams": ClimateRiskProcessParams,
     "Conformance": Conformance,
     "Constraints": Constraints,
     "Constraints1": Constraints1,

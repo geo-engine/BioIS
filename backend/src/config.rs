@@ -16,6 +16,12 @@ pub struct Config {
     pub data_ids: DataIdsConfig,
     pub credits: CreditsConfig,
     pub logging: Logging,
+    pub nexgddp_cmip6: NexGddpCmip6Config,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct NexGddpCmip6Config {
+    pub model_registry_path: String,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]

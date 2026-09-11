@@ -6,7 +6,13 @@ import {
   input,
   output,
 } from '@angular/core';
-import { InputDescription, FieldType, defaultInput } from './schema-info';
+import {
+  InputDescription,
+  FieldType,
+  defaultInput,
+  resolveArrayEnumSchema,
+  resolveSingleEnumSchema,
+} from './schema-info';
 import { CommonModule } from '@angular/common';
 import { FormField, FieldTree, MaybeFieldTree } from '@angular/forms/signals';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,6 +23,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { processName } from '../util/processes';
 import { type JSONSchema } from 'ya-json-schema-types';
 import { SimpleFormFieldComponent } from './simple-form-field';
+import { BooleanFieldComponent } from './boolean-field.component';
 import { GeoJsonFormFieldComponent } from './geo-json-field.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { isNullOrUndefined } from '../util/assertions';
@@ -46,7 +53,12 @@ import { InfoIconComponent } from '../util/info-icon.component';
       </p>
       @if (!input.optional || isFieldSet()[input.key]) {
         @switch (input.type) {
-          @case (FieldType.Boolean)
+          @case (FieldType.Boolean) {
+            <app-boolean-field
+              [title]="fieldName(input.key)"
+              [formField]="asPrimitiveInput(form()[input.key])"
+            ></app-boolean-field>
+          }
           @case (FieldType.Integer)
           @case (FieldType.Number)
           @case (FieldType.String) {
@@ -61,6 +73,16 @@ import { InfoIconComponent } from '../util/info-icon.component';
               <mat-label>{{ input.title }}</mat-label>
               <mat-select [formField]="asPrimitiveInput(form()[input.key])">
                 @for (option of enumOptions(input.schema); track option) {
+                  <mat-option [value]="option">{{ option }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @case (FieldType.StringArray) {
+            <mat-form-field>
+              <mat-label>{{ input.title }}</mat-label>
+              <mat-select multiple [formField]="asStringArrayInput(form()[input.key])">
+                @for (option of stringArrayOptions(input.schema); track option) {
                   <mat-option [value]="option">{{ option }}</mat-option>
                 }
               </mat-select>
@@ -166,6 +188,7 @@ import { InfoIconComponent } from '../util/info-icon.component';
     MatSlideToggleModule,
     MatTooltipModule,
     SimpleFormFieldComponent,
+    BooleanFieldComponent,
     forwardRef(() => InputsFormComponent),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -180,6 +203,7 @@ export class InputsFormComponent {
   readonly FieldType = FieldType;
   readonly enumOptions = enumOptions;
   readonly integerRangeList = integerRangeList;
+  readonly stringArrayOptions = stringArrayOptions;
 
   readonly isFieldSet = computed<Record<string, boolean>>(() => {
     const form = this.form();
@@ -208,6 +232,10 @@ export class InputsFormComponent {
     return formInput as FieldTree<string | number | boolean, string>;
   }
 
+  asStringArrayInput(formInput: MaybeFieldTree<unknown, string>): FieldTree<string[], string> {
+    return formInput as FieldTree<string[], string>;
+  }
+
   asGeoJsonInput(
     formInput: MaybeFieldTree<unknown, string>,
   ): FieldTree<FeatureCollectionGeoJsonInput, string> {
@@ -234,17 +262,12 @@ export class InputsFormComponent {
   }
 }
 
+/** Returns the options for a single string-enum input. */
 export function enumOptions(schema: JSONSchema | undefined): string[] {
-  if (!schema || typeof schema === 'boolean' || !schema.enum || !Array.isArray(schema.enum))
-    return [];
-
-  const options = [];
-  for (const value of schema.enum) {
-    if (typeof value === 'string') options.push(value);
-  }
-  return options;
+  return resolveSingleEnumSchema(schema) ?? [];
 }
 
+/** Expands a small bounded integer schema into select options. */
 export function integerRangeList(schema: JSONSchema | undefined): number[] {
   if (
     !schema ||
@@ -260,4 +283,12 @@ export function integerRangeList(schema: JSONSchema | undefined): number[] {
     range.push(i);
   }
   return range;
+}
+
+/** Returns all enum values for a string-array input. */
+export function stringArrayOptions(schema: JSONSchema | undefined): string[] {
+  if (!schema || typeof schema === 'boolean') return [];
+
+  const items = resolveArrayEnumSchema(schema);
+  return items ? enumOptions(items) : [];
 }

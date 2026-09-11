@@ -8,6 +8,7 @@ use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::IntoResponse,
+    routing::get,
 };
 use geoengine_api_client::apis::session_api::{oidc_init, oidc_login};
 use ogcapi::{
@@ -23,6 +24,13 @@ pub fn auth_router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(auth_handler))
         .routes(routes!(auth_request_url_handler))
+}
+
+pub fn profile_router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new().route(
+        "/profiles/table-schema/climate-risk/1.0/schema.json",
+        get(crate::profile::climate_risk_table_schema_profile),
+    )
 }
 
 #[utoipa::path(get, path = "/health", responses((status = NO_CONTENT)))]
