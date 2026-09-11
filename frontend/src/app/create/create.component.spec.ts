@@ -76,7 +76,7 @@ describe('CreateComponent', () => {
     expect(
       inputsForRequest({
         year: 2020,
-        region: null,
+        optionalField: null,
         referenceYearBegin: undefined,
       }),
     ).toEqual({ year: 2020 });

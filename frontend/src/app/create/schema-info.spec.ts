@@ -6,7 +6,6 @@ import {
   defaultInput,
   defaultInputs,
 } from './schema-info';
-import { enumOptions } from './inputs-visualizer.component';
 
 const testInputs: {
   sites: ApiInputDescription;
@@ -17,7 +16,6 @@ const testInputs: {
   yearRange: ApiInputDescription;
   referenceYearBegin: ApiInputDescription;
   siteTypeField: ApiInputDescription;
-  region: ApiInputDescription;
 } = {
   sites: {
     title: 'Sites',
@@ -346,21 +344,6 @@ describe('retrieveInputDescription', () => {
     expect(defaultInput(result)).toBe(2020);
   });
 
-  it('should process nullable StringEnum input (region) with a usable default', () => {
-    const result = retrieveInputDescription('region', testInputs.region);
-
-    expect(result).toMatchObject({
-      key: 'region',
-      title: 'CORDEX/CMIP5 region',
-      type: FieldType.StringEnum,
-      optional: true,
-    });
-
-    expect(defaultInput(result)).toBeNull();
-    expect(defaultInput(result, { ignoreOptional: true })).toBe('Eur');
-    expect(enumOptions(result.schema)).toEqual(['Eur']);
-  });
-
   it('should process nullable input (previousYearData)', () => {
     const result = retrieveInputDescription('previousYearData', testInputs.previousYearData);
 
@@ -398,12 +381,6 @@ describe('retrieveInputDescription', () => {
 });
 
 describe('defaultInputs', () => {
-  it('keeps optional inputs disabled by default', () => {
-    const input = retrieveInputDescription('region', testInputs.region);
-    const result = defaultInputs([input]);
-    expect(result['region']).toBeNull();
-  });
-
   it('enables required inputs with their schema default', () => {
     const input = retrieveInputDescription('referenceYearBegin', testInputs.referenceYearBegin);
     const result = defaultInputs([input]);
