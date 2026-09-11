@@ -37,8 +37,6 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
-import { CordexModel } from '../models/CordexModel';
-import { CordexRegion } from '../models/CordexRegion';
 import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
@@ -486,12 +484,12 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<Results>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<HttpInfo<Results | StatusInfo>> {
         const _config = mergeConfiguration(this.configuration, _options);
 
         const requestContextPromise = this.requestFactory.execution(processID, execute, _config);
@@ -512,13 +510,13 @@ export class ObservableProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<Results> {
-        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<Results>) => apiResponse.data));
+    public execution(processID: string, execute: Execute, _options?: ConfigurationOptions): Observable<Results | StatusInfo> {
+        return this.executionWithHttpInfo(processID, execute, _options).pipe(map((apiResponse: HttpInfo<Results | StatusInfo>) => apiResponse.data));
     }
 
     /**

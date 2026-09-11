@@ -11,8 +11,6 @@
  */
 
 import { ClimateVariable } from '../models/ClimateVariable';
-import { CordexModel } from '../models/CordexModel';
-import { CordexRegion } from '../models/CordexRegion';
 import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
 import { HttpFile } from '../http/http';
 
@@ -34,8 +32,7 @@ export class ClimateRiskInputs {
     */
     'referenceYearBegin': number;
     'variables'?: Array<ClimateVariable>;
-    'models'?: Array<CordexModel>;
-    'region'?: CordexRegion | null;
+    'models'?: Array<string>;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -75,13 +72,7 @@ export class ClimateRiskInputs {
         {
             "name": "models",
             "baseName": "models",
-            "type": "Array<CordexModel>",
-            "format": ""
-        },
-        {
-            "name": "region",
-            "baseName": "region",
-            "type": "CordexRegion",
+            "type": "Array<string>",
             "format": ""
         }    ];
 
@@ -92,5 +83,3 @@ export class ClimateRiskInputs {
     public constructor() {
     }
 }
-
-

@@ -36,8 +36,6 @@ import { Constraints6 } from '../models/Constraints6';
 import { Constraints7 } from '../models/Constraints7';
 import { Constraints8 } from '../models/Constraints8';
 import { Constraints9 } from '../models/Constraints9';
-import { CordexModel } from '../models/CordexModel';
-import { CordexRegion } from '../models/CordexRegion';
 import { CreditsForJob } from '../models/CreditsForJob';
 import { DataResource } from '../models/DataResource';
 import { DateField } from '../models/DateField';
@@ -364,24 +362,24 @@ export class PromiseProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results | StatusInfo>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executionWithHttpInfo(processID, execute, observableOptions);
         return result.toPromise();
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results> {
+    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results | StatusInfo> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.execution(processID, execute, observableOptions);
         return result.toPromise();

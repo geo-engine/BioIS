@@ -264,7 +264,7 @@ export class ProcessesApiRequestFactory extends BaseAPIRequestFactory {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID 
      * @param execute 
@@ -663,7 +663,7 @@ export class ProcessesApiResponseProcessor {
      * @params response Response returned by the server for a request to execution
      * @throws ApiException if the response code was not in [200, 299]
      */
-     public async executionWithHttpInfo(response: ResponseContext): Promise<HttpInfo<Results >> {
+     public async executionWithHttpInfo(response: ResponseContext): Promise<HttpInfo<Results | StatusInfo >> {
         const contentType = ObjectSerializer.normalizeMediaType(response.headers["content-type"]);
         if (isCodeInRange("200", response.httpStatusCode)) {
             const body: Results = ObjectSerializer.deserialize(
@@ -672,6 +672,20 @@ export class ProcessesApiResponseProcessor {
             ) as Results;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
+        if (isCodeInRange("201", response.httpStatusCode)) {
+            const body: StatusInfo = ObjectSerializer.deserialize(
+                ObjectSerializer.parse(await response.body.text(), contentType),
+                "StatusInfo", ""
+            ) as StatusInfo;
+            return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
+        }
+        if (isCodeInRange("400", response.httpStatusCode)) {
+            const body: Exception = ObjectSerializer.deserialize(
+                ObjectSerializer.parse(await response.body.text(), contentType),
+                "Exception", ""
+            ) as Exception;
+            throw new ApiException<Exception>(response.httpStatusCode, "The request was invalid.", body, response.headers);
+        }
         if (isCodeInRange("404", response.httpStatusCode)) {
             const body: Exception = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
@@ -679,13 +693,20 @@ export class ProcessesApiResponseProcessor {
             ) as Exception;
             throw new ApiException<Exception>(response.httpStatusCode, "The requested URI was not found.", body, response.headers);
         }
+        if (isCodeInRange("500", response.httpStatusCode)) {
+            const body: Exception = ObjectSerializer.deserialize(
+                ObjectSerializer.parse(await response.body.text(), contentType),
+                "Exception", ""
+            ) as Exception;
+            throw new ApiException<Exception>(response.httpStatusCode, "A server error occurred.", body, response.headers);
+        }
 
         // Work around for missing responses in specification, e.g. for petstore.yaml
         if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-            const body: Results = ObjectSerializer.deserialize(
+            const body: Results | StatusInfo = ObjectSerializer.deserialize(
                 ObjectSerializer.parse(await response.body.text(), contentType),
-                "Results", ""
-            ) as Results;
+                "Results | StatusInfo", ""
+            ) as Results | StatusInfo;
             return new HttpInfo(response.httpStatusCode, response.headers, response.body, body);
         }
 

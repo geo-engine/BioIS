@@ -52,8 +52,6 @@ models/Constraints6.ts
 models/Constraints7.ts
 models/Constraints8.ts
 models/Constraints9.ts
-models/CordexModel.ts
-models/CordexRegion.ts
 models/CreditsForJob.ts
 models/DataResource.ts
 models/DateField.ts
