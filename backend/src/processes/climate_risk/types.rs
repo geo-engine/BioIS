@@ -279,7 +279,7 @@ pub struct ClimateRiskOutputs {
     /// Analysis window as `"2041–2070"`, used for display in result headlines.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analysis_period: Option<String>,
-    /// Reference window used for anomalies as `"2006–2025"`, `None` when no reference period.
+    /// Reference window used for anomalies as `"1981–2010"`, `None` when no reference period.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reference_period: Option<String>,
     #[schema(value_type = Option<DataResourceSchema>, inline)]
@@ -288,7 +288,7 @@ pub struct ClimateRiskOutputs {
     pub raw_ensemble_data: Option<DataResource<Vec<ClimateRiskRawRow>>>,
 }
 
-/// Column title for the anomaly: "Anomaly (days/year compared to 2006–2025)".
+/// Column title for the anomaly: "Anomaly (days/year compared to 1981–2010)".
 /// The analysis period lives in the resource name, so it is not repeated here.
 pub(crate) fn anomaly_title(reference_period: Option<&str>) -> String {
     match reference_period {
@@ -690,7 +690,7 @@ mod tests {
     fn it_climate_risk_row_serializes_display_fields() {
         let row = ClimateRiskRow {
             variable: "Heat Days".to_string(),
-            scenario: "rcp45".to_string(),
+            scenario: "ssp245".to_string(),
             mean: Days(50.0),
             median: Days(50.0),
             min: Days(0.0),

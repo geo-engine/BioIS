@@ -347,8 +347,8 @@ impl TryFrom<ClimateRiskOutputs> for ExecuteResults {
     }
 }
 
-/// Maps a scenario's display name (e.g. `"RCP 4.5 (Intermediate emissions)"`) to the output id
-/// declared in the process description (`"rcp45"`), so that the keys of the execute response
+/// Maps a scenario's display name (e.g. `"SSP2-4.5 (Intermediate emissions)"`) to the output id
+/// declared in the process description (`"ssp245"`), so that the keys of the execute response
 /// match the declared output ids. Falls back to the given name when it is not a known
 /// display name, which keeps rows carrying output ids directly working as well.
 fn scenario_output_id(scenario: &str) -> String {
@@ -1006,8 +1006,8 @@ mod tests {
     #[test]
     fn it_aggregate_from_list_aggregates_values() {
         let mut values: HashMap<String, f64> = HashMap::new();
-        values.insert("MPI-M-MPI-ESM-LR".to_string(), 10.0);
-        values.insert("MOHC-HadGEM2-ES".to_string(), 20.0);
+        values.insert("MPI-ESM1-2-LR".to_string(), 10.0);
+        values.insert("ACCESS-CM2".to_string(), 20.0);
 
         let result = aggregate_from_list(&values).unwrap();
         assert_abs_diff_eq!(result.min.0, 10.0);
@@ -1025,7 +1025,7 @@ mod tests {
     fn it_climate_risk_data_resource_declares_display_extension() {
         let rows = vec![ClimateRiskRow {
             variable: "Heat Days".to_string(),
-            scenario: "rcp45".to_string(),
+            scenario: "ssp245".to_string(),
             max: Days(100.0),
             min: Days(0.0),
             mean: Days(50.0),
@@ -1070,7 +1070,7 @@ mod tests {
         let rows = vec![
             ClimateRiskRow {
                 variable: "Heat Days".to_string(),
-                scenario: "rcp45".to_string(),
+                scenario: "ssp245".to_string(),
                 max: Days(100.0),
                 min: Days(0.0),
                 mean: Days(50.0),
@@ -1081,7 +1081,7 @@ mod tests {
             },
             ClimateRiskRow {
                 variable: "Dry Days".to_string(),
-                scenario: "rcp45".to_string(),
+                scenario: "ssp245".to_string(),
                 max: Days(100.0),
                 min: Days(0.0),
                 mean: Days(50.0),
@@ -1130,7 +1130,7 @@ mod tests {
     fn it_climate_risk_data_resource_omits_anomaly_field_when_absent() {
         let rows = vec![ClimateRiskRow {
             variable: "Heat Days".to_string(),
-            scenario: "rcp45".to_string(),
+            scenario: "ssp245".to_string(),
             max: Days(100.0),
             min: Days(0.0),
             mean: Days(50.0),
@@ -1178,7 +1178,7 @@ mod tests {
             "SSP2-4.5 (Intermediate emissions)",
             rows,
             "2041–2070",
-            Some("2006–2025"),
+            Some("1981–2010"),
         );
 
         assert_eq!(resource.name.as_str(), "climate-risk-ssp245");
@@ -1199,7 +1199,7 @@ mod tests {
         assert_eq!(title("mean").as_deref(), Some("Mean (days/year)"));
         assert_eq!(
             title("anomaly").as_deref(),
-            Some("Anomaly (days/year compared to 2006–2025)")
+            Some("Anomaly (days/year compared to 1981–2010)")
         );
 
         let resource = climate_risk_scenario_data_resource(
@@ -1262,13 +1262,13 @@ mod tests {
     fn it_averages_per_model_values_from_feature_collection() {
         let models = vec![
             ClimateModelProperties {
-                id: "MPI-M-MPI-ESM-LR".to_string(),
+                id: "MPI-ESM1-2-LR".to_string(),
                 variant: "r1i1p1f1".to_string(),
                 grid: "gn".to_string(),
                 scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
             },
             ClimateModelProperties {
-                id: "MOHC-HadGEM2-ES".to_string(),
+                id: "ACCESS-CM2".to_string(),
                 variant: "r1i1p1f1".to_string(),
                 grid: "gn".to_string(),
                 scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
@@ -1277,15 +1277,15 @@ mod tests {
 
         let geo_json = GeoJson {
             features: vec![
-                serde_json::json!({"type": "Feature", "properties": {"MPI-M-MPI-ESM-LR": 42.0, "MOHC-HadGEM2-ES": 10.0}}),
-                serde_json::json!({"type": "Feature", "properties": {"MPI-M-MPI-ESM-LR": 58.0, "MOHC-HadGEM2-ES": 30.0}}),
+                serde_json::json!({"type": "Feature", "properties": {"MPI-ESM1-2-LR": 42.0, "ACCESS-CM2": 10.0}}),
+                serde_json::json!({"type": "Feature", "properties": {"MPI-ESM1-2-LR": 58.0, "ACCESS-CM2": 30.0}}),
             ],
             r#type: CollectionType::FeatureCollection,
         };
         let result = outputs_from_feature_collection(&geo_json, &models).unwrap();
         assert_eq!(result.len(), 2);
-        assert_abs_diff_eq!(result["MPI-M-MPI-ESM-LR"], 50.0);
-        assert_abs_diff_eq!(result["MOHC-HadGEM2-ES"], 20.0);
+        assert_abs_diff_eq!(result["MPI-ESM1-2-LR"], 50.0);
+        assert_abs_diff_eq!(result["ACCESS-CM2"], 20.0);
 
         assert!(outputs_from_feature_collection(&GeoJson::default(), &models).is_err());
 
@@ -1308,20 +1308,20 @@ mod tests {
         let rows = vec![
             ClimateRiskRawRow {
                 variable: "Ice Days".to_string(),
-                scenario: "rcp45".to_string(),
-                model: "MOHC-HadGEM2-ES".to_string(),
+                scenario: "ssp245".to_string(),
+                model: "ACCESS-CM2".to_string(),
                 value: 1.0,
             },
             ClimateRiskRawRow {
                 variable: "Heat Days".to_string(),
-                scenario: "rcp85".to_string(),
-                model: "MPI-M-MPI-ESM-LR".to_string(),
+                scenario: "ssp585".to_string(),
+                model: "MPI-ESM1-2-LR".to_string(),
                 value: 2.0,
             },
             ClimateRiskRawRow {
                 variable: "Heat Days".to_string(),
-                scenario: "rcp26".to_string(),
-                model: "MOHC-HadGEM2-ES".to_string(),
+                scenario: "historical".to_string(),
+                model: "ACCESS-CM2".to_string(),
                 value: 3.0,
             },
         ];
@@ -1336,9 +1336,9 @@ mod tests {
         assert_eq!(
             keys,
             vec![
-                ("Heat Days", "rcp26", "MOHC-HadGEM2-ES"),
-                ("Heat Days", "rcp85", "MPI-M-MPI-ESM-LR"),
-                ("Ice Days", "rcp45", "MOHC-HadGEM2-ES"),
+                ("Heat Days", "historical", "ACCESS-CM2"),
+                ("Heat Days", "ssp585", "MPI-ESM1-2-LR"),
+                ("Ice Days", "ssp245", "ACCESS-CM2"),
             ]
         );
     }
@@ -1571,13 +1571,13 @@ mod tests {
     fn it_skips_missing_or_invalid_model_columns() {
         let models = vec![
             ClimateModelProperties {
-                id: "MPI-M-MPI-ESM-LR".to_string(),
+                id: "MPI-ESM1-2-LR".to_string(),
                 variant: "r1i1p1f1".to_string(),
                 grid: "gn".to_string(),
                 scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
             },
             ClimateModelProperties {
-                id: "MOHC-HadGEM2-ES".to_string(),
+                id: "ACCESS-CM2".to_string(),
                 variant: "r1i1p1f1".to_string(),
                 grid: "gn".to_string(),
                 scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
@@ -1585,15 +1585,15 @@ mod tests {
         ];
         let geo_json = GeoJson {
             features: vec![
-                serde_json::json!({"type": "Feature", "properties": {"MPI-M-MPI-ESM-LR": "not-a-number", "MOHC-HadGEM2-ES": 4.0}}),
-                serde_json::json!({"type": "Feature", "properties": {"MPI-M-MPI-ESM-LR": 8.0}}),
+                serde_json::json!({"type": "Feature", "properties": {"MPI-ESM1-2-LR": "not-a-number", "ACCESS-CM2": 4.0}}),
+                serde_json::json!({"type": "Feature", "properties": {"MPI-ESM1-2-LR": 8.0}}),
             ],
             r#type: CollectionType::FeatureCollection,
         };
 
         let result = outputs_from_feature_collection(&geo_json, &models).unwrap();
 
-        assert_abs_diff_eq!(result["MPI-M-MPI-ESM-LR"], 8.0);
-        assert_abs_diff_eq!(result["MOHC-HadGEM2-ES"], 4.0);
+        assert_abs_diff_eq!(result["MPI-ESM1-2-LR"], 8.0);
+        assert_abs_diff_eq!(result["ACCESS-CM2"], 4.0);
     }
 }
