@@ -10,34 +10,37 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class StringFieldMissingValuesAnyOfInner {
-    'value': string;
-    'label'?: string;
+  "value": string;
+  "label"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "value",
-            "baseName": "value",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "label",
-            "baseName": "label",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "value",
+      baseName: "value",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "label",
+      baseName: "label",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return StringFieldMissingValuesAnyOfInner.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return StringFieldMissingValuesAnyOfInner.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

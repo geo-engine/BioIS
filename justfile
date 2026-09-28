@@ -2,6 +2,8 @@ _default:
     @just --list
 
 OPENAPI_GENERATOR_PACKAGE := "@openapitools/openapi-generator-cli@2.28.3"
+# used to remove unused imports from the generated API client, cf. `api-client/eslint.config.mjs`
+API_CLIENT_ESLINT_PACKAGES := "-p eslint@10.11.0 -p typescript-eslint@8.70.1 -p eslint-plugin-unused-imports@4.4.1"
 
 # Clear the terminal before executing a command. Does not fail in a CI.
 _clear:
@@ -48,6 +50,8 @@ build-api-client: _clear
     rm -rf typescript/*
     npx {{ OPENAPI_GENERATOR_PACKAGE }} batch config.yaml
     ./post-process.py
+    npx --yes {{ API_CLIENT_ESLINT_PACKAGES }} eslint --fix typescript
+    cd ../frontend && npx --yes prettier --write ../api-client/typescript
 
 # Build the backend. Usage: `just build-backend --release`.
 [group('build')]

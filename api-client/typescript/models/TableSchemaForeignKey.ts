@@ -10,28 +10,27 @@
  * Do not edit the class manually.
  */
 
-import { TableSchemaForeignKeyOneOf } from '../models/TableSchemaForeignKeyOneOf';
-import { TableSchemaForeignKeyOneOf1 } from '../models/TableSchemaForeignKeyOneOf1';
-import { HttpFile } from '../http/http';
+import { TableSchemaForeignKeyOneOf } from "../models/TableSchemaForeignKeyOneOf";
+import { TableSchemaForeignKeyOneOf1 } from "../models/TableSchemaForeignKeyOneOf1";
 
 /**
-* Table Schema Foreign Key
-*/
+ * Table Schema Foreign Key
+ */
 /**
  * @type TableSchemaForeignKey
  * Type
  * @export
  */
-export type TableSchemaForeignKey = TableSchemaForeignKeyOneOf | TableSchemaForeignKeyOneOf1;
+export type TableSchemaForeignKey =
+  TableSchemaForeignKeyOneOf | TableSchemaForeignKeyOneOf1;
 
 /**
-* @type TableSchemaForeignKeyClass
-    * Table Schema Foreign Key
-* @export
-*/
+ * @type TableSchemaForeignKeyClass
+ * Table Schema Foreign Key
+ * @export
+ */
 export class TableSchemaForeignKeyClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

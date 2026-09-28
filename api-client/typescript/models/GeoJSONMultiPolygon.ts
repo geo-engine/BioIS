@@ -10,46 +10,48 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class GeoJSONMultiPolygon {
-    'type': GeoJSONMultiPolygonTypeEnum;
-    'coordinates': Array<Array<Array<Array<number>>>>;
-    'bbox'?: Array<number>;
+  "type": GeoJSONMultiPolygonTypeEnum;
+  "coordinates": Array<Array<Array<Array<number>>>>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONMultiPolygonTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<Array<Array<Array<number>>>>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "GeoJSONMultiPolygonTypeEnum",
+      format: "",
+    },
+    {
+      name: "coordinates",
+      baseName: "coordinates",
+      type: "Array<Array<Array<Array<number>>>>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GeoJSONMultiPolygon.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GeoJSONMultiPolygon.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum GeoJSONMultiPolygonTypeEnum {
-    MultiPolygon = 'MultiPolygon'
+  MultiPolygon = "MultiPolygon",
 }
-

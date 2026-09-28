@@ -10,11 +10,9 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* A reference to the data for this resource, as either a path as a string, or an array of paths as strings. of valid URIs.
-*/
+ * A reference to the data for this resource, as either a path as a string, or an array of paths as strings. of valid URIs.
+ */
 /**
  * @type Path
  * Type
@@ -23,13 +21,12 @@ import { HttpFile } from '../http/http';
 export type Path = Array<string> | string;
 
 /**
-* @type PathClass
-    * A reference to the data for this resource, as either a path as a string, or an array of paths as strings. of valid URIs.
-* @export
-*/
+ * @type PathClass
+ * A reference to the data for this resource, as either a path as a string, or an array of paths as strings. of valid URIs.
+ * @export
+ */
 export class PathClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

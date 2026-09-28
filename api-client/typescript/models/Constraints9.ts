@@ -10,81 +10,85 @@
  * Do not edit the class manually.
  */
 
-import { Constraints1Enum } from '../models/Constraints1Enum';
-import { HttpFile } from '../http/http';
+import { Constraints1Enum } from "../models/Constraints1Enum";
 
 /**
-* The following constraints apply for `object` fields.
-*/
+ * The following constraints apply for `object` fields.
+ */
 export class Constraints9 {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    /**
-    * When `true`, each value for the property `MUST` be unique.
-    */
-    'unique'?: boolean;
-    '_enum'?: Constraints1Enum;
-    /**
-    * An integer that specifies the minimum length of a value.
-    */
-    'minLength'?: number;
-    /**
-    * An integer that specifies the maximum length of a value.
-    */
-    'maxLength'?: number;
-    /**
-    * A valid JSON Schema object to validate field values. If a field value conforms to the provided JSON Schema then this field value is valid.
-    */
-    'jsonSchema'?: any;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  /**
+   * When `true`, each value for the property `MUST` be unique.
+   */
+  "unique"?: boolean;
+  "_enum"?: Constraints1Enum;
+  /**
+   * An integer that specifies the minimum length of a value.
+   */
+  "minLength"?: number;
+  /**
+   * An integer that specifies the maximum length of a value.
+   */
+  "maxLength"?: number;
+  /**
+   * A valid JSON Schema object to validate field values. If a field value conforms to the provided JSON Schema then this field value is valid.
+   */
+  "jsonSchema"?: any;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "unique",
-            "baseName": "unique",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Constraints1Enum",
-            "format": ""
-        },
-        {
-            "name": "minLength",
-            "baseName": "minLength",
-            "type": "number",
-            "format": ""
-        },
-        {
-            "name": "maxLength",
-            "baseName": "maxLength",
-            "type": "number",
-            "format": ""
-        },
-        {
-            "name": "jsonSchema",
-            "baseName": "jsonSchema",
-            "type": "any",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "unique",
+      baseName: "unique",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Constraints1Enum",
+      format: "",
+    },
+    {
+      name: "minLength",
+      baseName: "minLength",
+      type: "number",
+      format: "",
+    },
+    {
+      name: "maxLength",
+      baseName: "maxLength",
+      type: "number",
+      format: "",
+    },
+    {
+      name: "jsonSchema",
+      baseName: "jsonSchema",
+      type: "any",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints9.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints9.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

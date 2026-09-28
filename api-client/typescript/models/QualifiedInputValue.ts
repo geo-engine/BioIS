@@ -10,31 +10,38 @@
  * Do not edit the class manually.
  */
 
-import { Format } from '../models/Format';
-import { InputValue } from '../models/InputValue';
-import { Schema } from '../models/Schema';
-import { HttpFile } from '../http/http';
+import { Format } from "../models/Format";
+import { InputValue } from "../models/InputValue";
 
 export class QualifiedInputValue extends Format {
-    'value': InputValue;
+  "value": InputValue;
 
-    static override readonly discriminator: string | undefined = undefined;
+  static override readonly discriminator: string | undefined = undefined;
 
-    static override readonly mapping: {[index: string]: string} | undefined = undefined;
+  static override readonly mapping: { [index: string]: string } | undefined =
+    undefined;
 
-    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "value",
-            "baseName": "value",
-            "type": "InputValue",
-            "format": ""
-        }    ];
+  static override readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "value",
+      baseName: "value",
+      type: "InputValue",
+      format: "",
+    },
+  ];
 
-    static override getAttributeTypeMap() {
-        return super.getAttributeTypeMap().concat(QualifiedInputValue.attributeTypeMap);
-    }
+  static override getAttributeTypeMap() {
+    return super
+      .getAttributeTypeMap()
+      .concat(QualifiedInputValue.attributeTypeMap);
+  }
 
-    public constructor() {
-        super();
-    }
+  public constructor() {
+    super();
+  }
 }

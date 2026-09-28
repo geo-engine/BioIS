@@ -10,53 +10,56 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* A license for this descriptor.
-*/
+ * A license for this descriptor.
+ */
 export class License {
-    /**
-    * MUST be an Open Definition license identifier, see http://licenses.opendefinition.org/
-    */
-    'name'?: string;
-    /**
-    * A fully qualified URL, or a POSIX file path.
-    */
-    'path'?: string;
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
+  /**
+   * MUST be an Open Definition license identifier, see http://licenses.opendefinition.org/
+   */
+  "name"?: string;
+  /**
+   * A fully qualified URL, or a POSIX file path.
+   */
+  "path"?: string;
+  /**
+   * A human-readable title.
+   */
+  "title"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "path",
-            "baseName": "path",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "path",
+      baseName: "path",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return License.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return License.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

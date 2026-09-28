@@ -10,60 +10,64 @@
  * Do not edit the class manually.
  */
 
-import { AdditionalParameters } from '../models/AdditionalParameters';
-import { Metadata } from '../models/Metadata';
-import { HttpFile } from '../http/http';
+import { AdditionalParameters } from "../models/AdditionalParameters";
+import { Metadata } from "../models/Metadata";
 
 /**
-* Basic description type
-*/
+ * Basic description type
+ */
 export class DescriptionType {
-    'title'?: string;
-    'description'?: string;
-    'keywords'?: Array<string>;
-    'metadata'?: Array<Metadata>;
-    'additionalParameters'?: AdditionalParameters;
+  "title"?: string;
+  "description"?: string;
+  "keywords"?: Array<string>;
+  "metadata"?: Array<Metadata>;
+  "additionalParameters"?: AdditionalParameters;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "description",
-            "baseName": "description",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "keywords",
-            "baseName": "keywords",
-            "type": "Array<string>",
-            "format": ""
-        },
-        {
-            "name": "metadata",
-            "baseName": "metadata",
-            "type": "Array<Metadata>",
-            "format": ""
-        },
-        {
-            "name": "additionalParameters",
-            "baseName": "additionalParameters",
-            "type": "AdditionalParameters",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "description",
+      baseName: "description",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "keywords",
+      baseName: "keywords",
+      type: "Array<string>",
+      format: "",
+    },
+    {
+      name: "metadata",
+      baseName: "metadata",
+      type: "Array<Metadata>",
+      format: "",
+    },
+    {
+      name: "additionalParameters",
+      baseName: "additionalParameters",
+      type: "AdditionalParameters",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return DescriptionType.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return DescriptionType.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

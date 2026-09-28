@@ -10,56 +10,60 @@
  * Do not edit the class manually.
  */
 
-import { UserInfo } from '../models/UserInfo';
-import { HttpFile } from '../http/http';
+import { UserInfo } from "../models/UserInfo";
 
 export class UserSession {
-    'created': string;
-    'id': string;
-    'roles': Array<string>;
-    'user': UserInfo;
-    'validUntil': string;
+  "created": string;
+  "id": string;
+  "roles": Array<string>;
+  "user": UserInfo;
+  "validUntil": string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "created",
-            "baseName": "created",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "id",
-            "baseName": "id",
-            "type": "string",
-            "format": "uuid"
-        },
-        {
-            "name": "roles",
-            "baseName": "roles",
-            "type": "Array<string>",
-            "format": "uuid"
-        },
-        {
-            "name": "user",
-            "baseName": "user",
-            "type": "UserInfo",
-            "format": ""
-        },
-        {
-            "name": "validUntil",
-            "baseName": "validUntil",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "created",
+      baseName: "created",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "id",
+      baseName: "id",
+      type: "string",
+      format: "uuid",
+    },
+    {
+      name: "roles",
+      baseName: "roles",
+      type: "Array<string>",
+      format: "uuid",
+    },
+    {
+      name: "user",
+      baseName: "user",
+      type: "UserInfo",
+      format: "",
+    },
+    {
+      name: "validUntil",
+      baseName: "validUntil",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return UserSession.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return UserSession.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

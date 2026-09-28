@@ -10,64 +10,66 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInputBiodiversitySiteProperties } from '../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties';
-import { UnitForArea } from '../models/UnitForArea';
-import { HttpFile } from '../http/http';
+import { FeatureCollectionGeoJsonInputBiodiversitySiteProperties } from "../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties";
+import { UnitForArea } from "../models/UnitForArea";
 
 export class BiodiversitySensitiveAreasProcessInputs {
-    /**
-    * Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.). The impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.).
-    */
-    'sites': FeatureCollectionGeoJsonInputBiodiversitySiteProperties;
-    /**
-    * Name of the property in the input `GeoJSON` features that contains the location information.
-    */
-    'locationNameField': string;
-    /**
-    * Name of the property in the input `GeoJSON` features that contains the site type information.
-    */
-    'siteTypeField': string;
-    /**
-    * Unit for area measurement, with options for hectares (ha) or square meters (m²).
-    */
-    'unitForArea': UnitForArea;
+  /**
+   * Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.). The impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.).
+   */
+  "sites": FeatureCollectionGeoJsonInputBiodiversitySiteProperties;
+  /**
+   * Name of the property in the input `GeoJSON` features that contains the location information.
+   */
+  "locationNameField": string;
+  /**
+   * Name of the property in the input `GeoJSON` features that contains the site type information.
+   */
+  "siteTypeField": string;
+  /**
+   * Unit for area measurement, with options for hectares (ha) or square meters (m²).
+   */
+  "unitForArea": UnitForArea;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "sites",
-            "baseName": "sites",
-            "type": "FeatureCollectionGeoJsonInputBiodiversitySiteProperties",
-            "format": ""
-        },
-        {
-            "name": "locationNameField",
-            "baseName": "locationNameField",
-            "type": "string",
-            "format": "relative-json-pointer"
-        },
-        {
-            "name": "siteTypeField",
-            "baseName": "siteTypeField",
-            "type": "string",
-            "format": "relative-json-pointer"
-        },
-        {
-            "name": "unitForArea",
-            "baseName": "unitForArea",
-            "type": "UnitForArea",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "sites",
+      baseName: "sites",
+      type: "FeatureCollectionGeoJsonInputBiodiversitySiteProperties",
+      format: "",
+    },
+    {
+      name: "locationNameField",
+      baseName: "locationNameField",
+      type: "string",
+      format: "relative-json-pointer",
+    },
+    {
+      name: "siteTypeField",
+      baseName: "siteTypeField",
+      type: "string",
+      format: "relative-json-pointer",
+    },
+    {
+      name: "unitForArea",
+      baseName: "unitForArea",
+      type: "UnitForArea",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return BiodiversitySensitiveAreasProcessInputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return BiodiversitySensitiveAreasProcessInputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

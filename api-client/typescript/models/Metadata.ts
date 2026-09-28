@@ -10,41 +10,44 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class Metadata {
-    'title'?: string;
-    'role'?: string;
-    'href'?: string;
+  "title"?: string;
+  "role"?: string;
+  "href"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "role",
-            "baseName": "role",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "href",
-            "baseName": "href",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "role",
+      baseName: "role",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "href",
+      baseName: "href",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Metadata.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Metadata.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

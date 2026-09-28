@@ -4,12 +4,11 @@
 Post-processing of generated code.
 """
 
-from collections.abc import Generator, Callable
+import logging
+from collections.abc import Callable, Generator
 from pathlib import Path
 from textwrap import dedent
 from typing import TypeAlias
-import logging
-
 
 FileModifier: TypeAlias = Callable[[list[str]], Generator[str, None, None]]
 INDENT = "    "
@@ -29,22 +28,33 @@ def main():
     """Main function to perform file modifications."""
 
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    logger = logging.getLogger(__name__)
 
     subdir = Path("typescript")
     for file_path, modify_fn in file_modifications():
-        logging.info("Modifying %s…", file_path)
-
-        file_path = subdir / file_path
+        full_path = subdir / file_path
+        logger.info("Modifying %s…", full_path)
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                file_contents = f.readlines()
+            # 1. Read file contents
+            file_contents = full_path.read_text(encoding="utf-8").splitlines(
+                keepends=True
+            )
 
-            with open(file_path, "w", encoding="utf-8") as f:
-                for line in modify_fn(file_contents):
-                    f.write(line)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logging.error("Error modifying %s: %s", file_path, e)
+            # 2. Transform contents (might fail inside modify_fn)
+            new_contents = modify_fn(file_contents)
+
+            # 3. Write back only after transformation succeeds
+            full_path.write_text("".join(new_contents), encoding="utf-8")
+
+        except OSError as e:
+            # Catches FileNotFoundError, PermissionError, IsADirectoryError, etc.
+            logger.error("I/O error modifying %s: %s", full_path, e)
+
+        except Exception:
+            # Catches unexpected logic or parsing bugs in modify_fn
+            # exc_info=True captures the full traceback in the log
+            logger.exception("Unexpected error executing modify_fn on %s", full_path)
 
 
 def object_param_api_ts(file_contents: list[str]) -> Generator[str, None, None]:
@@ -83,8 +93,7 @@ def object_serializer_ts(file_contents: list[str]) -> Generator[str, None, None]
 
 def all_ts(file_contents: list[str]) -> Generator[str, None, None]:
     """Modify all TypeScript files."""
-    for line in file_contents:
-        yield line
+    yield from file_contents
 
     # add to bottom
     yield "export * from '../models/ObjectSerializer';" + "\n"

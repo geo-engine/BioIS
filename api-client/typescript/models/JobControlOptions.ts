@@ -10,10 +10,8 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export enum JobControlOptions {
-    SyncExecute = 'sync-execute',
-    AsyncExecute = 'async-execute',
-    Dismiss = 'dismiss'
+  SyncExecute = "sync-execute",
+  AsyncExecute = "async-execute",
+  Dismiss = "dismiss",
 }

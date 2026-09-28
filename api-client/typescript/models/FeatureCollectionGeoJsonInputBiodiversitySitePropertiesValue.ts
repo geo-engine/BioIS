@@ -10,47 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner';
-import { HttpFile } from '../http/http';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner } from "../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner";
 
 export class FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue {
-    'type': FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum;
-    'features': Array<FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner>;
-    'bbox'?: Array<number>;
+  "type": FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum;
+  "features": Array<FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "features",
-            "baseName": "features",
-            "type": "Array<FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum",
+      format: "",
+    },
+    {
+      name: "features",
+      baseName: "features",
+      type: "Array<FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum {
-    FeatureCollection = 'FeatureCollection'
+  FeatureCollection = "FeatureCollection",
 }
-

@@ -10,63 +10,67 @@
  * Do not edit the class manually.
  */
 
-import { DataResource } from '../models/DataResource';
-import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
-import { HttpFile } from '../http/http';
+import { DataResource } from "../models/DataResource";
+import { LandUseSealedAreaProcessInputs } from "../models/LandUseSealedAreaProcessInputs";
 
 export class LandUseSealedAreaProcessOutputs {
-    'landUseSummary'?: DataResource | null;
-    'siteLandUseTable'?: DataResource | null;
-    /**
-    * Echo of inputs for auditing and traceability
-    */
-    'inputs'?: LandUseSealedAreaProcessInputs | null;
-    /**
-    * Errors encountered during processing, if any
-    */
-    'errors'?: Array<string> | null;
-    'documentationSources'?: DataResource | null;
+  "landUseSummary"?: DataResource | null;
+  "siteLandUseTable"?: DataResource | null;
+  /**
+   * Echo of inputs for auditing and traceability
+   */
+  "inputs"?: LandUseSealedAreaProcessInputs | null;
+  /**
+   * Errors encountered during processing, if any
+   */
+  "errors"?: Array<string> | null;
+  "documentationSources"?: DataResource | null;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "landUseSummary",
-            "baseName": "landUseSummary",
-            "type": "DataResource",
-            "format": ""
-        },
-        {
-            "name": "siteLandUseTable",
-            "baseName": "siteLandUseTable",
-            "type": "DataResource",
-            "format": ""
-        },
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "LandUseSealedAreaProcessInputs",
-            "format": ""
-        },
-        {
-            "name": "errors",
-            "baseName": "errors",
-            "type": "Array<string>",
-            "format": ""
-        },
-        {
-            "name": "documentationSources",
-            "baseName": "documentationSources",
-            "type": "DataResource",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "landUseSummary",
+      baseName: "landUseSummary",
+      type: "DataResource",
+      format: "",
+    },
+    {
+      name: "siteLandUseTable",
+      baseName: "siteLandUseTable",
+      type: "DataResource",
+      format: "",
+    },
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "LandUseSealedAreaProcessInputs",
+      format: "",
+    },
+    {
+      name: "errors",
+      baseName: "errors",
+      type: "Array<string>",
+      format: "",
+    },
+    {
+      name: "documentationSources",
+      baseName: "documentationSources",
+      type: "DataResource",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return LandUseSealedAreaProcessOutputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return LandUseSealedAreaProcessOutputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

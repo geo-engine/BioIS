@@ -10,46 +10,48 @@
  * Do not edit the class manually.
  */
 
-import { BiodiversitySiteSpecification } from '../models/BiodiversitySiteSpecification';
-import { HttpFile } from '../http/http';
+import { BiodiversitySiteSpecification } from "../models/BiodiversitySiteSpecification";
 
 /**
-* Expected properties of a site feature in the input `GeoJSON`.
-*/
+ * Expected properties of a site feature in the input `GeoJSON`.
+ */
 export class FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties {
-    /**
-    * Name of the site
-    */
-    'name'?: string;
-    /**
-    * Type of the site, which determines its impact radius
-    */
-    'type'?: BiodiversitySiteSpecification;
+  /**
+   * Name of the site
+   */
+  "name"?: string;
+  /**
+   * Type of the site, which determines its impact radius
+   */
+  "type"?: BiodiversitySiteSpecification;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "BiodiversitySiteSpecification",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "type",
+      baseName: "type",
+      type: "BiodiversitySiteSpecification",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

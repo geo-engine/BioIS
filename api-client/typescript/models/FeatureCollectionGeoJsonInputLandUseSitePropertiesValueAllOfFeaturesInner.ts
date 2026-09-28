@@ -10,36 +10,40 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry';
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties';
-import { HttpFile } from '../http/http';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry } from "../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry";
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties } from "../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties";
 
 export class FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner {
-    'geometry'?: FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry;
-    'properties'?: FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties;
+  "geometry"?: FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry;
+  "properties"?: FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "geometry",
-            "baseName": "geometry",
-            "type": "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry",
-            "format": ""
-        },
-        {
-            "name": "properties",
-            "baseName": "properties",
-            "type": "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "geometry",
+      baseName: "geometry",
+      type: "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry",
+      format: "",
+    },
+    {
+      name: "properties",
+      baseName: "properties",
+      type: "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

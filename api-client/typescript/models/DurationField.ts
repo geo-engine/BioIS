@@ -10,117 +10,120 @@
  * Do not edit the class manually.
  */
 
-import { Constraints13 } from '../models/Constraints13';
-import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
-import { HttpFile } from '../http/http';
+import { Constraints13 } from "../models/Constraints13";
+import { StringFieldMissingValues } from "../models/StringFieldMissingValues";
 
 /**
-* The field contains a duration of time.
-*/
+ * The field contains a duration of time.
+ */
 export class DurationField {
-    /**
-    * A name for this field.
-    */
-    'name': string;
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
-    /**
-    * A text description. Markdown is encouraged.
-    */
-    'description'?: string;
-    /**
-    * An example value for the field.
-    */
-    'example'?: string;
-    'missingValues'?: StringFieldMissingValues;
-    /**
-    * The type keyword, which `MUST` be a value of `duration`.
-    */
-    'type': DurationFieldTypeEnum;
-    /**
-    * There are no format keyword options for `duration`: only `default` is allowed.
-    */
-    'format'?: DurationFieldFormatEnum;
-    'constraints'?: Constraints13;
-    /**
-    * The RDF type for this field.
-    */
-    'rdfType'?: string;
+  /**
+   * A name for this field.
+   */
+  "name": string;
+  /**
+   * A human-readable title.
+   */
+  "title"?: string;
+  /**
+   * A text description. Markdown is encouraged.
+   */
+  "description"?: string;
+  /**
+   * An example value for the field.
+   */
+  "example"?: string;
+  "missingValues"?: StringFieldMissingValues;
+  /**
+   * The type keyword, which `MUST` be a value of `duration`.
+   */
+  "type": DurationFieldTypeEnum;
+  /**
+   * There are no format keyword options for `duration`: only `default` is allowed.
+   */
+  "format"?: DurationFieldFormatEnum;
+  "constraints"?: Constraints13;
+  /**
+   * The RDF type for this field.
+   */
+  "rdfType"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "description",
-            "baseName": "description",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "example",
-            "baseName": "example",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "missingValues",
-            "baseName": "missingValues",
-            "type": "StringFieldMissingValues",
-            "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "DurationFieldTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "format",
-            "baseName": "format",
-            "type": "DurationFieldFormatEnum",
-            "format": ""
-        },
-        {
-            "name": "constraints",
-            "baseName": "constraints",
-            "type": "Constraints13",
-            "format": ""
-        },
-        {
-            "name": "rdfType",
-            "baseName": "rdfType",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "description",
+      baseName: "description",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "example",
+      baseName: "example",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "missingValues",
+      baseName: "missingValues",
+      type: "StringFieldMissingValues",
+      format: "",
+    },
+    {
+      name: "type",
+      baseName: "type",
+      type: "DurationFieldTypeEnum",
+      format: "",
+    },
+    {
+      name: "format",
+      baseName: "format",
+      type: "DurationFieldFormatEnum",
+      format: "",
+    },
+    {
+      name: "constraints",
+      baseName: "constraints",
+      type: "Constraints13",
+      format: "",
+    },
+    {
+      name: "rdfType",
+      baseName: "rdfType",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return DurationField.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return DurationField.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum DurationFieldTypeEnum {
-    Duration = 'duration'
+  Duration = "duration",
 }
 export enum DurationFieldFormatEnum {
-    Default = 'default'
+  Default = "default",
 }
-

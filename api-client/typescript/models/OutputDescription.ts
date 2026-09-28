@@ -10,34 +10,40 @@
  * Do not edit the class manually.
  */
 
-import { AdditionalParameters } from '../models/AdditionalParameters';
-import { DescriptionType } from '../models/DescriptionType';
-import { Metadata } from '../models/Metadata';
-import { HttpFile } from '../http/http';
+import { DescriptionType } from "../models/DescriptionType";
 
 /**
-* Process output description
-*/
+ * Process output description
+ */
 export class OutputDescription extends DescriptionType {
-    'schema': any | null;
+  "schema": any | null;
 
-    static override readonly discriminator: string | undefined = undefined;
+  static override readonly discriminator: string | undefined = undefined;
 
-    static override readonly mapping: {[index: string]: string} | undefined = undefined;
+  static override readonly mapping: { [index: string]: string } | undefined =
+    undefined;
 
-    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "schema",
-            "baseName": "schema",
-            "type": "any",
-            "format": ""
-        }    ];
+  static override readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "schema",
+      baseName: "schema",
+      type: "any",
+      format: "",
+    },
+  ];
 
-    static override getAttributeTypeMap() {
-        return super.getAttributeTypeMap().concat(OutputDescription.attributeTypeMap);
-    }
+  static override getAttributeTypeMap() {
+    return super
+      .getAttributeTypeMap()
+      .concat(OutputDescription.attributeTypeMap);
+  }
 
-    public constructor() {
-        super();
-    }
+  public constructor() {
+    super();
+  }
 }

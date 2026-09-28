@@ -10,8 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export enum GeoJsonInputMediaType {
-    ApplicationGeojson = 'application/geo+json'
+  ApplicationGeojson = "application/geo+json",
 }

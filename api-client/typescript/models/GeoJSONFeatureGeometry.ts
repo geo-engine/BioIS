@@ -10,34 +10,34 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONGeometryCollection } from '../models/GeoJSONGeometryCollection';
-import { GeoJSONLineString } from '../models/GeoJSONLineString';
-import { GeoJSONMultiLineString } from '../models/GeoJSONMultiLineString';
-import { GeoJSONMultiPoint } from '../models/GeoJSONMultiPoint';
-import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
-import { HttpFile } from '../http/http';
+import { GeoJSONGeometryCollection } from "../models/GeoJSONGeometryCollection";
+import { GeoJSONLineString } from "../models/GeoJSONLineString";
+import { GeoJSONMultiLineString } from "../models/GeoJSONMultiLineString";
+import { GeoJSONMultiPoint } from "../models/GeoJSONMultiPoint";
+import { GeoJSONMultiPolygon } from "../models/GeoJSONMultiPolygon";
+import { GeoJSONPoint } from "../models/GeoJSONPoint";
+import { GeoJSONPolygon } from "../models/GeoJSONPolygon";
 
 /**
  * @type GeoJSONFeatureGeometry
  * Type
  * @export
  */
-export type GeoJSONFeatureGeometry = GeoJSONGeometryCollection | GeoJSONLineString | GeoJSONMultiLineString | GeoJSONMultiPoint | GeoJSONMultiPolygon | GeoJSONPoint | GeoJSONPolygon;
+export type GeoJSONFeatureGeometry =
+  | GeoJSONGeometryCollection
+  | GeoJSONLineString
+  | GeoJSONMultiLineString
+  | GeoJSONMultiPoint
+  | GeoJSONMultiPolygon
+  | GeoJSONPoint
+  | GeoJSONPolygon;
 
 /**
-* @type GeoJSONFeatureGeometryClass
-* @export
-*/
+ * @type GeoJSONFeatureGeometryClass
+ * @export
+ */
 export class GeoJSONFeatureGeometryClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-
-
-
-
-
-

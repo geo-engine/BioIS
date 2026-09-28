@@ -10,34 +10,37 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class AdditionalParameter {
-    'name': string;
-    'value': Array<any>;
+  "name": string;
+  "value": Array<any>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "value",
-            "baseName": "value",
-            "type": "Array<any>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "value",
+      baseName: "value",
+      type: "Array<any>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return AdditionalParameter.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return AdditionalParameter.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

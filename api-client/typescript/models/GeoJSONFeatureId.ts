@@ -10,8 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
  * @type GeoJSONFeatureId
  * Type
@@ -20,12 +18,11 @@ import { HttpFile } from '../http/http';
 export type GeoJSONFeatureId = number | string;
 
 /**
-* @type GeoJSONFeatureIdClass
-* @export
-*/
+ * @type GeoJSONFeatureIdClass
+ * @export
+ */
 export class GeoJSONFeatureIdClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

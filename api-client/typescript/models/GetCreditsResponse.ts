@@ -10,49 +10,53 @@
  * Do not edit the class manually.
  */
 
-import { CreditsForJob } from '../models/CreditsForJob';
-import { HttpFile } from '../http/http';
+import { CreditsForJob } from "../models/CreditsForJob";
 
 export class GetCreditsResponse {
-    'year': number;
-    'month': number;
-    'creditsUsed': number;
-    'details': Array<CreditsForJob>;
+  "year": number;
+  "month": number;
+  "creditsUsed": number;
+  "details": Array<CreditsForJob>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "year",
-            "baseName": "year",
-            "type": "number",
-            "format": "int32"
-        },
-        {
-            "name": "month",
-            "baseName": "month",
-            "type": "number",
-            "format": "int32"
-        },
-        {
-            "name": "creditsUsed",
-            "baseName": "creditsUsed",
-            "type": "number",
-            "format": "int64"
-        },
-        {
-            "name": "details",
-            "baseName": "details",
-            "type": "Array<CreditsForJob>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "year",
+      baseName: "year",
+      type: "number",
+      format: "int32",
+    },
+    {
+      name: "month",
+      baseName: "month",
+      type: "number",
+      format: "int32",
+    },
+    {
+      name: "creditsUsed",
+      baseName: "creditsUsed",
+      type: "number",
+      format: "int64",
+    },
+    {
+      name: "details",
+      baseName: "details",
+      type: "Array<CreditsForJob>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GetCreditsResponse.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GetCreditsResponse.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

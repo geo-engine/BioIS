@@ -10,48 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
-import { Response } from '../models/Response';
-import { HttpFile } from '../http/http';
+import { HabitatDistanceProcessInputs } from "../models/HabitatDistanceProcessInputs";
+import { Response } from "../models/Response";
 
 /**
-* Process execution
-*/
+ * Process execution
+ */
 export class HabitatDistanceProcessParams {
-    'inputs': HabitatDistanceProcessInputs;
-    'outputs'?: { [key: string]: any; };
-    'response'?: Response;
+  "inputs": HabitatDistanceProcessInputs;
+  "outputs"?: { [key: string]: any };
+  "response"?: Response;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "HabitatDistanceProcessInputs",
-            "format": ""
-        },
-        {
-            "name": "outputs",
-            "baseName": "outputs",
-            "type": "{ [key: string]: any; }",
-            "format": ""
-        },
-        {
-            "name": "response",
-            "baseName": "response",
-            "type": "Response",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "HabitatDistanceProcessInputs",
+      format: "",
+    },
+    {
+      name: "outputs",
+      baseName: "outputs",
+      type: "{ [key: string]: any; }",
+      format: "",
+    },
+    {
+      name: "response",
+      baseName: "response",
+      type: "Response",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return HabitatDistanceProcessParams.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return HabitatDistanceProcessParams.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

@@ -10,44 +10,47 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* Process execution subscriber
-*/
+ * Process execution subscriber
+ */
 export class Subscriber {
-    'successUri': string;
-    'inProgressUri'?: string;
-    'failedUri'?: string;
+  "successUri": string;
+  "inProgressUri"?: string;
+  "failedUri"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "successUri",
-            "baseName": "successUri",
-            "type": "string",
-            "format": "uri"
-        },
-        {
-            "name": "inProgressUri",
-            "baseName": "inProgressUri",
-            "type": "string",
-            "format": "uri"
-        },
-        {
-            "name": "failedUri",
-            "baseName": "failedUri",
-            "type": "string",
-            "format": "uri"
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "successUri",
+      baseName: "successUri",
+      type: "string",
+      format: "uri",
+    },
+    {
+      name: "inProgressUri",
+      baseName: "inProgressUri",
+      type: "string",
+      format: "uri",
+    },
+    {
+      name: "failedUri",
+      baseName: "failedUri",
+      type: "string",
+      format: "uri",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Subscriber.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Subscriber.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

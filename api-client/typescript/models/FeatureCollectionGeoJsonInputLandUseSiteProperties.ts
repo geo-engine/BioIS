@@ -10,41 +10,43 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValue } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
-import { HttpFile } from '../http/http';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValue } from "../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue";
+import { GeoJsonInputMediaType } from "../models/GeoJsonInputMediaType";
 
 /**
-* A `GeoJSON` `FeatureCollection` input
-*/
+ * A `GeoJSON` `FeatureCollection` input
+ */
 export class FeatureCollectionGeoJsonInputLandUseSiteProperties {
-    'value': FeatureCollectionGeoJsonInputLandUseSitePropertiesValue;
-    'mediaType': GeoJsonInputMediaType;
+  "value": FeatureCollectionGeoJsonInputLandUseSitePropertiesValue;
+  "mediaType": GeoJsonInputMediaType;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "value",
-            "baseName": "value",
-            "type": "FeatureCollectionGeoJsonInputLandUseSitePropertiesValue",
-            "format": ""
-        },
-        {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "value",
+      baseName: "value",
+      type: "FeatureCollectionGeoJsonInputLandUseSitePropertiesValue",
+      format: "",
+    },
+    {
+      name: "mediaType",
+      baseName: "mediaType",
+      type: "GeoJsonInputMediaType",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputLandUseSiteProperties.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputLandUseSiteProperties.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

@@ -10,8 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
  * @type Constraints1Enum
  * Type
@@ -20,12 +18,11 @@ import { HttpFile } from '../http/http';
 export type Constraints1Enum = Set<number> | Set<string>;
 
 /**
-* @type Constraints1EnumClass
-* @export
-*/
+ * @type Constraints1EnumClass
+ * @export
+ */
 export class Constraints1EnumClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

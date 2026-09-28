@@ -10,78 +10,81 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* The following constraints are supported for `time` fields.
-*/
+ * The following constraints are supported for `time` fields.
+ */
 export class Constraints4 {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    /**
-    * When `true`, each value for the property `MUST` be unique.
-    */
-    'unique'?: boolean;
-    '_enum'?: Set<string>;
-    'minimum'?: string;
-    'maximum'?: string;
-    'exclusiveMinimum'?: string;
-    'exclusiveMaximum'?: string;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  /**
+   * When `true`, each value for the property `MUST` be unique.
+   */
+  "unique"?: boolean;
+  "_enum"?: Set<string>;
+  "minimum"?: string;
+  "maximum"?: string;
+  "exclusiveMinimum"?: string;
+  "exclusiveMaximum"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "unique",
-            "baseName": "unique",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Set<string>",
-            "format": ""
-        },
-        {
-            "name": "minimum",
-            "baseName": "minimum",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "maximum",
-            "baseName": "maximum",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "exclusiveMinimum",
-            "baseName": "exclusiveMinimum",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "exclusiveMaximum",
-            "baseName": "exclusiveMaximum",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "unique",
+      baseName: "unique",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Set<string>",
+      format: "",
+    },
+    {
+      name: "minimum",
+      baseName: "minimum",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "maximum",
+      baseName: "maximum",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "exclusiveMinimum",
+      baseName: "exclusiveMinimum",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "exclusiveMaximum",
+      baseName: "exclusiveMaximum",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints4.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints4.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

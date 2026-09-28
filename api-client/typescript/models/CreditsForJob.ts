@@ -10,34 +10,37 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class CreditsForJob {
-    'jobId': string;
-    'creditsUsed': number;
+  "jobId": string;
+  "creditsUsed": number;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "jobId",
-            "baseName": "jobId",
-            "type": "string",
-            "format": "uuid"
-        },
-        {
-            "name": "creditsUsed",
-            "baseName": "creditsUsed",
-            "type": "number",
-            "format": "int64"
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "jobId",
+      baseName: "jobId",
+      type: "string",
+      format: "uuid",
+    },
+    {
+      name: "creditsUsed",
+      baseName: "creditsUsed",
+      type: "number",
+      format: "int64",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return CreditsForJob.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return CreditsForJob.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

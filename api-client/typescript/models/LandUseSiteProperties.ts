@@ -10,46 +10,48 @@
  * Do not edit the class manually.
  */
 
-import { LandUseSiteSpecification } from '../models/LandUseSiteSpecification';
-import { HttpFile } from '../http/http';
+import { LandUseSiteSpecification } from "../models/LandUseSiteSpecification";
 
 /**
-* Expected properties of a site feature in the input `GeoJSON`.
-*/
+ * Expected properties of a site feature in the input `GeoJSON`.
+ */
 export class LandUseSiteProperties {
-    /**
-    * Name of the site
-    */
-    'name'?: string;
-    /**
-    * Land-use type of the site
-    */
-    'type'?: LandUseSiteSpecification;
+  /**
+   * Name of the site
+   */
+  "name"?: string;
+  /**
+   * Land-use type of the site
+   */
+  "type"?: LandUseSiteSpecification;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "LandUseSiteSpecification",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "type",
+      baseName: "type",
+      type: "LandUseSiteSpecification",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return LandUseSiteProperties.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return LandUseSiteProperties.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

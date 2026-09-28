@@ -10,47 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONGeometryCollectionGeometriesInner } from '../models/GeoJSONGeometryCollectionGeometriesInner';
-import { HttpFile } from '../http/http';
+import { GeoJSONGeometryCollectionGeometriesInner } from "../models/GeoJSONGeometryCollectionGeometriesInner";
 
 export class GeoJSONGeometryCollection {
-    'type': GeoJSONGeometryCollectionTypeEnum;
-    'geometries': Array<GeoJSONGeometryCollectionGeometriesInner>;
-    'bbox'?: Array<number>;
+  "type": GeoJSONGeometryCollectionTypeEnum;
+  "geometries": Array<GeoJSONGeometryCollectionGeometriesInner>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONGeometryCollectionTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "geometries",
-            "baseName": "geometries",
-            "type": "Array<GeoJSONGeometryCollectionGeometriesInner>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "GeoJSONGeometryCollectionTypeEnum",
+      format: "",
+    },
+    {
+      name: "geometries",
+      baseName: "geometries",
+      type: "Array<GeoJSONGeometryCollectionGeometriesInner>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GeoJSONGeometryCollection.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GeoJSONGeometryCollection.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum GeoJSONGeometryCollectionTypeEnum {
-    GeometryCollection = 'GeometryCollection'
+  GeometryCollection = "GeometryCollection",
 }
-

@@ -10,41 +10,44 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class AuthCodeResponse {
-    'code': string;
-    'sessionState': string;
-    'state': string;
+  "code": string;
+  "sessionState": string;
+  "state": string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "code",
-            "baseName": "code",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "sessionState",
-            "baseName": "sessionState",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "state",
-            "baseName": "state",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "code",
+      baseName: "code",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "sessionState",
+      baseName: "sessionState",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "state",
+      baseName: "state",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return AuthCodeResponse.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return AuthCodeResponse.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

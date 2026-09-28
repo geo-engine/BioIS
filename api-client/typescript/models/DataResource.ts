@@ -10,11 +10,9 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* Data Resource.
-*/
+ * Data Resource.
+ */
 /**
  * @type DataResource
  * Type
@@ -23,12 +21,12 @@ import { HttpFile } from '../http/http';
 export type DataResource = any;
 
 /**
-* @type DataResourceClass
-    * Data Resource.
-* @export
-*/
+ * @type DataResourceClass
+ * Data Resource.
+ * @export
+ */
 export class DataResourceClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }

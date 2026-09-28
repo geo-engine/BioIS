@@ -10,64 +10,68 @@
  * Do not edit the class manually.
  */
 
-import { Link } from '../models/Link';
-import { HttpFile } from '../http/http';
+import { Link } from "../models/Link";
 
 /**
-* The Landing page is the entry point of a OGC API.  The Landing page provides links to: * the API definition (link relations `service-desc` and `service-doc`), * the Conformance declaration (path `/conformance`, link relation `conformance`), and * the Collections (path `/collections`, link relation `data`).
-*/
+ * The Landing page is the entry point of a OGC API.  The Landing page provides links to: * the API definition (link relations `service-desc` and `service-doc`), * the Conformance declaration (path `/conformance`, link relation `conformance`), and * the Collections (path `/collections`, link relation `data`).
+ */
 export class LandingPage {
-    /**
-    * The title of the API.
-    */
-    'title'?: string | null;
-    /**
-    * A textual description of the API.
-    */
-    'description'?: string | null;
-    /**
-    * Attribution for the API.
-    */
-    'attribution'?: string | null;
-    /**
-    * Links to the resources exposed through this API
-    */
-    'links'?: Array<Link>;
+  /**
+   * The title of the API.
+   */
+  "title"?: string | null;
+  /**
+   * A textual description of the API.
+   */
+  "description"?: string | null;
+  /**
+   * Attribution for the API.
+   */
+  "attribution"?: string | null;
+  /**
+   * Links to the resources exposed through this API
+   */
+  "links"?: Array<Link>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "description",
-            "baseName": "description",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "attribution",
-            "baseName": "attribution",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "description",
+      baseName: "description",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "attribution",
+      baseName: "attribution",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "links",
+      baseName: "links",
+      type: "Array<Link>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return LandingPage.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return LandingPage.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

@@ -10,47 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner';
-import { HttpFile } from '../http/http';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner } from "../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner";
 
 export class FeatureCollectionGeoJsonInputLandUseSitePropertiesValue {
-    'type': FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum;
-    'features': Array<FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner>;
-    'bbox'?: Array<number>;
+  "type": FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum;
+  "features": Array<FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "features",
-            "baseName": "features",
-            "type": "Array<FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum",
+      format: "",
+    },
+    {
+      name: "features",
+      baseName: "features",
+      type: "Array<FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputLandUseSitePropertiesValue.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputLandUseSitePropertiesValue.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum {
-    FeatureCollection = 'FeatureCollection'
+  FeatureCollection = "FeatureCollection",
 }
-

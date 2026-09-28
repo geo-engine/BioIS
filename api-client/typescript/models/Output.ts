@@ -10,41 +10,43 @@
  * Do not edit the class manually.
  */
 
-import { Format } from '../models/Format';
-import { TransmissionMode } from '../models/TransmissionMode';
-import { HttpFile } from '../http/http';
+import { Format } from "../models/Format";
+import { TransmissionMode } from "../models/TransmissionMode";
 
 /**
-* Process execution output
-*/
+ * Process execution output
+ */
 export class Output {
-    'format'?: Format;
-    'transmissionMode'?: TransmissionMode;
+  "format"?: Format;
+  "transmissionMode"?: TransmissionMode;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "format",
-            "baseName": "format",
-            "type": "Format",
-            "format": ""
-        },
-        {
-            "name": "transmissionMode",
-            "baseName": "transmissionMode",
-            "type": "TransmissionMode",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "format",
+      baseName: "format",
+      type: "Format",
+      format: "",
+    },
+    {
+      name: "transmissionMode",
+      baseName: "transmissionMode",
+      type: "TransmissionMode",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Output.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Output.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

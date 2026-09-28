@@ -10,80 +10,83 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* The following constraints are supported for `string` fields.
-*/
+ * The following constraints are supported for `string` fields.
+ */
 export class Constraints {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    /**
-    * When `true`, each value for the property `MUST` be unique.
-    */
-    'unique'?: boolean;
-    /**
-    * A regular expression pattern to test each value of the property against, where a truthy response indicates validity.
-    */
-    'pattern'?: string;
-    '_enum'?: Set<string>;
-    /**
-    * An integer that specifies the minimum length of a value.
-    */
-    'minLength'?: number;
-    /**
-    * An integer that specifies the maximum length of a value.
-    */
-    'maxLength'?: number;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  /**
+   * When `true`, each value for the property `MUST` be unique.
+   */
+  "unique"?: boolean;
+  /**
+   * A regular expression pattern to test each value of the property against, where a truthy response indicates validity.
+   */
+  "pattern"?: string;
+  "_enum"?: Set<string>;
+  /**
+   * An integer that specifies the minimum length of a value.
+   */
+  "minLength"?: number;
+  /**
+   * An integer that specifies the maximum length of a value.
+   */
+  "maxLength"?: number;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "unique",
-            "baseName": "unique",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "pattern",
-            "baseName": "pattern",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Set<string>",
-            "format": ""
-        },
-        {
-            "name": "minLength",
-            "baseName": "minLength",
-            "type": "number",
-            "format": ""
-        },
-        {
-            "name": "maxLength",
-            "baseName": "maxLength",
-            "type": "number",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "unique",
+      baseName: "unique",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "pattern",
+      baseName: "pattern",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Set<string>",
+      format: "",
+    },
+    {
+      name: "minLength",
+      baseName: "minLength",
+      type: "number",
+      format: "",
+    },
+    {
+      name: "maxLength",
+      baseName: "maxLength",
+      type: "number",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

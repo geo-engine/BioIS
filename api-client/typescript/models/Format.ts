@@ -10,42 +10,46 @@
  * Do not edit the class manually.
  */
 
-import { Schema } from '../models/Schema';
-import { HttpFile } from '../http/http';
+import { Schema } from "../models/Schema";
 
 export class Format {
-    'mediaType'?: string;
-    'encoding'?: string;
-    'schema'?: Schema;
+  "mediaType"?: string;
+  "encoding"?: string;
+  "schema"?: Schema;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "encoding",
-            "baseName": "encoding",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "schema",
-            "baseName": "schema",
-            "type": "Schema",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "mediaType",
+      baseName: "mediaType",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "encoding",
+      baseName: "encoding",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "schema",
+      baseName: "schema",
+      type: "Schema",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Format.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Format.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

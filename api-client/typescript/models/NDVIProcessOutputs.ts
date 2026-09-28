@@ -10,42 +10,46 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
-import { HttpFile } from '../http/http';
+import { NDVIProcessInputs } from "../models/NDVIProcessInputs";
 
 export class NDVIProcessOutputs {
-    'ndvi'?: number | null;
-    'kNdvi'?: number | null;
-    'inputs'?: NDVIProcessInputs | null;
+  "ndvi"?: number | null;
+  "kNdvi"?: number | null;
+  "inputs"?: NDVIProcessInputs | null;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "ndvi",
-            "baseName": "ndvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "kNdvi",
-            "baseName": "kNdvi",
-            "type": "number",
-            "format": "double"
-        },
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "NDVIProcessInputs",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "ndvi",
+      baseName: "ndvi",
+      type: "number",
+      format: "double",
+    },
+    {
+      name: "kNdvi",
+      baseName: "kNdvi",
+      type: "number",
+      format: "double",
+    },
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "NDVIProcessInputs",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return NDVIProcessOutputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return NDVIProcessOutputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

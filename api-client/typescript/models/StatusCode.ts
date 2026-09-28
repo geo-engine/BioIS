@@ -10,12 +10,10 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export enum StatusCode {
-    Accepted = 'accepted',
-    Running = 'running',
-    Successful = 'successful',
-    Failed = 'failed',
-    Dismissed = 'dismissed'
+  Accepted = "accepted",
+  Running = "running",
+  Successful = "successful",
+  Failed = "failed",
+  Dismissed = "dismissed",
 }

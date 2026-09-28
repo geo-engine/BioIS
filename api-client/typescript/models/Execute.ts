@@ -10,57 +10,59 @@
  * Do not edit the class manually.
  */
 
-import { Input } from '../models/Input';
-import { Output } from '../models/Output';
-import { Response } from '../models/Response';
-import { Subscriber } from '../models/Subscriber';
-import { HttpFile } from '../http/http';
+import { Input } from "../models/Input";
+import { Output } from "../models/Output";
+import { Response } from "../models/Response";
+import { Subscriber } from "../models/Subscriber";
 
 /**
-* Process execution
-*/
+ * Process execution
+ */
 export class Execute {
-    'inputs'?: { [key: string]: Input; };
-    'outputs'?: { [key: string]: Output; };
-    'response'?: Response;
-    'subscriber'?: Subscriber;
+  "inputs"?: { [key: string]: Input };
+  "outputs"?: { [key: string]: Output };
+  "response"?: Response;
+  "subscriber"?: Subscriber;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "{ [key: string]: Input; }",
-            "format": ""
-        },
-        {
-            "name": "outputs",
-            "baseName": "outputs",
-            "type": "{ [key: string]: Output; }",
-            "format": ""
-        },
-        {
-            "name": "response",
-            "baseName": "response",
-            "type": "Response",
-            "format": ""
-        },
-        {
-            "name": "subscriber",
-            "baseName": "subscriber",
-            "type": "Subscriber",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "{ [key: string]: Input; }",
+      format: "",
+    },
+    {
+      name: "outputs",
+      baseName: "outputs",
+      type: "{ [key: string]: Output; }",
+      format: "",
+    },
+    {
+      name: "response",
+      baseName: "response",
+      type: "Response",
+      format: "",
+    },
+    {
+      name: "subscriber",
+      baseName: "subscriber",
+      type: "Subscriber",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Execute.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Execute.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-
