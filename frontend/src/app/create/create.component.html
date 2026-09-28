@@ -9,6 +9,7 @@
       [inputs]="inputs()"
       [form]="form.inputs"
       [relativeJsonPointerAvailableFields]="relativeJsonPointerAvailableFields()"
+      [featureFields]="featureFields()"
       (updateFormField)="updateFormInputField($event.key, $event.value)"
     ></app-inputs-form>
   </fieldset>

@@ -7,4 +7,5 @@
 - [x] Fix job query with offset and limit as well as ExecuteResult in ogcapi.
 - [x] Add refresh button to results page to update job status and results.
 - [ ] Allow create new's coordinate input by using a map interface instead of manually entering coordinates.
+- [x] Allow drawing and editing GeoJSON features (incl. their properties) on a map.
 - [ ] Show inputs with the results, e.g. show the input coordinates on a map.

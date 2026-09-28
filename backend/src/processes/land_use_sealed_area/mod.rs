@@ -12,7 +12,7 @@ use crate::{
             },
             types::{
                 LandUseSummaryRowOutput, PreviousLandUseSummary, SiteLandUseRowOutput,
-                site_to_data_resource, summary_to_data_resource,
+                SiteProperties, site_to_data_resource, summary_to_data_resource,
             },
         },
         parameters::{
@@ -60,7 +60,7 @@ impl LandUseSealedAreaProcess {
 #[serde(rename_all = "camelCase")]
 pub struct LandUseSealedAreaProcessInputs {
     /// `GeoJSON` `FeatureCollection` representing sites to analyze for land-use calculation.
-    pub sites: FeatureCollectionGeoJsonInput,
+    pub sites: FeatureCollectionGeoJsonInput<SiteProperties>,
 
     /// Property name in the features that contains the location/site name.
     pub location_name_field: RelativeJsonPointer,
@@ -269,7 +269,7 @@ impl LandUseSealedAreaProcess {
                     title: "Sites",
                     description: "GeoJSON FeatureCollection of sites to analyze for land-use calculation.",
                     metadata: vec![],
-                    r#type: generator.root_schema_for::<FeatureCollectionGeoJsonInput>(),
+                    r#type: generator.root_schema_for::<FeatureCollectionGeoJsonInput<SiteProperties>>(),
                 },
                 InputSpec {
                     key: input_keys::LOCATION_NAME_FIELD,
@@ -282,7 +282,7 @@ impl LandUseSealedAreaProcess {
                             "#/inputs/sites/value/features/0/properties".to_string(),
                         ),
                     }],
-                    r#type: generator.root_schema_for::<RelativeJsonPointer>(),
+                    r#type: RelativeJsonPointer::schema_with_default(&mut generator, SiteProperties::NAME),
                 },
                 InputSpec {
                     key: input_keys::SITE_TYPE_FIELD,
@@ -295,7 +295,7 @@ impl LandUseSealedAreaProcess {
                             "#/inputs/sites/value/features/0/properties".to_string(),
                         ),
                     }],
-                    r#type: generator.root_schema_for::<RelativeJsonPointer>(),
+                    r#type: RelativeJsonPointer::schema_with_default(&mut generator, SiteProperties::TYPE),
                 },
                 InputSpec {
                     key: input_keys::UNIT_FOR_AREA,
@@ -905,6 +905,44 @@ mod tests {
         let process = LandUseSealedAreaProcess::new(db);
         assert_eq!(process.id(), "land-use-sealed-area");
         assert_eq!(process.version(), "0.1.0");
+    }
+
+    #[crate::test]
+    async fn it_describes_the_sites_features(db: DbHandle) {
+        let process = LandUseSealedAreaProcess::new(db)
+            .process(None)
+            .await
+            .expect("to produce process description");
+
+        let sites_schema = &process.inputs[input_keys::SITES].schema;
+        let feature_schema = &sites_schema["properties"]["value"]["allOf"][1]["properties"]["features"]
+            ["items"]["properties"];
+
+        assert_eq!(
+            feature_schema["geometry"],
+            json!({
+                "anyOf": [
+                    { "$ref": "https://geojson.org/schema/Polygon.json" },
+                    { "$ref": "https://geojson.org/schema/MultiPolygon.json" },
+                ]
+            })
+        );
+        assert_eq!(
+            feature_schema["properties"]["properties"]["name"]["type"],
+            "string"
+        );
+        assert!(feature_schema["properties"].get("required").is_none());
+        assert_eq!(
+            sites_schema["$defs"]["LandUseSiteSpecification"]["enum"],
+            json!(["site", "natureOnSite", "natureOffSite"])
+        );
+
+        for (key, default) in [
+            (input_keys::LOCATION_NAME_FIELD, SiteProperties::NAME),
+            (input_keys::SITE_TYPE_FIELD, SiteProperties::TYPE),
+        ] {
+            assert_eq!(process.inputs[key].schema["default"], default);
+        }
     }
 
     #[crate::test(task_context = TaskContext::new(User {

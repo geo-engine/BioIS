@@ -238,7 +238,7 @@
           "Processes"
         ],
         "summary": "Execute a process",
-        "description": "Create a new job.\n\nFor more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).",
+        "description": "Create a new job.\n\nFor more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).\n\nSchema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>",
         "operationId": "execution",
         "parameters": [
           {
@@ -271,6 +271,30 @@
               }
             }
           },
+          "201": {
+            "description": "Started asynchronous execution. Created job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusInfo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 400,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.400"
+                }
+              }
+            }
+          },
           "404": {
             "description": "The requested URI was not found.",
             "content": {
@@ -281,6 +305,20 @@
                 "example": {
                   "status": 404,
                   "type": "https://httpwg.org/specs/rfc7231.html#status.404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 500,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.500"
                 }
               }
             }
@@ -855,7 +893,7 @@
             }
           }
         ],
-        "description": "Each bounding box is provided as four or six numbers, depending on\nwhether the coordinate reference system includes a vertical axis\n(height or depth):\n\n* Lower left corner, coordinate axis 1\n\n* Lower left corner, coordinate axis 2\n\n* Minimum value, coordinate axis 3 (optional)\n\n* Upper right corner, coordinate axis 1\n\n* Upper right corner, coordinate axis 2\n\n* Maximum value, coordinate axis 3 (optional)\n\nThe coordinate reference system of the values is WGS 84 longitude/latitude\n(http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate\nreference system is specified in `crs`.\n\nFor WGS 84 longitude/latitude the values are in most cases the sequence of\nminimum longitude, minimum latitude, maximum longitude and maximum latitude.\nHowever, in cases where the box spans the antimeridian the first value\n(west-most box edge) is larger than the third value (east-most box edge).\n\nIf the vertical axis is included, the third and the sixth number are\nthe bottom and the top of the 3-dimensional bounding box.\n\nIf a feature has multiple spatial geometry properties, it is the decision of the\nserver whether only a single spatial geometry property is used to determine\nthe extent or all relevant geometries."
+        "description": "Each bounding box is provided as four or six numbers, depending on\nwhether the coordinate reference system includes a vertical axis\n(height or depth):\n\n* Lower left corner, coordinate axis 1\n\n* Lower left corner, coordinate axis 2\n\n* Minimum value, coordinate axis 3 (optional)\n\n* Upper right corner, coordinate axis 1\n\n* Upper right corner, coordinate axis 2\n\n* Maximum value, coordinate axis 3 (optional)\n\nThe coordinate reference system of the values is WGS 84 longitude/latitude\n(<http://www.opengis.net/def/crs/OGC/1.3/CRS84>) unless a different coordinate\nreference system is specified in `crs`.\n\nFor WGS 84 longitude/latitude the values are in most cases the sequence of\nminimum longitude, minimum latitude, maximum longitude and maximum latitude.\nHowever, in cases where the box spans the antimeridian the first value\n(west-most box edge) is larger than the third value (east-most box edge).\n\nIf the vertical axis is included, the third and the sixth number are\nthe bottom and the top of the 3-dimensional bounding box.\n\nIf a feature has multiple spatial geometry properties, it is the decision of the\nserver whether only a single spatial geometry property is used to determine\nthe extent or all relevant geometries."
       },
       "BiodiversitySensitiveAreasProcessInputs": {
         "type": "object",
@@ -867,7 +905,7 @@
         ],
         "properties": {
           "sites": {
-            "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput",
+            "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput_BiodiversitySiteProperties",
             "description": "Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.).\nThe impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.)."
           },
           "locationNameField": {
@@ -955,6 +993,31 @@
             "$ref": "#/components/schemas/Response"
           }
         }
+      },
+      "BiodiversitySiteProperties": {
+        "type": "object",
+        "description": "Expected properties of a site feature in the input `GeoJSON`.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the site"
+          },
+          "type": {
+            "$ref": "#/components/schemas/BiodiversitySiteSpecification",
+            "description": "Type of the site, which determines its impact radius"
+          }
+        }
+      },
+      "BiodiversitySiteSpecification": {
+        "type": "string",
+        "description": "The schema uses the lowercase names that are parsed by [`SiteSpecification::from_str`].",
+        "enum": [
+          "office",
+          "agriculture",
+          "marine",
+          "mining",
+          "other"
+        ]
       },
       "BoundingBox": {
         "type": "object",
@@ -1093,7 +1156,7 @@
         },
         "additionalProperties": false
       },
-      "FeatureCollectionGeoJsonInput": {
+      "FeatureCollectionGeoJsonInput_BiodiversitySiteProperties": {
         "type": "object",
         "description": "A `GeoJSON` `FeatureCollection` input",
         "required": [
@@ -1102,7 +1165,111 @@
         ],
         "properties": {
           "value": {
-            "$ref": "https://geojson.org/schema/FeatureCollection.json"
+            "allOf": [
+              {
+                "$ref": "https://geojson.org/schema/FeatureCollection.json"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "geometry": {
+                          "anyOf": [
+                            {
+                              "$ref": "https://geojson.org/schema/Point.json"
+                            },
+                            {
+                              "$ref": "https://geojson.org/schema/MultiPoint.json"
+                            },
+                            {
+                              "$ref": "https://geojson.org/schema/Polygon.json"
+                            },
+                            {
+                              "$ref": "https://geojson.org/schema/MultiPolygon.json"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "type": "object",
+                          "description": "Expected properties of a site feature in the input `GeoJSON`.",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the site"
+                            },
+                            "type": {
+                              "$ref": "#/components/schemas/BiodiversitySiteSpecification",
+                              "description": "Type of the site, which determines its impact radius"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "mediaType": {
+            "$ref": "#/components/schemas/GeoJsonInputMediaType"
+          }
+        }
+      },
+      "FeatureCollectionGeoJsonInput_LandUseSiteProperties": {
+        "type": "object",
+        "description": "A `GeoJSON` `FeatureCollection` input",
+        "required": [
+          "value",
+          "mediaType"
+        ],
+        "properties": {
+          "value": {
+            "allOf": [
+              {
+                "$ref": "https://geojson.org/schema/FeatureCollection.json"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "geometry": {
+                          "anyOf": [
+                            {
+                              "$ref": "https://geojson.org/schema/Polygon.json"
+                            },
+                            {
+                              "$ref": "https://geojson.org/schema/MultiPolygon.json"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "type": "object",
+                          "description": "Expected properties of a site feature in the input `GeoJSON`.",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the site"
+                            },
+                            "type": {
+                              "$ref": "#/components/schemas/LandUseSiteSpecification",
+                              "description": "Land-use type of the site"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
           },
           "mediaType": {
             "$ref": "#/components/schemas/GeoJsonInputMediaType"
@@ -1426,7 +1593,7 @@
         ],
         "properties": {
           "sites": {
-            "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput",
+            "$ref": "#/components/schemas/FeatureCollectionGeoJsonInput_LandUseSiteProperties",
             "description": "`GeoJSON` `FeatureCollection` representing sites to analyze for land-use calculation."
           },
           "locationNameField": {
@@ -1540,6 +1707,28 @@
             "$ref": "#/components/schemas/Response"
           }
         }
+      },
+      "LandUseSiteProperties": {
+        "type": "object",
+        "description": "Expected properties of a site feature in the input `GeoJSON`.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the site"
+          },
+          "type": {
+            "$ref": "#/components/schemas/LandUseSiteSpecification",
+            "description": "Land-use type of the site"
+          }
+        }
+      },
+      "LandUseSiteSpecification": {
+        "type": "string",
+        "enum": [
+          "site",
+          "natureOnSite",
+          "natureOffSite"
+        ]
       },
       "LandingPage": {
         "type": "object",

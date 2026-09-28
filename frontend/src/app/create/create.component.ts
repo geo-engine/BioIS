@@ -29,6 +29,7 @@ import {
   retrieveInputDescription,
   jsonSchemaToZod,
   defaultInputs,
+  editableFeatureFields,
 } from './schema-info';
 import { assertNever, isNullOrUndefined } from '../util/assertions';
 import { InfoIconComponent } from '../util/info-icon.component';
@@ -132,6 +133,12 @@ export class CreateComponent {
 
   readonly relativeJsonPointerAvailableFields = computed<Record<string, string[]>>(() =>
     availableFieldsForRelativeJsonPointers(this.formModel(), this.inputs()),
+  );
+
+  readonly featureFields = computed(
+    () => editableFeatureFields(this.inputs(), this.formModel().inputs),
+    // the form model changes on every input, but the fields rarely do
+    { equal: (a, b) => JSON.stringify(a) === JSON.stringify(b) },
   );
 
   readonly fieldName = processName;

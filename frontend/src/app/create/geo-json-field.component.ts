@@ -2,30 +2,35 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   ElementRef,
   input,
+  linkedSignal,
   model,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormValueControl, ValidationError, WithOptionalFieldTree } from '@angular/forms/signals';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { DndDirective } from '../util/drag-and-drop.directive';
-import {
-  FeatureCollectionGeoJsonInput,
-  GeoJSONFeatureCollection,
-  GeoJSONFeatureCollectionTypeEnum,
-  GeoJsonInputMediaType,
-} from '@geoengine/biois';
-import { Ajv } from 'ajv';
+import { GeoJsonInputMediaType } from '@geoengine/biois';
+import { Ajv, ErrorObject } from 'ajv';
 import { JSONSchema } from 'ya-json-schema-types';
+import { MapComponent } from '../map/map.component';
+import {
+  emptyGeoJsonFeatureCollection,
+  FeatureCollectionGeoJsonInput,
+  FeatureField,
+  GeoJsonFeatureCollection,
+  isDrawnFeature,
+  missingFeatureProperties,
+} from '../util/geo-json';
+import { allowedGeometryTypes } from './schema-info';
 
 @Component({
   selector: 'app-geo-json-field',
@@ -54,8 +59,7 @@ import { JSONSchema } from 'ya-json-schema-types';
       >
         <mat-card-content>
           <mat-icon color="primary">cloud_upload</mat-icon>
-          <h3>Drag & Drop File</h3>
-          <p>or click to <b>browse</b></p>
+          <span>Drag & drop a GeoJSON file or click to <b>browse</b> – or draw on the map</span>
         </mat-card-content>
       </mat-card>
     }
@@ -67,21 +71,52 @@ import { JSONSchema } from 'ya-json-schema-types';
       hidden
     />
 
+    <app-map
+      [features]="collection()"
+      (featuresChange)="onCollectionChange($event)"
+      [geometryTypes]="geometryTypes()"
+      [fields]="fields()"
+    />
+
     @for (error of errors(); track error) {
       <mat-error>{{ error.message }}</mat-error>
     }
     @if (errorValue(); as error) {
       <mat-error>{{ error }}</mat-error>
+    } @else if (missingPropertiesWarning(); as warning) {
+      <p class="warning">
+        <mat-icon inline>warning</mat-icon>
+        {{ warning }} Choose other properties above or fill in the values, otherwise the process
+        reports such features as errors.
+      </p>
     }
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .warning {
+      margin: 0;
+      font: var(--mat-sys-body-small);
+      color: var(--mat-sys-on-surface-variant);
+    }
+
     .dropzone {
       width: 100%;
-      padding: 1rem;
       text-align: center;
       border: 2px dashed var(--mat-sys-primary);
       transition: all 0.3s ease;
       cursor: pointer;
+
+      mat-card-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
 
       &.fileover {
         border-color: var(--mat-sys-secondary); /* Material Secondary Color */
@@ -92,15 +127,13 @@ import { JSONSchema } from 'ya-json-schema-types';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCheckboxModule,
     DndDirective,
-    MatCardModule,
-    MatListModule,
-    MatIconModule,
+    MapComponent,
     MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatListModule,
   ],
 })
 export class GeoJsonFormFieldComponent implements FormValueControl<
@@ -108,13 +141,26 @@ export class GeoJsonFormFieldComponent implements FormValueControl<
 > {
   readonly title = input.required<string>();
   readonly geoJsonSchema = input.required<JSONSchema>();
-  // readonly geoJsonSchema = input.required<z.ZodTypeAny>();
+  /** Feature properties that users must fill in, e.g., a name and a class label */
+  readonly fields = input<FeatureField[]>([]);
 
   readonly value = model.required<FeatureCollectionGeoJsonInput | Error>();
   readonly errors = input.required<readonly WithOptionalFieldTree<ValidationError>[]>();
 
   readonly fileName = signal<string | undefined>(undefined);
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
+  /** The features on the map, which are kept even if they are (still) invalid */
+  readonly collection = linkedSignal<
+    FeatureCollectionGeoJsonInput | Error,
+    GeoJsonFeatureCollection
+  >({
+    source: this.value,
+    computation: (value, previous) =>
+      value instanceof Error ? (previous?.value ?? emptyGeoJsonFeatureCollection()) : value.value,
+  });
+
+  readonly geometryTypes = computed(() => allowedGeometryTypes(this.geoJsonSchema()));
 
   readonly geoJsonValidator = computed(() =>
     new Ajv({
@@ -124,6 +170,38 @@ export class GeoJsonFormFieldComponent implements FormValueControl<
       loadSchema: loadSchema,
     }).compileAsync(this.geoJsonSchema() as Record<string, unknown>),
   );
+
+  /** Only the latest validation may set the value */
+  private validationRun = 0;
+
+  /**
+   * The fields by content, since callers may pass new but equal arrays on every change.
+   * Otherwise, validating (i.e., setting the value) would trigger itself endlessly.
+   */
+  private readonly fieldsByContent = computed(() => this.fields(), {
+    equal: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+  });
+
+  /**
+   * Uploaded features with missing properties do not invalidate the input, since the process reports them as errors.
+   * Moreover, the fields can only be changed to other properties of a valid input.
+   * Drawn features, however, must be complete (cf. `validate`).
+   */
+  readonly missingPropertiesWarning = computed(() =>
+    missingFeatureProperties(
+      this.collection(),
+      this.fieldsByContent(),
+      (feature) => !isDrawnFeature(feature),
+    ),
+  );
+
+  constructor() {
+    // e.g., the user selected another property for a field
+    effect(() => {
+      this.fieldsByContent();
+      untracked(() => void this.validate());
+    });
+  }
 
   async onFileDropped(files: FileList): Promise<void> {
     if (files.length <= 0) return;
@@ -136,15 +214,21 @@ export class GeoJsonFormFieldComponent implements FormValueControl<
     await this.handleFileSelection(inputElement.files[0]);
   }
 
+  async onCollectionChange(collection: GeoJsonFeatureCollection): Promise<void> {
+    this.collection.set(collection);
+    await this.validate();
+  }
+
   triggerBrowse(): void {
     const inputEl = this.fileInput()?.nativeElement;
     if (!inputEl) return;
     inputEl.click();
   }
 
-  removeFile(): void {
+  async removeFile(): Promise<void> {
     this.fileName.set(undefined);
-    this.value.set(new Error('No file selected')); // Set error state when file is removed
+    this.collection.set(emptyGeoJsonFeatureCollection());
+    await this.validate();
 
     // Reset the input value so the same file can be re-selected if needed
     const inputEl = this.fileInput()?.nativeElement;
@@ -162,41 +246,82 @@ export class GeoJsonFormFieldComponent implements FormValueControl<
 
     const content = await readFileContents(file);
 
-    let jsonContent: Record<string, unknown>;
+    let collection: unknown;
     try {
-      jsonContent = {
-        value: JSON.parse(content) as JSON,
-        mediaType: GeoJsonInputMediaType.ApplicationGeojson,
-      };
+      collection = JSON.parse(content);
     } catch (error) {
-      // console.error('Error parsing GeoJSON file:', error);
+      this.validationRun++; // discard pending validations
       this.value.set(new Error('Invalid JSON file', { cause: error })); // Set error if parsing fails
       return;
     }
 
-    const validate = await this.geoJsonValidator();
-    const valid = validate(jsonContent);
-
-    if (!valid) {
-      // console.error('GeoJSON validation errors:', validate.errors);
-      this.value.set(new Error('Invalid GeoJSON format', { cause: validate.errors }));
+    if (!isFeatureCollection(collection)) {
+      this.validationRun++; // discard pending validations
+      this.value.set(new Error('The file is not a GeoJSON FeatureCollection'));
       return;
     }
 
+    this.collection.set(collection);
+    await this.validate();
+  }
+
+  /** Validates the features on the map and sets the value (or an error) accordingly. */
+  private async validate(): Promise<void> {
+    const run = ++this.validationRun;
+    const collection = this.collection();
+
+    const geoJsonInput: FeatureCollectionGeoJsonInput = {
+      value: collection,
+      mediaType: GeoJsonInputMediaType.ApplicationGeojson,
+    };
+
+    const validate = await this.geoJsonValidator();
+    const valid = validate(geoJsonInput);
+
     // TODO: use the zod schema for validation instead of Ajv, to avoid maintaining two separate schemas and validators
 
-    // const parseResult = this.geoJsonSchema().safeParse(jsonContent);
+    if (run !== this.validationRun) return; // a newer validation is pending
 
-    // console.log('GeoJSON validation result:', parseResult);
+    if (collection.features.length === 0) {
+      this.value.set(new Error('Upload a file or draw at least one feature on the map'));
+      return;
+    }
 
-    // if (!parseResult.success) {
-    //   console.error('GeoJSON validation errors:', parseResult.error);
-    //   this.value.set(new Error('Invalid GeoJSON format', { cause: parseResult.error }));
-    //   return;
-    // }
+    if (!valid) {
+      this.value.set(new Error(invalidGeoJsonMessage(validate.errors), { cause: validate.errors }));
+      return;
+    }
 
-    this.value.set(jsonContent as unknown as FeatureCollectionGeoJsonInput);
+    const missingProperty = missingFeatureProperties(
+      collection,
+      this.fieldsByContent(),
+      isDrawnFeature,
+    );
+    if (missingProperty) {
+      this.value.set(new Error(missingProperty));
+      return;
+    }
+
+    this.value.set(geoJsonInput);
   }
+}
+
+function invalidGeoJsonMessage(errors: ErrorObject[] | null | undefined): string {
+  const error = errors?.[0];
+  if (!error) return 'Invalid GeoJSON format';
+
+  // `/value/features/0/geometry` -> `features/0/geometry`
+  const path = error.instancePath.replace(/^\/value\/?/, '');
+  return `Invalid GeoJSON format: ${path ? `${path} ` : ''}${error.message ?? 'is invalid'}`;
+}
+
+function isFeatureCollection(json: unknown): json is GeoJsonFeatureCollection {
+  return (
+    typeof json === 'object' &&
+    json !== null &&
+    (json as Record<string, unknown>)['type'] === 'FeatureCollection' &&
+    Array.isArray((json as Record<string, unknown>)['features'])
+  );
 }
 
 async function readFileContents(file: File): Promise<string> {
@@ -206,20 +331,6 @@ async function readFileContents(file: File): Promise<string> {
     reader.onerror = (): void => reject(reader.error ?? new Error('Unknown file reading error'));
     reader.readAsText(file);
   });
-}
-
-export function emptyGeoJsonFeatureCollection(): GeoJSONFeatureCollection {
-  const featureCollection = new GeoJSONFeatureCollection();
-  featureCollection.type = GeoJSONFeatureCollectionTypeEnum.FeatureCollection;
-  featureCollection.features = [];
-  return featureCollection;
-}
-
-export function emptyGeoJsonFeatureCollectionInput(): FeatureCollectionGeoJsonInput {
-  return {
-    value: emptyGeoJsonFeatureCollection(),
-    mediaType: GeoJsonInputMediaType.ApplicationGeojson,
-  };
 }
 
 async function loadSchema(uri: string): Promise<Record<string, unknown>> {
