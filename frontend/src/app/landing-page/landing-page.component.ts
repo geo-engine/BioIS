@@ -9,12 +9,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltip } from '@angular/material/tooltip';
 import { LONG_TITLE, TITLE } from '../app.routes';
+import { ContactFormComponent } from './contact-form.component';
 
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    ContactFormComponent,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,

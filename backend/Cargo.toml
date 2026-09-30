@@ -74,6 +74,13 @@ geo-types = "0.7"
 geoengine-api-client = "0.9.4"
 geojson = "1.0"
 indoc = "2.0"
+lettre = { version = "0.11", default-features = false, features = [
+    "builder",
+    "hostname",
+    "pool",
+    "smtp-transport",
+    "tokio1-rustls-tls",
+] }
 nom = "8.0"
 ogcapi = { git = "https://github.com/georust/ogcapi", branch = "fix/missing-sync-job-in-builder", default-features = false, features = [
     "common",
@@ -96,7 +103,7 @@ toasty = { git = "https://github.com/tokio-rs/toasty", branch = "main", features
 # toasty-cli = "0.11"
 toasty-cli = { git = "https://github.com/tokio-rs/toasty", branch = "main" }
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
-tower = "0.5"
+tower = { version = "0.5", features = ["buffer", "limit", "load-shed", "util"] }
 tracing = "0.1"
 tracing-appender = "0.2"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

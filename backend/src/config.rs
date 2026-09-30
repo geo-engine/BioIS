@@ -15,6 +15,7 @@ pub struct Config {
     pub geoengine: GeoEngineInstance,
     pub data_ids: DataIdsConfig,
     pub credits: CreditsConfig,
+    pub contact: ContactConfig,
     pub logging: Logging,
 }
 
@@ -157,6 +158,52 @@ pub struct BiodiversitySensitiveAreasCreditsConfig {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct HabitatDistanceCreditsConfig {
     pub credits_per_coordinate: u64,
+}
+
+/// Configuration for the contact form, which sends emails via SMTP.
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct ContactConfig {
+    /// Sender of the notification emails, e.g. `BioIS <noreply@geoengine.de>`.
+    pub from: String,
+    /// Recipient of the notification emails.
+    pub to: String,
+    pub smtp: SmtpConfig,
+    pub rate_limit: ContactRateLimitConfig,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct SmtpConfig {
+    pub host: String,
+    pub port: u16,
+    pub tls: SmtpTls,
+    /// Name to use in the SMTP `EHLO` command. Defaults to the machine's hostname.
+    pub helo_name: Option<String>,
+    pub username: Option<String>,
+    pub password: Option<Secret<String>>,
+}
+
+#[derive(serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum SmtpTls {
+    /// Upgrade a plaintext connection via `STARTTLS` (usually port 587)
+    Starttls,
+    /// Implicit TLS (usually port 465)
+    Tls,
+    /// Unencrypted, only for local testing
+    None,
+}
+
+/// Global rate limit for the contact form, shared by all clients.
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct ContactRateLimitConfig {
+    pub max_requests: u64,
+    pub window_seconds: u64,
+}
+
+impl ContactRateLimitConfig {
+    pub fn window(&self) -> Duration {
+        Duration::from_secs(self.window_seconds)
+    }
 }
 
 #[cfg(test)]

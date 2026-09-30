@@ -25,6 +25,26 @@ level = "info"
 [data_ids]
 land_use_imperviousness_builtup = "land_use_impervious_built_up"
 
+[contact]
+from = "BioIS <noreply@geoengine.de>"
+to = "info@geoengine.de"
+
+[contact.smtp]
+host = "smtp-relay.gmail.com"
+port = 587
+# Possible values: "starttls", "tls", "none" (unencrypted, only for local testing)
+tls = "starttls"
+# Name used in the SMTP `EHLO` command. Defaults to the machine's hostname.
+# helo_name = "biois.app.geoengine.io"
+# Optional SMTP authentication. The Gmail SMTP relay also supports IP-based authentication.
+# username = ""
+# password = ""
+
+# Global limit for all clients: at most `max_requests` per window
+[contact.rate_limit]
+max_requests = 10
+window_seconds = 3600
+
 [credits]
 credits_lookup_interval_seconds = 60
 

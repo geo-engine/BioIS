@@ -2,6 +2,7 @@
 .gitignore
 README.md
 apis/CapabilitiesApi.ts
+apis/ContactApi.ts
 apis/DefaultApi.ts
 apis/ProcessesApi.ts
 apis/UserApi.ts
@@ -10,6 +11,7 @@ apis/exception.ts
 auth/auth.ts
 configuration.ts
 docs/CapabilitiesApi.md
+docs/ContactApi.md
 docs/DefaultApi.md
 docs/ProcessesApi.md
 docs/UserApi.md
@@ -50,6 +52,8 @@ models/Constraints6.ts
 models/Constraints7.ts
 models/Constraints8.ts
 models/Constraints9.ts
+models/ContactRequest.ts
+models/ContactRole.ts
 models/CreditsForJob.ts
 models/DataResource.ts
 models/DateField.ts

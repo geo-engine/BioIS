@@ -5,6 +5,7 @@ import { AuthCodeResponse } from "../models/AuthCodeResponse";
 import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
 import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
 import { Conformance } from "../models/Conformance";
+import { ContactRequest } from "../models/ContactRequest";
 import { Execute } from "../models/Execute";
 import { GetCreditsResponse } from "../models/GetCreditsResponse";
 import { HabitatDistanceProcessOutputs } from "../models/HabitatDistanceProcessOutputs";
@@ -116,6 +117,61 @@ export class ObjectCapabilitiesApi {
     options?: ConfigurationOptions,
   ): Promise<LandingPage> {
     return this.api.root(options).toPromise();
+  }
+}
+
+import { ObservableContactApi } from "./ObservableAPI";
+import {
+  ContactApiRequestFactory,
+  ContactApiResponseProcessor,
+} from "../apis/ContactApi";
+
+export interface ContactApiSubmitContactRequest {
+  /**
+   *
+   * @type ContactRequest
+   * @memberof ContactApisubmitContact
+   */
+  contactRequest: ContactRequest;
+}
+
+export class ObjectContactApi {
+  private api: ObservableContactApi;
+
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ContactApiRequestFactory,
+    responseProcessor?: ContactApiResponseProcessor,
+  ) {
+    this.api = new ObservableContactApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
+
+  /**
+   * Sends a request for pilot access to the `BioIS` team.
+   * @param param the request object
+   */
+  public submitContactWithHttpInfo(
+    param: ContactApiSubmitContactRequest,
+    options?: ConfigurationOptions,
+  ): Promise<HttpInfo<void>> {
+    return this.api
+      .submitContactWithHttpInfo(param.contactRequest, options)
+      .toPromise();
+  }
+
+  /**
+   * Sends a request for pilot access to the `BioIS` team.
+   * @param param the request object
+   */
+  public submitContact(
+    param: ContactApiSubmitContactRequest,
+    options?: ConfigurationOptions,
+  ): Promise<void> {
+    return this.api.submitContact(param.contactRequest, options).toPromise();
   }
 }
 

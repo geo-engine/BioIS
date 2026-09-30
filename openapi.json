@@ -697,6 +697,72 @@
         }
       }
     },
+    "/contact": {
+      "post": {
+        "tags": [
+          "Contact"
+        ],
+        "summary": "Sends a request for pilot access to the `BioIS` team.",
+        "operationId": "submit_contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "The request was sent to the BioIS team."
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 400,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.400"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests. Please try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 429,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.429"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exception"
+                },
+                "example": {
+                  "status": 500,
+                  "type": "https://httpwg.org/specs/rfc7231.html#status.500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/processes/ndvi/execution": {
       "post": {
         "tags": [
@@ -1047,6 +1113,57 @@
             }
           }
         }
+      },
+      "ContactRequest": {
+        "type": "object",
+        "description": "A request for pilot access, submitted via the contact form on the landing page.",
+        "required": [
+          "name",
+          "email",
+          "organization",
+          "role",
+          "message",
+          "privacyConsent"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "organization": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ContactRole"
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message, may be empty."
+          },
+          "privacyConsent": {
+            "type": "boolean",
+            "description": "Must be `true`: the user agrees to the processing of their data."
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Must be left empty. Used to detect spam bots."
+          }
+        }
+      },
+      "ContactRole": {
+        "type": "string",
+        "enum": [
+          "largeCorporate",
+          "sme",
+          "consultancy",
+          "other"
+        ]
       },
       "CreditsForJob": {
         "type": "object",

@@ -2,6 +2,7 @@ use crate::{
     auth::GeoEngineAuthMiddlewareLayer,
     collection_transactions::NoCollectionTransactions,
     config::CONFIG,
+    contact,
     credits::{self, start_credits_process_task},
     db::DbHandle,
     handler,
@@ -41,6 +42,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .routes(routes!(handler::health_handler))
         .nest("/auth", handler::auth_router())
         .nest("/credits", credits::router())
+        .nest("/contact", contact::router(&CONFIG.contact)?)
         .with_state(AppState {
             db: db_pool.clone(),
             api_config: CONFIG.geoengine.api_config(None),
