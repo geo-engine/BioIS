@@ -10,85 +10,87 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInputLandUseSiteProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSiteProperties';
-import { JsonInputPreviousLandUseSummary } from '../models/JsonInputPreviousLandUseSummary';
-import { UnitForArea } from '../models/UnitForArea';
-import { HttpFile } from '../http/http';
+import { FeatureCollectionGeoJsonInputLandUseSiteProperties } from "../models/FeatureCollectionGeoJsonInputLandUseSiteProperties";
+import { JsonInputPreviousLandUseSummary } from "../models/JsonInputPreviousLandUseSummary";
+import { UnitForArea } from "../models/UnitForArea";
 
 export class LandUseSealedAreaProcessInputs {
-    /**
-    * `GeoJSON` `FeatureCollection` representing sites to analyze for land-use calculation.
-    */
-    'sites': FeatureCollectionGeoJsonInputLandUseSiteProperties;
-    /**
-    * Property name in the features that contains the location/site name.
-    */
-    'locationNameField': string;
-    /**
-    * Property name in the features that contains the site type (e.g., \"site\", \"natureOnSite\", \"natureOffSite\").
-    */
-    'siteTypeField': string;
-    /**
-    * Unit for area measurement, with options for hectares (ha) or square meters (m²).
-    */
-    'unitForArea': UnitForArea;
-    /**
-    * Reporting year for the land-use calculation.
-    */
-    'year': number;
-    /**
-    * Optional: Site data from the previous reporting period for year-over-year comparison.
-    */
-    'previousYearData'?: JsonInputPreviousLandUseSummary | null;
+  /**
+   * `GeoJSON` `FeatureCollection` representing sites to analyze for land-use calculation.
+   */
+  "sites": FeatureCollectionGeoJsonInputLandUseSiteProperties;
+  /**
+   * Property name in the features that contains the location/site name.
+   */
+  "locationNameField": string;
+  /**
+   * Property name in the features that contains the site type (e.g., \"site\", \"natureOnSite\", \"natureOffSite\").
+   */
+  "siteTypeField": string;
+  /**
+   * Unit for area measurement, with options for hectares (ha) or square meters (m²).
+   */
+  "unitForArea": UnitForArea;
+  /**
+   * Reporting year for the land-use calculation.
+   */
+  "year": number;
+  /**
+   * Optional: Site data from the previous reporting period for year-over-year comparison.
+   */
+  "previousYearData"?: JsonInputPreviousLandUseSummary | null;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "sites",
-            "baseName": "sites",
-            "type": "FeatureCollectionGeoJsonInputLandUseSiteProperties",
-            "format": ""
-        },
-        {
-            "name": "locationNameField",
-            "baseName": "locationNameField",
-            "type": "string",
-            "format": "relative-json-pointer"
-        },
-        {
-            "name": "siteTypeField",
-            "baseName": "siteTypeField",
-            "type": "string",
-            "format": "relative-json-pointer"
-        },
-        {
-            "name": "unitForArea",
-            "baseName": "unitForArea",
-            "type": "UnitForArea",
-            "format": ""
-        },
-        {
-            "name": "year",
-            "baseName": "year",
-            "type": "number",
-            "format": "int32"
-        },
-        {
-            "name": "previousYearData",
-            "baseName": "previousYearData",
-            "type": "JsonInputPreviousLandUseSummary",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "sites",
+      baseName: "sites",
+      type: "FeatureCollectionGeoJsonInputLandUseSiteProperties",
+      format: "",
+    },
+    {
+      name: "locationNameField",
+      baseName: "locationNameField",
+      type: "string",
+      format: "relative-json-pointer",
+    },
+    {
+      name: "siteTypeField",
+      baseName: "siteTypeField",
+      type: "string",
+      format: "relative-json-pointer",
+    },
+    {
+      name: "unitForArea",
+      baseName: "unitForArea",
+      type: "UnitForArea",
+      format: "",
+    },
+    {
+      name: "year",
+      baseName: "year",
+      type: "number",
+      format: "int32",
+    },
+    {
+      name: "previousYearData",
+      baseName: "previousYearData",
+      type: "JsonInputPreviousLandUseSummary",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return LandUseSealedAreaProcessInputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return LandUseSealedAreaProcessInputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

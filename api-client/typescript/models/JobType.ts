@@ -10,8 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export enum JobType {
-    Process = 'process'
+  Process = "process",
 }

@@ -10,114 +10,117 @@
  * Do not edit the class manually.
  */
 
-import { Constraints3 } from '../models/Constraints3';
-import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
-import { HttpFile } from '../http/http';
+import { Constraints3 } from "../models/Constraints3";
+import { StringFieldMissingValues } from "../models/StringFieldMissingValues";
 
 /**
-* The field contains temporal date values.
-*/
+ * The field contains temporal date values.
+ */
 export class DateField {
-    /**
-    * A name for this field.
-    */
-    'name': string;
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
-    /**
-    * A text description. Markdown is encouraged.
-    */
-    'description'?: string;
-    /**
-    * An example value for the field.
-    */
-    'example'?: string;
-    'missingValues'?: StringFieldMissingValues;
-    /**
-    * The type keyword, which `MUST` be a value of `date`.
-    */
-    'type': DateFieldTypeEnum;
-    /**
-    * The format keyword options for `date` are `default`, `any`, and `{PATTERN}`.
-    */
-    'format'?: any | null;
-    'constraints'?: Constraints3;
-    /**
-    * The RDF type for this field.
-    */
-    'rdfType'?: string;
+  /**
+   * A name for this field.
+   */
+  "name": string;
+  /**
+   * A human-readable title.
+   */
+  "title"?: string;
+  /**
+   * A text description. Markdown is encouraged.
+   */
+  "description"?: string;
+  /**
+   * An example value for the field.
+   */
+  "example"?: string;
+  "missingValues"?: StringFieldMissingValues;
+  /**
+   * The type keyword, which `MUST` be a value of `date`.
+   */
+  "type": DateFieldTypeEnum;
+  /**
+   * The format keyword options for `date` are `default`, `any`, and `{PATTERN}`.
+   */
+  "format"?: any | null;
+  "constraints"?: Constraints3;
+  /**
+   * The RDF type for this field.
+   */
+  "rdfType"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "description",
-            "baseName": "description",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "example",
-            "baseName": "example",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "missingValues",
-            "baseName": "missingValues",
-            "type": "StringFieldMissingValues",
-            "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "DateFieldTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "format",
-            "baseName": "format",
-            "type": "any",
-            "format": ""
-        },
-        {
-            "name": "constraints",
-            "baseName": "constraints",
-            "type": "Constraints3",
-            "format": ""
-        },
-        {
-            "name": "rdfType",
-            "baseName": "rdfType",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "description",
+      baseName: "description",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "example",
+      baseName: "example",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "missingValues",
+      baseName: "missingValues",
+      type: "StringFieldMissingValues",
+      format: "",
+    },
+    {
+      name: "type",
+      baseName: "type",
+      type: "DateFieldTypeEnum",
+      format: "",
+    },
+    {
+      name: "format",
+      baseName: "format",
+      type: "any",
+      format: "",
+    },
+    {
+      name: "constraints",
+      baseName: "constraints",
+      type: "Constraints3",
+      format: "",
+    },
+    {
+      name: "rdfType",
+      baseName: "rdfType",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return DateField.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return DateField.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum DateFieldTypeEnum {
-    Date = 'date'
+  Date = "date",
 }
-

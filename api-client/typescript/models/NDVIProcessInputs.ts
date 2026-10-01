@@ -10,45 +10,49 @@
  * Do not edit the class manually.
  */
 
-import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
-import { HttpFile } from '../http/http';
+import { PointGeoJsonInput } from "../models/PointGeoJsonInput";
 
 export class NDVIProcessInputs {
-    'coordinate': PointGeoJsonInput;
-    /**
-    * Year of reporting or change (e.g., 2023, 2024, etc.)
-    */
-    'year': number;
-    'month': number;
+  "coordinate": PointGeoJsonInput;
+  /**
+   * Year of reporting or change (e.g., 2023, 2024, etc.)
+   */
+  "year": number;
+  "month": number;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "coordinate",
-            "baseName": "coordinate",
-            "type": "PointGeoJsonInput",
-            "format": ""
-        },
-        {
-            "name": "year",
-            "baseName": "year",
-            "type": "number",
-            "format": "int32"
-        },
-        {
-            "name": "month",
-            "baseName": "month",
-            "type": "number",
-            "format": "int32"
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "coordinate",
+      baseName: "coordinate",
+      type: "PointGeoJsonInput",
+      format: "",
+    },
+    {
+      name: "year",
+      baseName: "year",
+      type: "number",
+      format: "int32",
+    },
+    {
+      name: "month",
+      baseName: "month",
+      type: "number",
+      format: "int32",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return NDVIProcessInputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return NDVIProcessInputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

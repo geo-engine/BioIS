@@ -10,62 +10,65 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONFeatureGeometry } from '../models/GeoJSONFeatureGeometry';
-import { GeoJSONFeatureId } from '../models/GeoJSONFeatureId';
-import { HttpFile } from '../http/http';
+import { GeoJSONFeatureGeometry } from "../models/GeoJSONFeatureGeometry";
+import { GeoJSONFeatureId } from "../models/GeoJSONFeatureId";
 
 export class GeoJSONFeature {
-    'type': GeoJSONFeatureTypeEnum;
-    'id'?: GeoJSONFeatureId;
-    'properties': any | null;
-    'geometry': GeoJSONFeatureGeometry | null;
-    'bbox'?: Array<number>;
+  "type": GeoJSONFeatureTypeEnum;
+  "id"?: GeoJSONFeatureId;
+  "properties": any | null;
+  "geometry": GeoJSONFeatureGeometry | null;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONFeatureTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "id",
-            "baseName": "id",
-            "type": "GeoJSONFeatureId",
-            "format": ""
-        },
-        {
-            "name": "properties",
-            "baseName": "properties",
-            "type": "any",
-            "format": ""
-        },
-        {
-            "name": "geometry",
-            "baseName": "geometry",
-            "type": "GeoJSONFeatureGeometry",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "GeoJSONFeatureTypeEnum",
+      format: "",
+    },
+    {
+      name: "id",
+      baseName: "id",
+      type: "GeoJSONFeatureId",
+      format: "",
+    },
+    {
+      name: "properties",
+      baseName: "properties",
+      type: "any",
+      format: "",
+    },
+    {
+      name: "geometry",
+      baseName: "geometry",
+      type: "GeoJSONFeatureGeometry",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GeoJSONFeature.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GeoJSONFeature.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum GeoJSONFeatureTypeEnum {
-    Feature = 'Feature'
+  Feature = "Feature",
 }
-

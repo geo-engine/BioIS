@@ -10,30 +10,38 @@
  * Do not edit the class manually.
  */
 
-import { AdditionalParameter } from '../models/AdditionalParameter';
-import { Metadata } from '../models/Metadata';
-import { HttpFile } from '../http/http';
+import { AdditionalParameter } from "../models/AdditionalParameter";
+import { Metadata } from "../models/Metadata";
 
 export class AdditionalParameters extends Metadata {
-    'parameters': Array<AdditionalParameter>;
+  "parameters": Array<AdditionalParameter>;
 
-    static override readonly discriminator: string | undefined = undefined;
+  static override readonly discriminator: string | undefined = undefined;
 
-    static override readonly mapping: {[index: string]: string} | undefined = undefined;
+  static override readonly mapping: { [index: string]: string } | undefined =
+    undefined;
 
-    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "parameters",
-            "baseName": "parameters",
-            "type": "Array<AdditionalParameter>",
-            "format": ""
-        }    ];
+  static override readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "parameters",
+      baseName: "parameters",
+      type: "Array<AdditionalParameter>",
+      format: "",
+    },
+  ];
 
-    static override getAttributeTypeMap() {
-        return super.getAttributeTypeMap().concat(AdditionalParameters.attributeTypeMap);
-    }
+  static override getAttributeTypeMap() {
+    return super
+      .getAttributeTypeMap()
+      .concat(AdditionalParameters.attributeTypeMap);
+  }
 
-    public constructor() {
-        super();
-    }
+  public constructor() {
+    super();
+  }
 }

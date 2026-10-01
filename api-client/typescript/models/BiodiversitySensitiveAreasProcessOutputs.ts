@@ -10,56 +10,60 @@
  * Do not edit the class manually.
  */
 
-import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
-import { DataResource } from '../models/DataResource';
-import { HttpFile } from '../http/http';
+import { BiodiversitySensitiveAreasProcessInputs } from "../models/BiodiversitySensitiveAreasProcessInputs";
+import { DataResource } from "../models/DataResource";
 
 export class BiodiversitySensitiveAreasProcessOutputs {
-    'biodiversitySensitiveAreas'?: DataResource | null;
-    /**
-    * Echo of inputs for auditing and traceability
-    */
-    'inputs'?: BiodiversitySensitiveAreasProcessInputs | null;
-    /**
-    * Errors encountered during processing, if any (e.g. invalid geometries, missing properties, etc.)
-    */
-    'errors'?: Array<string> | null;
-    'documentationSources'?: DataResource | null;
+  "biodiversitySensitiveAreas"?: DataResource | null;
+  /**
+   * Echo of inputs for auditing and traceability
+   */
+  "inputs"?: BiodiversitySensitiveAreasProcessInputs | null;
+  /**
+   * Errors encountered during processing, if any (e.g. invalid geometries, missing properties, etc.)
+   */
+  "errors"?: Array<string> | null;
+  "documentationSources"?: DataResource | null;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "biodiversitySensitiveAreas",
-            "baseName": "biodiversitySensitiveAreas",
-            "type": "DataResource",
-            "format": ""
-        },
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "BiodiversitySensitiveAreasProcessInputs",
-            "format": ""
-        },
-        {
-            "name": "errors",
-            "baseName": "errors",
-            "type": "Array<string>",
-            "format": ""
-        },
-        {
-            "name": "documentationSources",
-            "baseName": "documentationSources",
-            "type": "DataResource",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "biodiversitySensitiveAreas",
+      baseName: "biodiversitySensitiveAreas",
+      type: "DataResource",
+      format: "",
+    },
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "BiodiversitySensitiveAreasProcessInputs",
+      format: "",
+    },
+    {
+      name: "errors",
+      baseName: "errors",
+      type: "Array<string>",
+      format: "",
+    },
+    {
+      name: "documentationSources",
+      baseName: "documentationSources",
+      type: "DataResource",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return BiodiversitySensitiveAreasProcessOutputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return BiodiversitySensitiveAreasProcessOutputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

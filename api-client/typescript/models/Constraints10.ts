@@ -10,51 +10,55 @@
  * Do not edit the class manually.
  */
 
-import { Constraints10Enum } from '../models/Constraints10Enum';
-import { HttpFile } from '../http/http';
+import { Constraints10Enum } from "../models/Constraints10Enum";
 
 /**
-* The following constraints are supported for `geopoint` fields.
-*/
+ * The following constraints are supported for `geopoint` fields.
+ */
 export class Constraints10 {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    /**
-    * When `true`, each value for the property `MUST` be unique.
-    */
-    'unique'?: boolean;
-    '_enum'?: Constraints10Enum;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  /**
+   * When `true`, each value for the property `MUST` be unique.
+   */
+  "unique"?: boolean;
+  "_enum"?: Constraints10Enum;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "unique",
-            "baseName": "unique",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Constraints10Enum",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "unique",
+      baseName: "unique",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Constraints10Enum",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints10.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints10.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

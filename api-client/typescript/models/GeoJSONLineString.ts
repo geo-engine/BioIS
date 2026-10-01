@@ -10,46 +10,48 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class GeoJSONLineString {
-    'type': GeoJSONLineStringTypeEnum;
-    'coordinates': Array<Array<number>>;
-    'bbox'?: Array<number>;
+  "type": GeoJSONLineStringTypeEnum;
+  "coordinates": Array<Array<number>>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONLineStringTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<Array<number>>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "GeoJSONLineStringTypeEnum",
+      format: "",
+    },
+    {
+      name: "coordinates",
+      baseName: "coordinates",
+      type: "Array<Array<number>>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GeoJSONLineString.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GeoJSONLineString.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum GeoJSONLineStringTypeEnum {
-    LineString = 'LineString'
+  LineString = "LineString",
 }
-

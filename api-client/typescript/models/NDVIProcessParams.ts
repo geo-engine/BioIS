@@ -10,48 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
-import { Response } from '../models/Response';
-import { HttpFile } from '../http/http';
+import { NDVIProcessInputs } from "../models/NDVIProcessInputs";
+import { Response } from "../models/Response";
 
 /**
-* Process execution
-*/
+ * Process execution
+ */
 export class NDVIProcessParams {
-    'inputs': NDVIProcessInputs;
-    'outputs'?: { [key: string]: any; };
-    'response'?: Response;
+  "inputs": NDVIProcessInputs;
+  "outputs"?: { [key: string]: any };
+  "response"?: Response;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "NDVIProcessInputs",
-            "format": ""
-        },
-        {
-            "name": "outputs",
-            "baseName": "outputs",
-            "type": "{ [key: string]: any; }",
-            "format": ""
-        },
-        {
-            "name": "response",
-            "baseName": "response",
-            "type": "Response",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "NDVIProcessInputs",
+      format: "",
+    },
+    {
+      name: "outputs",
+      baseName: "outputs",
+      type: "{ [key: string]: any; }",
+      format: "",
+    },
+    {
+      name: "response",
+      baseName: "response",
+      type: "Response",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return NDVIProcessParams.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return NDVIProcessParams.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

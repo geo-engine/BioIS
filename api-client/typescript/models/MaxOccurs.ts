@@ -10,8 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
  * @type MaxOccurs
  * Type
@@ -20,12 +18,11 @@ import { HttpFile } from '../http/http';
 export type MaxOccurs = number | string;
 
 /**
-* @type MaxOccursClass
-* @export
-*/
+ * @type MaxOccursClass
+ * @export
+ */
 export class MaxOccursClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

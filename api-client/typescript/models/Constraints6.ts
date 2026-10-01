@@ -10,80 +10,84 @@
  * Do not edit the class manually.
  */
 
-import { Constraints1Enum } from '../models/Constraints1Enum';
-import { Constraints1Minimum } from '../models/Constraints1Minimum';
-import { HttpFile } from '../http/http';
+import { Constraints1Enum } from "../models/Constraints1Enum";
+import { Constraints1Minimum } from "../models/Constraints1Minimum";
 
 /**
-* The following constraints are supported for `year` fields.
-*/
+ * The following constraints are supported for `year` fields.
+ */
 export class Constraints6 {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    /**
-    * When `true`, each value for the property `MUST` be unique.
-    */
-    'unique'?: boolean;
-    '_enum'?: Constraints1Enum;
-    'minimum'?: Constraints1Minimum;
-    'maximum'?: Constraints1Minimum;
-    'exclusiveMinimum'?: Constraints1Minimum;
-    'exclusiveMaximum'?: Constraints1Minimum;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  /**
+   * When `true`, each value for the property `MUST` be unique.
+   */
+  "unique"?: boolean;
+  "_enum"?: Constraints1Enum;
+  "minimum"?: Constraints1Minimum;
+  "maximum"?: Constraints1Minimum;
+  "exclusiveMinimum"?: Constraints1Minimum;
+  "exclusiveMaximum"?: Constraints1Minimum;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "unique",
-            "baseName": "unique",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Constraints1Enum",
-            "format": ""
-        },
-        {
-            "name": "minimum",
-            "baseName": "minimum",
-            "type": "Constraints1Minimum",
-            "format": ""
-        },
-        {
-            "name": "maximum",
-            "baseName": "maximum",
-            "type": "Constraints1Minimum",
-            "format": ""
-        },
-        {
-            "name": "exclusiveMinimum",
-            "baseName": "exclusiveMinimum",
-            "type": "Constraints1Minimum",
-            "format": ""
-        },
-        {
-            "name": "exclusiveMaximum",
-            "baseName": "exclusiveMaximum",
-            "type": "Constraints1Minimum",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "unique",
+      baseName: "unique",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Constraints1Enum",
+      format: "",
+    },
+    {
+      name: "minimum",
+      baseName: "minimum",
+      type: "Constraints1Minimum",
+      format: "",
+    },
+    {
+      name: "maximum",
+      baseName: "maximum",
+      type: "Constraints1Minimum",
+      format: "",
+    },
+    {
+      name: "exclusiveMinimum",
+      baseName: "exclusiveMinimum",
+      type: "Constraints1Minimum",
+      format: "",
+    },
+    {
+      name: "exclusiveMaximum",
+      baseName: "exclusiveMaximum",
+      type: "Constraints1Minimum",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints6.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints6.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

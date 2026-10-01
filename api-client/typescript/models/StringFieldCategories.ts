@@ -10,22 +10,21 @@
  * Do not edit the class manually.
  */
 
-import { StringFieldMissingValuesAnyOfInner } from '../models/StringFieldMissingValuesAnyOfInner';
-import { HttpFile } from '../http/http';
-
 export class StringFieldCategories {
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [];
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-    ];
+  static getAttributeTypeMap() {
+    return StringFieldCategories.attributeTypeMap;
+  }
 
-    static getAttributeTypeMap() {
-        return StringFieldCategories.attributeTypeMap;
-    }
-
-    public constructor() {
-    }
+  public constructor() {}
 }

@@ -1,573 +1,622 @@
-import { ResponseContext, RequestContext, HttpFile, HttpInfo } from '../http/http';
-import { Configuration, PromiseConfigurationOptions, wrapOptions } from '../configuration'
-import { PromiseMiddleware, Middleware, PromiseMiddlewareWrapper } from '../middleware';
+import { HttpInfo } from "../http/http";
+import {
+  Configuration,
+  PromiseConfigurationOptions,
+  wrapOptions,
+} from "../configuration";
 
-import { AdditionalParameter } from '../models/AdditionalParameter';
-import { AdditionalParameters } from '../models/AdditionalParameters';
-import { AnyField } from '../models/AnyField';
-import { ArrayField } from '../models/ArrayField';
-import { AuthCodeResponse } from '../models/AuthCodeResponse';
-import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
-import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
-import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
-import { BiodiversitySiteProperties } from '../models/BiodiversitySiteProperties';
-import { BiodiversitySiteSpecification } from '../models/BiodiversitySiteSpecification';
-import { BooleanField } from '../models/BooleanField';
-import { BoundingBox } from '../models/BoundingBox';
-import { Conformance } from '../models/Conformance';
-import { Constraints } from '../models/Constraints';
-import { Constraints1 } from '../models/Constraints1';
-import { Constraints10 } from '../models/Constraints10';
-import { Constraints10Enum } from '../models/Constraints10Enum';
-import { Constraints11 } from '../models/Constraints11';
-import { Constraints12 } from '../models/Constraints12';
-import { Constraints12Enum } from '../models/Constraints12Enum';
-import { Constraints13 } from '../models/Constraints13';
-import { Constraints14 } from '../models/Constraints14';
-import { Constraints1Enum } from '../models/Constraints1Enum';
-import { Constraints1Minimum } from '../models/Constraints1Minimum';
-import { Constraints2 } from '../models/Constraints2';
-import { Constraints3 } from '../models/Constraints3';
-import { Constraints4 } from '../models/Constraints4';
-import { Constraints5 } from '../models/Constraints5';
-import { Constraints6 } from '../models/Constraints6';
-import { Constraints7 } from '../models/Constraints7';
-import { Constraints8 } from '../models/Constraints8';
-import { Constraints9 } from '../models/Constraints9';
-import { CreditsForJob } from '../models/CreditsForJob';
-import { DataResource } from '../models/DataResource';
-import { DateField } from '../models/DateField';
-import { DateTimeField } from '../models/DateTimeField';
-import { DescriptionType } from '../models/DescriptionType';
-import { DurationField } from '../models/DurationField';
-import { Exception } from '../models/Exception';
-import { Execute } from '../models/Execute';
-import { FeatureCollectionGeoJsonInputBiodiversitySiteProperties } from '../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties';
-import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue';
-import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner';
-import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry';
-import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties';
-import { FeatureCollectionGeoJsonInputLandUseSiteProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSiteProperties';
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValue } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue';
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner';
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry';
-import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties';
-import { Format } from '../models/Format';
-import { GeoJSONFeature } from '../models/GeoJSONFeature';
-import { GeoJSONFeatureGeometry } from '../models/GeoJSONFeatureGeometry';
-import { GeoJSONFeatureId } from '../models/GeoJSONFeatureId';
-import { GeoJSONField } from '../models/GeoJSONField';
-import { GeoJSONGeometryCollection } from '../models/GeoJSONGeometryCollection';
-import { GeoJSONGeometryCollectionGeometriesInner } from '../models/GeoJSONGeometryCollectionGeometriesInner';
-import { GeoJSONLineString } from '../models/GeoJSONLineString';
-import { GeoJSONMultiLineString } from '../models/GeoJSONMultiLineString';
-import { GeoJSONMultiPoint } from '../models/GeoJSONMultiPoint';
-import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
-import { GeoPointField } from '../models/GeoPointField';
-import { GetCreditsResponse } from '../models/GetCreditsResponse';
-import { HabitatDistanceProcessInputs } from '../models/HabitatDistanceProcessInputs';
-import { HabitatDistanceProcessOutputs } from '../models/HabitatDistanceProcessOutputs';
-import { HabitatDistanceProcessParams } from '../models/HabitatDistanceProcessParams';
-import { InlineOrRefData } from '../models/InlineOrRefData';
-import { Input } from '../models/Input';
-import { InputDescription } from '../models/InputDescription';
-import { InputValue } from '../models/InputValue';
-import { IntegerField } from '../models/IntegerField';
-import { JobControlOptions } from '../models/JobControlOptions';
-import { JobList } from '../models/JobList';
-import { JobType } from '../models/JobType';
-import { JsonInputMediaType } from '../models/JsonInputMediaType';
-import { JsonInputPreviousLandUseSummary } from '../models/JsonInputPreviousLandUseSummary';
-import { JsonInputPreviousLandUseSummaryValue } from '../models/JsonInputPreviousLandUseSummaryValue';
-import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
-import { LandUseSealedAreaProcessOutputs } from '../models/LandUseSealedAreaProcessOutputs';
-import { LandUseSealedAreaProcessParams } from '../models/LandUseSealedAreaProcessParams';
-import { LandUseSiteProperties } from '../models/LandUseSiteProperties';
-import { LandUseSiteSpecification } from '../models/LandUseSiteSpecification';
-import { LandingPage } from '../models/LandingPage';
-import { License } from '../models/License';
-import { Link } from '../models/Link';
-import { MaxOccurs } from '../models/MaxOccurs';
-import { Metadata } from '../models/Metadata';
-import { NDVIProcessInputs } from '../models/NDVIProcessInputs';
-import { NDVIProcessOutputs } from '../models/NDVIProcessOutputs';
-import { NDVIProcessParams } from '../models/NDVIProcessParams';
-import { NumberField } from '../models/NumberField';
-import { ObjectField } from '../models/ObjectField';
-import { Output } from '../models/Output';
-import { OutputDescription } from '../models/OutputDescription';
-import { Path } from '../models/Path';
-import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
-import { Process } from '../models/Process';
-import { ProcessList } from '../models/ProcessList';
-import { ProcessSummary } from '../models/ProcessSummary';
-import { QualifiedInputValue } from '../models/QualifiedInputValue';
-import { Response } from '../models/Response';
-import { Results } from '../models/Results';
-import { Schema } from '../models/Schema';
-import { Source } from '../models/Source';
-import { StatusCode } from '../models/StatusCode';
-import { StatusInfo } from '../models/StatusInfo';
-import { StringField } from '../models/StringField';
-import { StringFieldCategories } from '../models/StringFieldCategories';
-import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
-import { StringFieldMissingValuesAnyOfInner } from '../models/StringFieldMissingValuesAnyOfInner';
-import { Subscriber } from '../models/Subscriber';
-import { TableDialect } from '../models/TableDialect';
-import { TableSchemaField } from '../models/TableSchemaField';
-import { TableSchemaForeignKey } from '../models/TableSchemaForeignKey';
-import { TableSchemaForeignKeyOneOf } from '../models/TableSchemaForeignKeyOneOf';
-import { TableSchemaForeignKeyOneOf1 } from '../models/TableSchemaForeignKeyOneOf1';
-import { TableSchemaForeignKeyOneOf1Reference } from '../models/TableSchemaForeignKeyOneOf1Reference';
-import { TableSchemaForeignKeyOneOfReference } from '../models/TableSchemaForeignKeyOneOfReference';
-import { TableSchemaPrimaryKey } from '../models/TableSchemaPrimaryKey';
-import { TimeField } from '../models/TimeField';
-import { TransmissionMode } from '../models/TransmissionMode';
-import { UnitForArea } from '../models/UnitForArea';
-import { UserInfo } from '../models/UserInfo';
-import { UserSession } from '../models/UserSession';
-import { YearField } from '../models/YearField';
-import { YearMonthField } from '../models/YearMonthField';
-import { ObservableCapabilitiesApi } from './ObservableAPI';
+import { AuthCodeResponse } from "../models/AuthCodeResponse";
+import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
+import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
+import { Conformance } from "../models/Conformance";
+import { Execute } from "../models/Execute";
+import { GetCreditsResponse } from "../models/GetCreditsResponse";
+import { HabitatDistanceProcessOutputs } from "../models/HabitatDistanceProcessOutputs";
+import { HabitatDistanceProcessParams } from "../models/HabitatDistanceProcessParams";
+import { JobList } from "../models/JobList";
+import { LandUseSealedAreaProcessOutputs } from "../models/LandUseSealedAreaProcessOutputs";
+import { LandUseSealedAreaProcessParams } from "../models/LandUseSealedAreaProcessParams";
+import { LandingPage } from "../models/LandingPage";
+import { NDVIProcessOutputs } from "../models/NDVIProcessOutputs";
+import { NDVIProcessParams } from "../models/NDVIProcessParams";
+import { Process } from "../models/Process";
+import { ProcessList } from "../models/ProcessList";
+import { Results } from "../models/Results";
+import { StatusInfo } from "../models/StatusInfo";
+import { UserSession } from "../models/UserSession";
+import { ObservableCapabilitiesApi } from "./ObservableAPI";
 
-import { CapabilitiesApiRequestFactory, CapabilitiesApiResponseProcessor} from "../apis/CapabilitiesApi";
+import {
+  CapabilitiesApiRequestFactory,
+  CapabilitiesApiResponseProcessor,
+} from "../apis/CapabilitiesApi";
 export class PromiseCapabilitiesApi {
-    private api: ObservableCapabilitiesApi
+  private api: ObservableCapabilitiesApi;
 
-    public constructor(
-        configuration: Configuration,
-        requestFactory?: CapabilitiesApiRequestFactory,
-        responseProcessor?: CapabilitiesApiResponseProcessor
-    ) {
-        this.api = new ObservableCapabilitiesApi(configuration, requestFactory, responseProcessor);
-    }
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: CapabilitiesApiRequestFactory,
+    responseProcessor?: CapabilitiesApiResponseProcessor,
+  ) {
+    this.api = new ObservableCapabilitiesApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
 
-    /**
-     * API definition
-     */
-    public apiWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<{ [key: string]: any; }>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.apiWithHttpInfo(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * API definition
+   */
+  public apiWithHttpInfo(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<{ [key: string]: any }>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.apiWithHttpInfo(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * API definition
-     */
-    public api_(_options?: PromiseConfigurationOptions): Promise<{ [key: string]: any; }> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.api(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * API definition
+   */
+  public api_(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<{ [key: string]: any }> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.api(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * A list of all conformance classes specified in a standard that the server conforms to.
-     * API conformance definition
-     */
-    public conformanceWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<Conformance>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.conformanceWithHttpInfo(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * A list of all conformance classes specified in a standard that the server conforms to.
+   * API conformance definition
+   */
+  public conformanceWithHttpInfo(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<Conformance>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.conformanceWithHttpInfo(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * A list of all conformance classes specified in a standard that the server conforms to.
-     * API conformance definition
-     */
-    public conformance(_options?: PromiseConfigurationOptions): Promise<Conformance> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.conformance(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * A list of all conformance classes specified in a standard that the server conforms to.
+   * API conformance definition
+   */
+  public conformance(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<Conformance> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.conformance(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * The landing page provides links to the API definition and the conformance statements for this API.
-     * Landing page
-     */
-    public rootWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<LandingPage>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.rootWithHttpInfo(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * The landing page provides links to the API definition and the conformance statements for this API.
+   * Landing page
+   */
+  public rootWithHttpInfo(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<LandingPage>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.rootWithHttpInfo(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * The landing page provides links to the API definition and the conformance statements for this API.
-     * Landing page
-     */
-    public root(_options?: PromiseConfigurationOptions): Promise<LandingPage> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.root(observableOptions);
-        return result.toPromise();
-    }
-
-
+  /**
+   * The landing page provides links to the API definition and the conformance statements for this API.
+   * Landing page
+   */
+  public root(_options?: PromiseConfigurationOptions): Promise<LandingPage> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.root(observableOptions);
+    return result.toPromise();
+  }
 }
 
+import { ObservableDefaultApi } from "./ObservableAPI";
 
-
-import { ObservableDefaultApi } from './ObservableAPI';
-
-import { DefaultApiRequestFactory, DefaultApiResponseProcessor} from "../apis/DefaultApi";
+import {
+  DefaultApiRequestFactory,
+  DefaultApiResponseProcessor,
+} from "../apis/DefaultApi";
 export class PromiseDefaultApi {
-    private api: ObservableDefaultApi
+  private api: ObservableDefaultApi;
 
-    public constructor(
-        configuration: Configuration,
-        requestFactory?: DefaultApiRequestFactory,
-        responseProcessor?: DefaultApiResponseProcessor
-    ) {
-        this.api = new ObservableDefaultApi(configuration, requestFactory, responseProcessor);
-    }
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: DefaultApiRequestFactory,
+    responseProcessor?: DefaultApiResponseProcessor,
+  ) {
+    this.api = new ObservableDefaultApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
 
-    /**
-     */
-    public healthHandlerWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<void>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.healthHandlerWithHttpInfo(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   */
+  public healthHandlerWithHttpInfo(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<void>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.healthHandlerWithHttpInfo(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     */
-    public healthHandler(_options?: PromiseConfigurationOptions): Promise<void> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.healthHandler(observableOptions);
-        return result.toPromise();
-    }
-
-
+  /**
+   */
+  public healthHandler(_options?: PromiseConfigurationOptions): Promise<void> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.healthHandler(observableOptions);
+    return result.toPromise();
+  }
 }
 
+import { ObservableProcessesApi } from "./ObservableAPI";
 
-
-import { ObservableProcessesApi } from './ObservableAPI';
-
-import { ProcessesApiRequestFactory, ProcessesApiResponseProcessor} from "../apis/ProcessesApi";
+import {
+  ProcessesApiRequestFactory,
+  ProcessesApiResponseProcessor,
+} from "../apis/ProcessesApi";
 export class PromiseProcessesApi {
-    private api: ObservableProcessesApi
+  private api: ObservableProcessesApi;
 
-    public constructor(
-        configuration: Configuration,
-        requestFactory?: ProcessesApiRequestFactory,
-        responseProcessor?: ProcessesApiResponseProcessor
-    ) {
-        this.api = new ObservableProcessesApi(configuration, requestFactory, responseProcessor);
-    }
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ProcessesApiRequestFactory,
+    responseProcessor?: ProcessesApiResponseProcessor,
+  ) {
+    this.api = new ObservableProcessesApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
 
-    /**
-     * Cancel a job execution and remove it from the jobs list.  For more information, see [Section 13](https://docs.ogc.org/is/18-062/18-062.html#Dismiss).
-     * Cancel a job execution, remove finished job
-     * @param jobId
-     */
-    public _deleteWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<StatusInfo>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api._deleteWithHttpInfo(jobId, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Cancel a job execution and remove it from the jobs list.  For more information, see [Section 13](https://docs.ogc.org/is/18-062/18-062.html#Dismiss).
+   * Cancel a job execution, remove finished job
+   * @param jobId
+   */
+  public _deleteWithHttpInfo(
+    jobId: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<StatusInfo>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api._deleteWithHttpInfo(jobId, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * Cancel a job execution and remove it from the jobs list.  For more information, see [Section 13](https://docs.ogc.org/is/18-062/18-062.html#Dismiss).
-     * Cancel a job execution, remove finished job
-     * @param jobId
-     */
-    public _delete(jobId: string, _options?: PromiseConfigurationOptions): Promise<StatusInfo> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api._delete(jobId, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Cancel a job execution and remove it from the jobs list.  For more information, see [Section 13](https://docs.ogc.org/is/18-062/18-062.html#Dismiss).
+   * Cancel a job execution, remove finished job
+   * @param jobId
+   */
+  public _delete(
+    jobId: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<StatusInfo> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api._delete(jobId, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * @param biodiversitySensitiveAreasProcessParams
-     */
-    public executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeBiodiversitySensitiveAreasWithHttpInfo(biodiversitySensitiveAreasProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param biodiversitySensitiveAreasProcessParams
+   */
+  public executeBiodiversitySensitiveAreasWithHttpInfo(
+    biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<BiodiversitySensitiveAreasProcessOutputs>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeBiodiversitySensitiveAreasWithHttpInfo(
+      biodiversitySensitiveAreasProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param biodiversitySensitiveAreasProcessParams
-     */
-    public executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams, _options?: PromiseConfigurationOptions): Promise<BiodiversitySensitiveAreasProcessOutputs> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeBiodiversitySensitiveAreas(biodiversitySensitiveAreasProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param biodiversitySensitiveAreasProcessParams
+   */
+  public executeBiodiversitySensitiveAreas(
+    biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<BiodiversitySensitiveAreasProcessOutputs> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeBiodiversitySensitiveAreas(
+      biodiversitySensitiveAreasProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param habitatDistanceProcessParams
-     */
-    public executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeHabitatDistanceWithHttpInfo(habitatDistanceProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param habitatDistanceProcessParams
+   */
+  public executeHabitatDistanceWithHttpInfo(
+    habitatDistanceProcessParams: HabitatDistanceProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<HabitatDistanceProcessOutputs>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeHabitatDistanceWithHttpInfo(
+      habitatDistanceProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param habitatDistanceProcessParams
-     */
-    public executeHabitatDistance(habitatDistanceProcessParams: HabitatDistanceProcessParams, _options?: PromiseConfigurationOptions): Promise<HabitatDistanceProcessOutputs> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeHabitatDistance(habitatDistanceProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param habitatDistanceProcessParams
+   */
+  public executeHabitatDistance(
+    habitatDistanceProcessParams: HabitatDistanceProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HabitatDistanceProcessOutputs> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeHabitatDistance(
+      habitatDistanceProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param landUseSealedAreaProcessParams
-     */
-    public executeLandUseSealedAreaWithHttpInfo(landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<LandUseSealedAreaProcessOutputs>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeLandUseSealedAreaWithHttpInfo(landUseSealedAreaProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param landUseSealedAreaProcessParams
+   */
+  public executeLandUseSealedAreaWithHttpInfo(
+    landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<LandUseSealedAreaProcessOutputs>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeLandUseSealedAreaWithHttpInfo(
+      landUseSealedAreaProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param landUseSealedAreaProcessParams
-     */
-    public executeLandUseSealedArea(landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams, _options?: PromiseConfigurationOptions): Promise<LandUseSealedAreaProcessOutputs> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeLandUseSealedArea(landUseSealedAreaProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param landUseSealedAreaProcessParams
+   */
+  public executeLandUseSealedArea(
+    landUseSealedAreaProcessParams: LandUseSealedAreaProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<LandUseSealedAreaProcessOutputs> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeLandUseSealedArea(
+      landUseSealedAreaProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param nDVIProcessParams
-     */
-    public executeNdviWithHttpInfo(nDVIProcessParams: NDVIProcessParams, _options?: PromiseConfigurationOptions): Promise<HttpInfo<NDVIProcessOutputs>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeNdviWithHttpInfo(nDVIProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param nDVIProcessParams
+   */
+  public executeNdviWithHttpInfo(
+    nDVIProcessParams: NDVIProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<NDVIProcessOutputs>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeNdviWithHttpInfo(
+      nDVIProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param nDVIProcessParams
-     */
-    public executeNdvi(nDVIProcessParams: NDVIProcessParams, _options?: PromiseConfigurationOptions): Promise<NDVIProcessOutputs> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executeNdvi(nDVIProcessParams, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param nDVIProcessParams
+   */
+  public executeNdvi(
+    nDVIProcessParams: NDVIProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<NDVIProcessOutputs> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeNdvi(nDVIProcessParams, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
-     * Execute a process
-     * @param processID
-     * @param execute
-     */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results | StatusInfo>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.executionWithHttpInfo(processID, execute, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
+   * Execute a process
+   * @param processID
+   * @param execute
+   */
+  public executionWithHttpInfo(
+    processID: string,
+    execute: Execute,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<Results | StatusInfo>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executionWithHttpInfo(
+      processID,
+      execute,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
-     * Execute a process
-     * @param processID
-     * @param execute
-     */
-    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results | StatusInfo> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.execution(processID, execute, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
+   * Execute a process
+   * @param processID
+   * @param execute
+   */
+  public execution(
+    processID: string,
+    execute: Execute,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<Results | StatusInfo> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.execution(processID, execute, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
-     * Retrieve the list of jobs
-     * @param [limit] Amount of items to return
-     * @param [offset] Offset into the items list
-     */
-    public jobsWithHttpInfo(limit?: number, offset?: number, _options?: PromiseConfigurationOptions): Promise<HttpInfo<JobList>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.jobsWithHttpInfo(limit, offset, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
+   * Retrieve the list of jobs
+   * @param [limit] Amount of items to return
+   * @param [offset] Offset into the items list
+   */
+  public jobsWithHttpInfo(
+    limit?: number,
+    offset?: number,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<JobList>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.jobsWithHttpInfo(limit, offset, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
-     * Retrieve the list of jobs
-     * @param [limit] Amount of items to return
-     * @param [offset] Offset into the items list
-     */
-    public jobs(limit?: number, offset?: number, _options?: PromiseConfigurationOptions): Promise<JobList> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.jobs(limit, offset, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * For more information, see [Section 11](https://docs.ogc.org/is/18-062/18-062.html#sc_job_list).
+   * Retrieve the list of jobs
+   * @param [limit] Amount of items to return
+   * @param [offset] Offset into the items list
+   */
+  public jobs(
+    limit?: number,
+    offset?: number,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<JobList> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.jobs(limit, offset, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:  Implementations SHOULD consider supporting the OGC process description.  For more information, see Section 7.10.
-     * Retrieve a processes description
-     * @param processID
-     */
-    public processWithHttpInfo(processID: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Process>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.processWithHttpInfo(processID, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:  Implementations SHOULD consider supporting the OGC process description.  For more information, see Section 7.10.
+   * Retrieve a processes description
+   * @param processID
+   */
+  public processWithHttpInfo(
+    processID: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<Process>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.processWithHttpInfo(processID, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:  Implementations SHOULD consider supporting the OGC process description.  For more information, see Section 7.10.
-     * Retrieve a processes description
-     * @param processID
-     */
-    public process(processID: string, _options?: PromiseConfigurationOptions): Promise<Process> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.process(processID, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:  Implementations SHOULD consider supporting the OGC process description.  For more information, see Section 7.10.
+   * Retrieve a processes description
+   * @param processID
+   */
+  public process(
+    processID: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<Process> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.process(processID, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.  For more information, see [Section 7.9](https://docs.ogc.org/is/18-062/18-062.html#sc_process_list).
-     * Retrieve the list of available processes
-     */
-    public processesWithHttpInfo(_options?: PromiseConfigurationOptions): Promise<HttpInfo<ProcessList>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.processesWithHttpInfo(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.  For more information, see [Section 7.9](https://docs.ogc.org/is/18-062/18-062.html#sc_process_list).
+   * Retrieve the list of available processes
+   */
+  public processesWithHttpInfo(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<ProcessList>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.processesWithHttpInfo(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.  For more information, see [Section 7.9](https://docs.ogc.org/is/18-062/18-062.html#sc_process_list).
-     * Retrieve the list of available processes
-     */
-    public processes(_options?: PromiseConfigurationOptions): Promise<ProcessList> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.processes(observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.  For more information, see [Section 7.9](https://docs.ogc.org/is/18-062/18-062.html#sc_process_list).
+   * Retrieve the list of available processes
+   */
+  public processes(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<ProcessList> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.processes(observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * Lists available results of a job. In case of a failure, lists exceptions instead.  For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).  
-     * Retrieve the result(s) of a job
-     * @param jobId
-     */
-    public resultsWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.resultsWithHttpInfo(jobId, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Lists available results of a job. In case of a failure, lists exceptions instead.  For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).  
+   * Retrieve the result(s) of a job
+   * @param jobId
+   */
+  public resultsWithHttpInfo(
+    jobId: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<Results>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.resultsWithHttpInfo(jobId, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * Lists available results of a job. In case of a failure, lists exceptions instead.  For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).  
-     * Retrieve the result(s) of a job
-     * @param jobId
-     */
-    public results(jobId: string, _options?: PromiseConfigurationOptions): Promise<Results> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.results(jobId, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Lists available results of a job. In case of a failure, lists exceptions instead.  For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).  
+   * Retrieve the result(s) of a job
+   * @param jobId
+   */
+  public results(
+    jobId: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<Results> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.results(jobId, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * Shows the status of a job.  For more information, see [Section 7.12](https://docs.ogc.org/is/18-062/18-062.html#sc_retrieve_status_info).
-     * Retrieve the status of a job
-     * @param jobId
-     */
-    public statusWithHttpInfo(jobId: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<StatusInfo>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.statusWithHttpInfo(jobId, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Shows the status of a job.  For more information, see [Section 7.12](https://docs.ogc.org/is/18-062/18-062.html#sc_retrieve_status_info).
+   * Retrieve the status of a job
+   * @param jobId
+   */
+  public statusWithHttpInfo(
+    jobId: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<StatusInfo>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.statusWithHttpInfo(jobId, observableOptions);
+    return result.toPromise();
+  }
 
-    /**
-     * Shows the status of a job.  For more information, see [Section 7.12](https://docs.ogc.org/is/18-062/18-062.html#sc_retrieve_status_info).
-     * Retrieve the status of a job
-     * @param jobId
-     */
-    public status(jobId: string, _options?: PromiseConfigurationOptions): Promise<StatusInfo> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.status(jobId, observableOptions);
-        return result.toPromise();
-    }
-
-
+  /**
+   * Shows the status of a job.  For more information, see [Section 7.12](https://docs.ogc.org/is/18-062/18-062.html#sc_retrieve_status_info).
+   * Retrieve the status of a job
+   * @param jobId
+   */
+  public status(
+    jobId: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<StatusInfo> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.status(jobId, observableOptions);
+    return result.toPromise();
+  }
 }
 
+import { ObservableUserApi } from "./ObservableAPI";
 
-
-import { ObservableUserApi } from './ObservableAPI';
-
-import { UserApiRequestFactory, UserApiResponseProcessor} from "../apis/UserApi";
+import {
+  UserApiRequestFactory,
+  UserApiResponseProcessor,
+} from "../apis/UserApi";
 export class PromiseUserApi {
-    private api: ObservableUserApi
+  private api: ObservableUserApi;
 
-    public constructor(
-        configuration: Configuration,
-        requestFactory?: UserApiRequestFactory,
-        responseProcessor?: UserApiResponseProcessor
-    ) {
-        this.api = new ObservableUserApi(configuration, requestFactory, responseProcessor);
-    }
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: UserApiRequestFactory,
+    responseProcessor?: UserApiResponseProcessor,
+  ) {
+    this.api = new ObservableUserApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
 
-    /**
-     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
-     * @param authCodeResponse
-     */
-    public authHandlerWithHttpInfo(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<HttpInfo<UserSession>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.authHandlerWithHttpInfo(redirectUri, authCodeResponse, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+   * @param authCodeResponse
+   */
+  public authHandlerWithHttpInfo(
+    redirectUri: string,
+    authCodeResponse: AuthCodeResponse,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<UserSession>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.authHandlerWithHttpInfo(
+      redirectUri,
+      authCodeResponse,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
-     * @param authCodeResponse
-     */
-    public authHandler(redirectUri: string, authCodeResponse: AuthCodeResponse, _options?: PromiseConfigurationOptions): Promise<UserSession> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.authHandler(redirectUri, authCodeResponse, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+   * @param authCodeResponse
+   */
+  public authHandler(
+    redirectUri: string,
+    authCodeResponse: AuthCodeResponse,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<UserSession> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.authHandler(
+      redirectUri,
+      authCodeResponse,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
-     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
-     */
-    public authRequestUrlHandlerWithHttpInfo(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<HttpInfo<string>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.authRequestUrlHandlerWithHttpInfo(redirectUri, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+   * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+   */
+  public authRequestUrlHandlerWithHttpInfo(
+    redirectUri: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<string>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.authRequestUrlHandlerWithHttpInfo(
+      redirectUri,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
-     * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
-     */
-    public authRequestUrlHandler(redirectUri: string, _options?: PromiseConfigurationOptions): Promise<string> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.authRequestUrlHandler(redirectUri, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Generates a URL for initiating the OIDC code flow, which the frontend can use to redirect the user to the identity provider\'s login page.
+   * @param redirectUri The URI to which the identity provider should redirect after successful authentication.
+   */
+  public authRequestUrlHandler(
+    redirectUri: string,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<string> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.authRequestUrlHandler(
+      redirectUri,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * Returns the user\'s credits.
-     * @param year
-     * @param month
-     */
-    public getCreditsWithHttpInfo(year: number, month: number, _options?: PromiseConfigurationOptions): Promise<HttpInfo<GetCreditsResponse>> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.getCreditsWithHttpInfo(year, month, observableOptions);
-        return result.toPromise();
-    }
+  /**
+   * Returns the user\'s credits.
+   * @param year
+   * @param month
+   */
+  public getCreditsWithHttpInfo(
+    year: number,
+    month: number,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<GetCreditsResponse>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.getCreditsWithHttpInfo(
+      year,
+      month,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
 
-    /**
-     * Returns the user\'s credits.
-     * @param year
-     * @param month
-     */
-    public getCredits(year: number, month: number, _options?: PromiseConfigurationOptions): Promise<GetCreditsResponse> {
-        const observableOptions = wrapOptions(_options);
-        const result = this.api.getCredits(year, month, observableOptions);
-        return result.toPromise();
-    }
-
-
+  /**
+   * Returns the user\'s credits.
+   * @param year
+   * @param month
+   */
+  public getCredits(
+    year: number,
+    month: number,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<GetCreditsResponse> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.getCredits(year, month, observableOptions);
+    return result.toPromise();
+  }
 }
-
-
-

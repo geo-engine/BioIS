@@ -10,22 +10,19 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
  * @type Schema
  * Type
  * @export
  */
-export type Schema = string | { [key: string]: any; };
+export type Schema = string | { [key: string]: any };
 
 /**
-* @type SchemaClass
-* @export
-*/
+ * @type SchemaClass
+ * @export
+ */
 export class SchemaClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

@@ -10,38 +10,40 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
-import { HttpFile } from '../http/http';
+import { GeoJSONPoint } from "../models/GeoJSONPoint";
+import { GeoJsonInputMediaType } from "../models/GeoJsonInputMediaType";
 
 export class PointGeoJsonInput {
-    'value': GeoJSONPoint;
-    'mediaType': GeoJsonInputMediaType;
+  "value": GeoJSONPoint;
+  "mediaType": GeoJsonInputMediaType;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONPoint",
-            "format": ""
-        },
-        {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "value",
+      baseName: "value",
+      type: "GeoJSONPoint",
+      format: "",
+    },
+    {
+      name: "mediaType",
+      baseName: "mediaType",
+      type: "GeoJsonInputMediaType",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return PointGeoJsonInput.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return PointGeoJsonInput.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

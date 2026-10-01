@@ -10,48 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
-import { Response } from '../models/Response';
-import { HttpFile } from '../http/http';
+import { BiodiversitySensitiveAreasProcessInputs } from "../models/BiodiversitySensitiveAreasProcessInputs";
+import { Response } from "../models/Response";
 
 /**
-* Process execution (Biodiversity Sensitive Areas – ESRS E4-5)
-*/
+ * Process execution (Biodiversity Sensitive Areas – ESRS E4-5)
+ */
 export class BiodiversitySensitiveAreasProcessParams {
-    'inputs': BiodiversitySensitiveAreasProcessInputs;
-    'outputs'?: { [key: string]: any; };
-    'response'?: Response;
+  "inputs": BiodiversitySensitiveAreasProcessInputs;
+  "outputs"?: { [key: string]: any };
+  "response"?: Response;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "BiodiversitySensitiveAreasProcessInputs",
-            "format": ""
-        },
-        {
-            "name": "outputs",
-            "baseName": "outputs",
-            "type": "{ [key: string]: any; }",
-            "format": ""
-        },
-        {
-            "name": "response",
-            "baseName": "response",
-            "type": "Response",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "BiodiversitySensitiveAreasProcessInputs",
+      format: "",
+    },
+    {
+      name: "outputs",
+      baseName: "outputs",
+      type: "{ [key: string]: any; }",
+      format: "",
+    },
+    {
+      name: "response",
+      baseName: "response",
+      type: "Response",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return BiodiversitySensitiveAreasProcessParams.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return BiodiversitySensitiveAreasProcessParams.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

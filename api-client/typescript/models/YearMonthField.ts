@@ -10,117 +10,120 @@
  * Do not edit the class manually.
  */
 
-import { Constraints7 } from '../models/Constraints7';
-import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
-import { HttpFile } from '../http/http';
+import { Constraints7 } from "../models/Constraints7";
+import { StringFieldMissingValues } from "../models/StringFieldMissingValues";
 
 /**
-* A calendar year month, being an integer with 1 or 2 digits. Equivalent to [gYearMonth in XML Schema](https://www.w3.org/TR/xmlschema-2/#gYearMonth)
-*/
+ * A calendar year month, being an integer with 1 or 2 digits. Equivalent to [gYearMonth in XML Schema](https://www.w3.org/TR/xmlschema-2/#gYearMonth)
+ */
 export class YearMonthField {
-    /**
-    * A name for this field.
-    */
-    'name': string;
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
-    /**
-    * A text description. Markdown is encouraged.
-    */
-    'description'?: string;
-    /**
-    * An example value for the field.
-    */
-    'example'?: string;
-    'missingValues'?: StringFieldMissingValues;
-    /**
-    * The type keyword, which `MUST` be a value of `yearmonth`.
-    */
-    'type': YearMonthFieldTypeEnum;
-    /**
-    * There are no format keyword options for `yearmonth`: only `default` is allowed.
-    */
-    'format'?: YearMonthFieldFormatEnum;
-    'constraints'?: Constraints7;
-    /**
-    * The RDF type for this field.
-    */
-    'rdfType'?: string;
+  /**
+   * A name for this field.
+   */
+  "name": string;
+  /**
+   * A human-readable title.
+   */
+  "title"?: string;
+  /**
+   * A text description. Markdown is encouraged.
+   */
+  "description"?: string;
+  /**
+   * An example value for the field.
+   */
+  "example"?: string;
+  "missingValues"?: StringFieldMissingValues;
+  /**
+   * The type keyword, which `MUST` be a value of `yearmonth`.
+   */
+  "type": YearMonthFieldTypeEnum;
+  /**
+   * There are no format keyword options for `yearmonth`: only `default` is allowed.
+   */
+  "format"?: YearMonthFieldFormatEnum;
+  "constraints"?: Constraints7;
+  /**
+   * The RDF type for this field.
+   */
+  "rdfType"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "description",
-            "baseName": "description",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "example",
-            "baseName": "example",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "missingValues",
-            "baseName": "missingValues",
-            "type": "StringFieldMissingValues",
-            "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "YearMonthFieldTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "format",
-            "baseName": "format",
-            "type": "YearMonthFieldFormatEnum",
-            "format": ""
-        },
-        {
-            "name": "constraints",
-            "baseName": "constraints",
-            "type": "Constraints7",
-            "format": ""
-        },
-        {
-            "name": "rdfType",
-            "baseName": "rdfType",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "description",
+      baseName: "description",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "example",
+      baseName: "example",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "missingValues",
+      baseName: "missingValues",
+      type: "StringFieldMissingValues",
+      format: "",
+    },
+    {
+      name: "type",
+      baseName: "type",
+      type: "YearMonthFieldTypeEnum",
+      format: "",
+    },
+    {
+      name: "format",
+      baseName: "format",
+      type: "YearMonthFieldFormatEnum",
+      format: "",
+    },
+    {
+      name: "constraints",
+      baseName: "constraints",
+      type: "Constraints7",
+      format: "",
+    },
+    {
+      name: "rdfType",
+      baseName: "rdfType",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return YearMonthField.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return YearMonthField.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum YearMonthFieldTypeEnum {
-    Yearmonth = 'yearmonth'
+  Yearmonth = "yearmonth",
 }
 export enum YearMonthFieldFormatEnum {
-    Default = 'default'
+  Default = "default",
 }
-

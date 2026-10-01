@@ -10,35 +10,39 @@
  * Do not edit the class manually.
  */
 
-import { TableSchemaForeignKeyOneOfReference } from '../models/TableSchemaForeignKeyOneOfReference';
-import { HttpFile } from '../http/http';
+import { TableSchemaForeignKeyOneOfReference } from "../models/TableSchemaForeignKeyOneOfReference";
 
 export class TableSchemaForeignKeyOneOf {
-    'fields'?: Array<string>;
-    'reference'?: TableSchemaForeignKeyOneOfReference;
+  "fields"?: Array<string>;
+  "reference"?: TableSchemaForeignKeyOneOfReference;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "fields",
-            "baseName": "fields",
-            "type": "Array<string>",
-            "format": ""
-        },
-        {
-            "name": "reference",
-            "baseName": "reference",
-            "type": "TableSchemaForeignKeyOneOfReference",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "fields",
+      baseName: "fields",
+      type: "Array<string>",
+      format: "",
+    },
+    {
+      name: "reference",
+      baseName: "reference",
+      type: "TableSchemaForeignKeyOneOfReference",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return TableSchemaForeignKeyOneOf.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return TableSchemaForeignKeyOneOf.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

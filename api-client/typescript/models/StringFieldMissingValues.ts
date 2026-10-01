@@ -10,25 +10,24 @@
  * Do not edit the class manually.
  */
 
-import { StringFieldMissingValuesAnyOfInner } from '../models/StringFieldMissingValuesAnyOfInner';
-import { HttpFile } from '../http/http';
-
 /**
-* Values that when encountered in the source, should be considered as `null`, \'not present\', or \'blank\' values.
-*/
+ * Values that when encountered in the source, should be considered as `null`, \'not present\', or \'blank\' values.
+ */
 export class StringFieldMissingValues {
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [];
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-    ];
+  static getAttributeTypeMap() {
+    return StringFieldMissingValues.attributeTypeMap;
+  }
 
-    static getAttributeTypeMap() {
-        return StringFieldMissingValues.attributeTypeMap;
-    }
-
-    public constructor() {
-    }
+  public constructor() {}
 }

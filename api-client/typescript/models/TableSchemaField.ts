@@ -10,50 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { AnyField } from '../models/AnyField';
-import { ArrayField } from '../models/ArrayField';
-import { BooleanField } from '../models/BooleanField';
-import { DateField } from '../models/DateField';
-import { DateTimeField } from '../models/DateTimeField';
-import { DurationField } from '../models/DurationField';
-import { GeoJSONField } from '../models/GeoJSONField';
-import { GeoPointField } from '../models/GeoPointField';
-import { IntegerField } from '../models/IntegerField';
-import { NumberField } from '../models/NumberField';
-import { ObjectField } from '../models/ObjectField';
-import { StringField } from '../models/StringField';
-import { TimeField } from '../models/TimeField';
-import { YearField } from '../models/YearField';
-import { YearMonthField } from '../models/YearMonthField';
-import { HttpFile } from '../http/http';
+import { AnyField } from "../models/AnyField";
+import { ArrayField } from "../models/ArrayField";
+import { BooleanField } from "../models/BooleanField";
+import { DateField } from "../models/DateField";
+import { DateTimeField } from "../models/DateTimeField";
+import { DurationField } from "../models/DurationField";
+import { GeoJSONField } from "../models/GeoJSONField";
+import { GeoPointField } from "../models/GeoPointField";
+import { IntegerField } from "../models/IntegerField";
+import { NumberField } from "../models/NumberField";
+import { ObjectField } from "../models/ObjectField";
+import { StringField } from "../models/StringField";
+import { TimeField } from "../models/TimeField";
+import { YearField } from "../models/YearField";
+import { YearMonthField } from "../models/YearMonthField";
 
 /**
  * @type TableSchemaField
  * Type
  * @export
  */
-export type TableSchemaField = AnyField | ArrayField | BooleanField | DateField | DateTimeField | DurationField | GeoJSONField | GeoPointField | IntegerField | NumberField | ObjectField | StringField | TimeField | YearField | YearMonthField;
+export type TableSchemaField =
+  | AnyField
+  | ArrayField
+  | BooleanField
+  | DateField
+  | DateTimeField
+  | DurationField
+  | GeoJSONField
+  | GeoPointField
+  | IntegerField
+  | NumberField
+  | ObjectField
+  | StringField
+  | TimeField
+  | YearField
+  | YearMonthField;
 
 /**
-* @type TableSchemaFieldClass
-* @export
-*/
+ * @type TableSchemaFieldClass
+ * @export
+ */
 export class TableSchemaFieldClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

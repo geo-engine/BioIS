@@ -10,12 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { InlineOrRefData } from '../models/InlineOrRefData';
-import { HttpFile } from '../http/http';
+import { InlineOrRefData } from "../models/InlineOrRefData";
 
 /**
-* Process execution input
-*/
+ * Process execution input
+ */
 /**
  * @type Input
  * Type
@@ -24,13 +23,12 @@ import { HttpFile } from '../http/http';
 export type Input = Array<InlineOrRefData> | InlineOrRefData;
 
 /**
-* @type InputClass
-    * Process execution input
-* @export
-*/
+ * @type InputClass
+ * Process execution input
+ * @export
+ */
 export class InputClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

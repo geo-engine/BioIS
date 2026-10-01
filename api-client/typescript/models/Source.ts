@@ -10,60 +10,63 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* A source file.
-*/
+ * A source file.
+ */
 export class Source {
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
-    /**
-    * A fully qualified URL, or a POSIX file path.
-    */
-    'path'?: string;
-    /**
-    * An email address.
-    */
-    'email'?: string;
-    'version'?: string;
+  /**
+   * A human-readable title.
+   */
+  "title"?: string;
+  /**
+   * A fully qualified URL, or a POSIX file path.
+   */
+  "path"?: string;
+  /**
+   * An email address.
+   */
+  "email"?: string;
+  "version"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "path",
-            "baseName": "path",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "email",
-            "baseName": "email",
-            "type": "string",
-            "format": "email"
-        },
-        {
-            "name": "version",
-            "baseName": "version",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "path",
+      baseName: "path",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "email",
+      baseName: "email",
+      type: "string",
+      format: "email",
+    },
+    {
+      name: "version",
+      baseName: "version",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Source.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Source.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

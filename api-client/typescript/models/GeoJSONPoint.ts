@@ -10,46 +10,48 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class GeoJSONPoint {
-    'type': GeoJSONPointTypeEnum;
-    'coordinates': Array<number>;
-    'bbox'?: Array<number>;
+  "type": GeoJSONPointTypeEnum;
+  "coordinates": Array<number>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONPointTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<number>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "GeoJSONPointTypeEnum",
+      format: "",
+    },
+    {
+      name: "coordinates",
+      baseName: "coordinates",
+      type: "Array<number>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GeoJSONPoint.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GeoJSONPoint.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum GeoJSONPointTypeEnum {
-    Point = 'Point'
+  Point = "Point",
 }
-

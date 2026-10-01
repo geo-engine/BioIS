@@ -10,53 +10,51 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONMultiPoint } from '../models/GeoJSONMultiPoint';
-import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
-import { HttpFile } from '../http/http';
-
 export class FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry {
-    'type': FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum;
-    'coordinates': Array<Array<Array<Array<number>>>>;
-    'bbox'?: Array<number>;
+  "type": FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum;
+  "coordinates": Array<Array<Array<Array<number>>>>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<Array<Array<Array<number>>>>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum",
+      format: "",
+    },
+    {
+      name: "coordinates",
+      baseName: "coordinates",
+      type: "Array<Array<Array<Array<number>>>>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum {
-    Point = 'Point',
-    MultiPoint = 'MultiPoint',
-    Polygon = 'Polygon',
-    MultiPolygon = 'MultiPolygon'
+  Point = "Point",
+  MultiPoint = "MultiPoint",
+  Polygon = "Polygon",
+  MultiPolygon = "MultiPolygon",
 }
-

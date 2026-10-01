@@ -10,8 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
  * @type Constraints1Minimum
  * Type
@@ -20,12 +18,11 @@ import { HttpFile } from '../http/http';
 export type Constraints1Minimum = number | string;
 
 /**
-* @type Constraints1MinimumClass
-* @export
-*/
+ * @type Constraints1MinimumClass
+ * @export
+ */
 export class Constraints1MinimumClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

@@ -10,41 +10,43 @@
  * Do not edit the class manually.
  */
 
-import { JsonInputMediaType } from '../models/JsonInputMediaType';
-import { JsonInputPreviousLandUseSummaryValue } from '../models/JsonInputPreviousLandUseSummaryValue';
-import { HttpFile } from '../http/http';
+import { JsonInputMediaType } from "../models/JsonInputMediaType";
+import { JsonInputPreviousLandUseSummaryValue } from "../models/JsonInputPreviousLandUseSummaryValue";
 
 /**
-* Helper struct to define complex input specifications for processes.
-*/
+ * Helper struct to define complex input specifications for processes.
+ */
 export class JsonInputPreviousLandUseSummary {
-    'value': JsonInputPreviousLandUseSummaryValue;
-    'mediaType': JsonInputMediaType;
+  "value": JsonInputPreviousLandUseSummaryValue;
+  "mediaType": JsonInputMediaType;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "value",
-            "baseName": "value",
-            "type": "JsonInputPreviousLandUseSummaryValue",
-            "format": ""
-        },
-        {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "JsonInputMediaType",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "value",
+      baseName: "value",
+      type: "JsonInputPreviousLandUseSummaryValue",
+      format: "",
+    },
+    {
+      name: "mediaType",
+      baseName: "mediaType",
+      type: "JsonInputMediaType",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return JsonInputPreviousLandUseSummary.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return JsonInputPreviousLandUseSummary.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

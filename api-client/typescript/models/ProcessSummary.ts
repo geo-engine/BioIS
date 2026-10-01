@@ -10,65 +10,69 @@
  * Do not edit the class manually.
  */
 
-import { AdditionalParameters } from '../models/AdditionalParameters';
-import { DescriptionType } from '../models/DescriptionType';
-import { JobControlOptions } from '../models/JobControlOptions';
-import { Link } from '../models/Link';
-import { Metadata } from '../models/Metadata';
-import { TransmissionMode } from '../models/TransmissionMode';
-import { HttpFile } from '../http/http';
+import { DescriptionType } from "../models/DescriptionType";
+import { JobControlOptions } from "../models/JobControlOptions";
+import { Link } from "../models/Link";
+import { TransmissionMode } from "../models/TransmissionMode";
 
 /**
-* Process summary
-*/
+ * Process summary
+ */
 export class ProcessSummary extends DescriptionType {
-    'id': string;
-    'version': string;
-    'jobControlOptions'?: Array<JobControlOptions>;
-    'outputTransmission'?: Array<TransmissionMode>;
-    'links'?: Array<Link>;
+  "id": string;
+  "version": string;
+  "jobControlOptions"?: Array<JobControlOptions>;
+  "outputTransmission"?: Array<TransmissionMode>;
+  "links"?: Array<Link>;
 
-    static override readonly discriminator: string | undefined = undefined;
+  static override readonly discriminator: string | undefined = undefined;
 
-    static override readonly mapping: {[index: string]: string} | undefined = undefined;
+  static override readonly mapping: { [index: string]: string } | undefined =
+    undefined;
 
-    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "id",
-            "baseName": "id",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "version",
-            "baseName": "version",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "jobControlOptions",
-            "baseName": "jobControlOptions",
-            "type": "Array<JobControlOptions>",
-            "format": ""
-        },
-        {
-            "name": "outputTransmission",
-            "baseName": "outputTransmission",
-            "type": "Array<TransmissionMode>",
-            "format": ""
-        },
-        {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
-            "format": ""
-        }    ];
+  static override readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "id",
+      baseName: "id",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "version",
+      baseName: "version",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "jobControlOptions",
+      baseName: "jobControlOptions",
+      type: "Array<JobControlOptions>",
+      format: "",
+    },
+    {
+      name: "outputTransmission",
+      baseName: "outputTransmission",
+      type: "Array<TransmissionMode>",
+      format: "",
+    },
+    {
+      name: "links",
+      baseName: "links",
+      type: "Array<Link>",
+      format: "",
+    },
+  ];
 
-    static override getAttributeTypeMap() {
-        return super.getAttributeTypeMap().concat(ProcessSummary.attributeTypeMap);
-    }
+  static override getAttributeTypeMap() {
+    return super.getAttributeTypeMap().concat(ProcessSummary.attributeTypeMap);
+  }
 
-    public constructor() {
-        super();
-    }
+  public constructor() {
+    super();
+  }
 }

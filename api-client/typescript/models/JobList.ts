@@ -10,36 +10,40 @@
  * Do not edit the class manually.
  */
 
-import { Link } from '../models/Link';
-import { StatusInfo } from '../models/StatusInfo';
-import { HttpFile } from '../http/http';
+import { Link } from "../models/Link";
+import { StatusInfo } from "../models/StatusInfo";
 
 export class JobList {
-    'jobs': Array<StatusInfo>;
-    'links': Array<Link>;
+  "jobs": Array<StatusInfo>;
+  "links": Array<Link>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "jobs",
-            "baseName": "jobs",
-            "type": "Array<StatusInfo>",
-            "format": ""
-        },
-        {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "jobs",
+      baseName: "jobs",
+      type: "Array<StatusInfo>",
+      format: "",
+    },
+    {
+      name: "links",
+      baseName: "links",
+      type: "Array<Link>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return JobList.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return JobList.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

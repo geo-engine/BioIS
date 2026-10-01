@@ -10,46 +10,48 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class GeoJSONMultiLineString {
-    'type': GeoJSONMultiLineStringTypeEnum;
-    'coordinates': Array<Array<Array<number>>>;
-    'bbox'?: Array<number>;
+  "type": GeoJSONMultiLineStringTypeEnum;
+  "coordinates": Array<Array<Array<number>>>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONMultiLineStringTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<Array<Array<number>>>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "GeoJSONMultiLineStringTypeEnum",
+      format: "",
+    },
+    {
+      name: "coordinates",
+      baseName: "coordinates",
+      type: "Array<Array<Array<number>>>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return GeoJSONMultiLineString.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return GeoJSONMultiLineString.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum GeoJSONMultiLineStringTypeEnum {
-    MultiLineString = 'MultiLineString'
+  MultiLineString = "MultiLineString",
 }
-

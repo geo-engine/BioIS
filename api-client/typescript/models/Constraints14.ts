@@ -10,50 +10,53 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* The following constraints apply to `any` fields.
-*/
+ * The following constraints apply to `any` fields.
+ */
 export class Constraints14 {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    /**
-    * When `true`, each value for the property `MUST` be unique.
-    */
-    'unique'?: boolean;
-    '_enum'?: Set<any>;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  /**
+   * When `true`, each value for the property `MUST` be unique.
+   */
+  "unique"?: boolean;
+  "_enum"?: Set<any>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "unique",
-            "baseName": "unique",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Set<any>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "unique",
+      baseName: "unique",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Set<any>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints14.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints14.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

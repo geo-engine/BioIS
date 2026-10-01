@@ -10,9 +10,8 @@
  * Do not edit the class manually.
  */
 
-import { Link } from '../models/Link';
-import { QualifiedInputValue } from '../models/QualifiedInputValue';
-import { HttpFile } from '../http/http';
+import { Link } from "../models/Link";
+import { QualifiedInputValue } from "../models/QualifiedInputValue";
 
 /**
  * @type InlineOrRefData
@@ -22,13 +21,11 @@ import { HttpFile } from '../http/http';
 export type InlineOrRefData = Link | QualifiedInputValue | any;
 
 /**
-* @type InlineOrRefDataClass
-* @export
-*/
+ * @type InlineOrRefDataClass
+ * @export
+ */
 export class InlineOrRefDataClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-
-

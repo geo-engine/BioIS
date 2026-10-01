@@ -10,48 +10,50 @@
  * Do not edit the class manually.
  */
 
-import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
-import { Response } from '../models/Response';
-import { HttpFile } from '../http/http';
+import { LandUseSealedAreaProcessInputs } from "../models/LandUseSealedAreaProcessInputs";
+import { Response } from "../models/Response";
 
 /**
-* Process execution (Land Use Sealed Area – ESRS E4-5)
-*/
+ * Process execution (Land Use Sealed Area – ESRS E4-5)
+ */
 export class LandUseSealedAreaProcessParams {
-    'inputs': LandUseSealedAreaProcessInputs;
-    'outputs'?: { [key: string]: any; };
-    'response'?: Response;
+  "inputs": LandUseSealedAreaProcessInputs;
+  "outputs"?: { [key: string]: any };
+  "response"?: Response;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "LandUseSealedAreaProcessInputs",
-            "format": ""
-        },
-        {
-            "name": "outputs",
-            "baseName": "outputs",
-            "type": "{ [key: string]: any; }",
-            "format": ""
-        },
-        {
-            "name": "response",
-            "baseName": "response",
-            "type": "Response",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "LandUseSealedAreaProcessInputs",
+      format: "",
+    },
+    {
+      name: "outputs",
+      baseName: "outputs",
+      type: "{ [key: string]: any; }",
+      format: "",
+    },
+    {
+      name: "response",
+      baseName: "response",
+      type: "Response",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return LandUseSealedAreaProcessParams.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return LandUseSealedAreaProcessParams.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
-
-

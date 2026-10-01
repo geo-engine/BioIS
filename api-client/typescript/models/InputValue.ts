@@ -10,22 +10,19 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
  * @type InputValue
  * Type
  * @export
  */
-export type InputValue = any | { [key: string]: any; };
+export type InputValue = any | { [key: string]: any };
 
 /**
-* @type InputValueClass
-* @export
-*/
+ * @type InputValueClass
+ * @export
+ */
 export class InputValueClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

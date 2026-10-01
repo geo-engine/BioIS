@@ -10,104 +10,107 @@
  * Do not edit the class manually.
  */
 
-import { Constraints14 } from '../models/Constraints14';
-import { StringFieldMissingValues } from '../models/StringFieldMissingValues';
-import { HttpFile } from '../http/http';
+import { Constraints14 } from "../models/Constraints14";
+import { StringFieldMissingValues } from "../models/StringFieldMissingValues";
 
 /**
-* Any value is accepted, including values that are not captured by the type/format/constraint requirements of the specification.
-*/
+ * Any value is accepted, including values that are not captured by the type/format/constraint requirements of the specification.
+ */
 export class AnyField {
-    /**
-    * A name for this field.
-    */
-    'name': string;
-    /**
-    * A human-readable title.
-    */
-    'title'?: string;
-    /**
-    * A text description. Markdown is encouraged.
-    */
-    'description'?: string;
-    /**
-    * An example value for the field.
-    */
-    'example'?: string;
-    'missingValues'?: StringFieldMissingValues;
-    /**
-    * The type keyword, which `MUST` be a value of `any`.
-    */
-    'type': AnyFieldTypeEnum;
-    'constraints'?: Constraints14;
-    /**
-    * The RDF type for this field.
-    */
-    'rdfType'?: string;
+  /**
+   * A name for this field.
+   */
+  "name": string;
+  /**
+   * A human-readable title.
+   */
+  "title"?: string;
+  /**
+   * A text description. Markdown is encouraged.
+   */
+  "description"?: string;
+  /**
+   * An example value for the field.
+   */
+  "example"?: string;
+  "missingValues"?: StringFieldMissingValues;
+  /**
+   * The type keyword, which `MUST` be a value of `any`.
+   */
+  "type": AnyFieldTypeEnum;
+  "constraints"?: Constraints14;
+  /**
+   * The RDF type for this field.
+   */
+  "rdfType"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "name",
-            "baseName": "name",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "title",
-            "baseName": "title",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "description",
-            "baseName": "description",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "example",
-            "baseName": "example",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "missingValues",
-            "baseName": "missingValues",
-            "type": "StringFieldMissingValues",
-            "format": ""
-        },
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "AnyFieldTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "constraints",
-            "baseName": "constraints",
-            "type": "Constraints14",
-            "format": ""
-        },
-        {
-            "name": "rdfType",
-            "baseName": "rdfType",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "name",
+      baseName: "name",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "title",
+      baseName: "title",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "description",
+      baseName: "description",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "example",
+      baseName: "example",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "missingValues",
+      baseName: "missingValues",
+      type: "StringFieldMissingValues",
+      format: "",
+    },
+    {
+      name: "type",
+      baseName: "type",
+      type: "AnyFieldTypeEnum",
+      format: "",
+    },
+    {
+      name: "constraints",
+      baseName: "constraints",
+      type: "Constraints14",
+      format: "",
+    },
+    {
+      name: "rdfType",
+      baseName: "rdfType",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return AnyField.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return AnyField.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum AnyFieldTypeEnum {
-    Any = 'any'
+  Any = "any",
 }
-

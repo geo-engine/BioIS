@@ -10,40 +10,43 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* The following constraints are supported for `boolean` fields.
-*/
+ * The following constraints are supported for `boolean` fields.
+ */
 export class Constraints8 {
-    /**
-    * Indicates whether a property must have a value for each instance.
-    */
-    'required'?: boolean;
-    '_enum'?: Set<boolean>;
+  /**
+   * Indicates whether a property must have a value for each instance.
+   */
+  "required"?: boolean;
+  "_enum"?: Set<boolean>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "required",
-            "baseName": "required",
-            "type": "boolean",
-            "format": ""
-        },
-        {
-            "name": "_enum",
-            "baseName": "enum",
-            "type": "Set<boolean>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "required",
+      baseName: "required",
+      type: "boolean",
+      format: "",
+    },
+    {
+      name: "_enum",
+      baseName: "enum",
+      type: "Set<boolean>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return Constraints8.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return Constraints8.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

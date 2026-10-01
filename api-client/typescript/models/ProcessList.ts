@@ -10,39 +10,43 @@
  * Do not edit the class manually.
  */
 
-import { Link } from '../models/Link';
-import { ProcessSummary } from '../models/ProcessSummary';
-import { HttpFile } from '../http/http';
+import { Link } from "../models/Link";
+import { ProcessSummary } from "../models/ProcessSummary";
 
 /**
-* Information about the available processes
-*/
+ * Information about the available processes
+ */
 export class ProcessList {
-    'processes': Array<ProcessSummary>;
-    'links': Array<Link>;
+  "processes": Array<ProcessSummary>;
+  "links": Array<Link>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "processes",
-            "baseName": "processes",
-            "type": "Array<ProcessSummary>",
-            "format": ""
-        },
-        {
-            "name": "links",
-            "baseName": "links",
-            "type": "Array<Link>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "processes",
+      baseName: "processes",
+      type: "Array<ProcessSummary>",
+      format: "",
+    },
+    {
+      name: "links",
+      baseName: "links",
+      type: "Array<Link>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return ProcessList.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return ProcessList.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

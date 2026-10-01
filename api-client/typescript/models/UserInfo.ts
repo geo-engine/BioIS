@@ -10,41 +10,44 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class UserInfo {
-    'email'?: string | null;
-    'id': string;
-    'realName'?: string | null;
+  "email"?: string | null;
+  "id": string;
+  "realName"?: string | null;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "email",
-            "baseName": "email",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "id",
-            "baseName": "id",
-            "type": "string",
-            "format": "uuid"
-        },
-        {
-            "name": "realName",
-            "baseName": "realName",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "email",
+      baseName: "email",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "id",
+      baseName: "id",
+      type: "string",
+      format: "uuid",
+    },
+    {
+      name: "realName",
+      baseName: "realName",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return UserInfo.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return UserInfo.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

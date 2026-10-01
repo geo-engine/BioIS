@@ -10,46 +10,47 @@
  * Do not edit the class manually.
  */
 
-import { AdditionalParameters } from '../models/AdditionalParameters';
-import { InputDescription } from '../models/InputDescription';
-import { JobControlOptions } from '../models/JobControlOptions';
-import { Link } from '../models/Link';
-import { Metadata } from '../models/Metadata';
-import { OutputDescription } from '../models/OutputDescription';
-import { ProcessSummary } from '../models/ProcessSummary';
-import { TransmissionMode } from '../models/TransmissionMode';
-import { HttpFile } from '../http/http';
+import { InputDescription } from "../models/InputDescription";
+import { OutputDescription } from "../models/OutputDescription";
+import { ProcessSummary } from "../models/ProcessSummary";
 
 /**
-* Full process description
-*/
+ * Full process description
+ */
 export class Process extends ProcessSummary {
-    'inputs'?: { [key: string]: InputDescription; };
-    'outputs'?: { [key: string]: OutputDescription; };
+  "inputs"?: { [key: string]: InputDescription };
+  "outputs"?: { [key: string]: OutputDescription };
 
-    static override readonly discriminator: string | undefined = undefined;
+  static override readonly discriminator: string | undefined = undefined;
 
-    static override readonly mapping: {[index: string]: string} | undefined = undefined;
+  static override readonly mapping: { [index: string]: string } | undefined =
+    undefined;
 
-    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "inputs",
-            "baseName": "inputs",
-            "type": "{ [key: string]: InputDescription; }",
-            "format": ""
-        },
-        {
-            "name": "outputs",
-            "baseName": "outputs",
-            "type": "{ [key: string]: OutputDescription; }",
-            "format": ""
-        }    ];
+  static override readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "inputs",
+      baseName: "inputs",
+      type: "{ [key: string]: InputDescription; }",
+      format: "",
+    },
+    {
+      name: "outputs",
+      baseName: "outputs",
+      type: "{ [key: string]: OutputDescription; }",
+      format: "",
+    },
+  ];
 
-    static override getAttributeTypeMap() {
-        return super.getAttributeTypeMap().concat(Process.attributeTypeMap);
-    }
+  static override getAttributeTypeMap() {
+    return super.getAttributeTypeMap().concat(Process.attributeTypeMap);
+  }
 
-    public constructor() {
-        super();
-    }
+  public constructor() {
+    super();
+  }
 }

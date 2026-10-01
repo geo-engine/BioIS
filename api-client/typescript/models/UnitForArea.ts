@@ -10,9 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export enum UnitForArea {
-    Ha = 'ha',
-    M = 'm²'
+  Ha = "ha",
+  M = "m²",
 }

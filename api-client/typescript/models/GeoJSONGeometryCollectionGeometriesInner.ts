@@ -10,32 +10,32 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONLineString } from '../models/GeoJSONLineString';
-import { GeoJSONMultiLineString } from '../models/GeoJSONMultiLineString';
-import { GeoJSONMultiPoint } from '../models/GeoJSONMultiPoint';
-import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
-import { GeoJSONPoint } from '../models/GeoJSONPoint';
-import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
-import { HttpFile } from '../http/http';
+import { GeoJSONLineString } from "../models/GeoJSONLineString";
+import { GeoJSONMultiLineString } from "../models/GeoJSONMultiLineString";
+import { GeoJSONMultiPoint } from "../models/GeoJSONMultiPoint";
+import { GeoJSONMultiPolygon } from "../models/GeoJSONMultiPolygon";
+import { GeoJSONPoint } from "../models/GeoJSONPoint";
+import { GeoJSONPolygon } from "../models/GeoJSONPolygon";
 
 /**
  * @type GeoJSONGeometryCollectionGeometriesInner
  * Type
  * @export
  */
-export type GeoJSONGeometryCollectionGeometriesInner = GeoJSONLineString | GeoJSONMultiLineString | GeoJSONMultiPoint | GeoJSONMultiPolygon | GeoJSONPoint | GeoJSONPolygon;
+export type GeoJSONGeometryCollectionGeometriesInner =
+  | GeoJSONLineString
+  | GeoJSONMultiLineString
+  | GeoJSONMultiPoint
+  | GeoJSONMultiPolygon
+  | GeoJSONPoint
+  | GeoJSONPolygon;
 
 /**
-* @type GeoJSONGeometryCollectionGeometriesInnerClass
-* @export
-*/
+ * @type GeoJSONGeometryCollectionGeometriesInnerClass
+ * @export
+ */
 export class GeoJSONGeometryCollectionGeometriesInnerClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-
-
-
-
-

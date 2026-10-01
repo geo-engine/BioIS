@@ -10,28 +10,32 @@
  * Do not edit the class manually.
  */
 
-import { PointGeoJsonInput } from '../models/PointGeoJsonInput';
-import { HttpFile } from '../http/http';
+import { PointGeoJsonInput } from "../models/PointGeoJsonInput";
 
 export class HabitatDistanceProcessInputs {
-    'coordinate': PointGeoJsonInput;
+  "coordinate": PointGeoJsonInput;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "coordinate",
-            "baseName": "coordinate",
-            "type": "PointGeoJsonInput",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "coordinate",
+      baseName: "coordinate",
+      type: "PointGeoJsonInput",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return HabitatDistanceProcessInputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return HabitatDistanceProcessInputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

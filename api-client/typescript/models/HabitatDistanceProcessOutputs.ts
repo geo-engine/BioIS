@@ -10,41 +10,44 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class HabitatDistanceProcessOutputs {
-    'habitatCode'?: string | null;
-    'habitatName'?: string | null;
-    'distanceM'?: number | null;
+  "habitatCode"?: string | null;
+  "habitatName"?: string | null;
+  "distanceM"?: number | null;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "habitatCode",
-            "baseName": "habitatCode",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "habitatName",
-            "baseName": "habitatName",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "distanceM",
-            "baseName": "distanceM",
-            "type": "number",
-            "format": "int64"
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "habitatCode",
+      baseName: "habitatCode",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "habitatName",
+      baseName: "habitatName",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "distanceM",
+      baseName: "distanceM",
+      type: "number",
+      format: "int64",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return HabitatDistanceProcessOutputs.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return HabitatDistanceProcessOutputs.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

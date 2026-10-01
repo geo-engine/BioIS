@@ -10,34 +10,37 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class BoundingBox {
-    'bbox': Array<number>;
-    'crs'?: string;
+  "bbox": Array<number>;
+  "crs"?: string;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": "double"
-        },
-        {
-            "name": "crs",
-            "baseName": "crs",
-            "type": "string",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "double",
+    },
+    {
+      name: "crs",
+      baseName: "crs",
+      type: "string",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return BoundingBox.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return BoundingBox.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

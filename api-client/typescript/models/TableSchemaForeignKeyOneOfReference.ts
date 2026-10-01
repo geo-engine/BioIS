@@ -10,34 +10,37 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 export class TableSchemaForeignKeyOneOfReference {
-    'resource'?: string;
-    'fields': Set<string>;
+  "resource"?: string;
+  "fields": Set<string>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "resource",
-            "baseName": "resource",
-            "type": "string",
-            "format": ""
-        },
-        {
-            "name": "fields",
-            "baseName": "fields",
-            "type": "Set<string>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "resource",
+      baseName: "resource",
+      type: "string",
+      format: "",
+    },
+    {
+      name: "fields",
+      baseName: "fields",
+      type: "Set<string>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return TableSchemaForeignKeyOneOfReference.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return TableSchemaForeignKeyOneOfReference.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }

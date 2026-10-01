@@ -10,49 +10,49 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONMultiPolygon } from '../models/GeoJSONMultiPolygon';
-import { GeoJSONPolygon } from '../models/GeoJSONPolygon';
-import { HttpFile } from '../http/http';
-
 export class FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry {
-    'type': FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum;
-    'coordinates': Array<Array<Array<Array<number>>>>;
-    'bbox'?: Array<number>;
+  "type": FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum;
+  "coordinates": Array<Array<Array<Array<number>>>>;
+  "bbox"?: Array<number>;
 
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 
-    static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "type",
-            "baseName": "type",
-            "type": "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum",
-            "format": ""
-        },
-        {
-            "name": "coordinates",
-            "baseName": "coordinates",
-            "type": "Array<Array<Array<Array<number>>>>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
-            "format": ""
-        }    ];
+  static readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "type",
+      baseName: "type",
+      type: "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum",
+      format: "",
+    },
+    {
+      name: "coordinates",
+      baseName: "coordinates",
+      type: "Array<Array<Array<Array<number>>>>",
+      format: "",
+    },
+    {
+      name: "bbox",
+      baseName: "bbox",
+      type: "Array<number>",
+      format: "",
+    },
+  ];
 
-    static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry.attributeTypeMap;
-    }
+  static getAttributeTypeMap() {
+    return FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry.attributeTypeMap;
+  }
 
-    public constructor() {
-    }
+  public constructor() {}
 }
 
 export enum FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum {
-    Polygon = 'Polygon',
-    MultiPolygon = 'MultiPolygon'
+  Polygon = "Polygon",
+  MultiPolygon = "MultiPolygon",
 }
-

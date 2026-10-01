@@ -10,15 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* The schema uses the lowercase names that are parsed by [`SiteSpecification::from_str`].
-*/
+ * The schema uses the lowercase names that are parsed by [`SiteSpecification::from_str`].
+ */
 export enum BiodiversitySiteSpecification {
-    Office = 'office',
-    Agriculture = 'agriculture',
-    Marine = 'marine',
-    Mining = 'mining',
-    Other = 'other'
+  Office = "office",
+  Agriculture = "agriculture",
+  Marine = "marine",
+  Mining = "mining",
+  Other = "other",
 }

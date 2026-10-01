@@ -10,11 +10,9 @@
  * Do not edit the class manually.
  */
 
-import { HttpFile } from '../http/http';
-
 /**
-* A primary key is a field name or an array of field names, whose values `MUST` uniquely identify each row in the table.
-*/
+ * A primary key is a field name or an array of field names, whose values `MUST` uniquely identify each row in the table.
+ */
 /**
  * @type TableSchemaPrimaryKey
  * Type
@@ -23,13 +21,12 @@ import { HttpFile } from '../http/http';
 export type TableSchemaPrimaryKey = Set<string> | string;
 
 /**
-* @type TableSchemaPrimaryKeyClass
-    * A primary key is a field name or an array of field names, whose values `MUST` uniquely identify each row in the table.
-* @export
-*/
+ * @type TableSchemaPrimaryKeyClass
+ * A primary key is a field name or an array of field names, whose values `MUST` uniquely identify each row in the table.
+ * @export
+ */
 export class TableSchemaPrimaryKeyClass {
-    static readonly discriminator: string | undefined = undefined;
+  static readonly discriminator: string | undefined = undefined;
 
-    static readonly mapping: {[index: string]: string} | undefined = undefined;
+  static readonly mapping: { [index: string]: string } | undefined = undefined;
 }
-

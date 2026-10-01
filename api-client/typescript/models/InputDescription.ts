@@ -10,49 +10,55 @@
  * Do not edit the class manually.
  */
 
-import { AdditionalParameters } from '../models/AdditionalParameters';
-import { DescriptionType } from '../models/DescriptionType';
-import { MaxOccurs } from '../models/MaxOccurs';
-import { Metadata } from '../models/Metadata';
-import { HttpFile } from '../http/http';
+import { DescriptionType } from "../models/DescriptionType";
+import { MaxOccurs } from "../models/MaxOccurs";
 
 /**
-* Process input description
-*/
+ * Process input description
+ */
 export class InputDescription extends DescriptionType {
-    'minOccurs'?: number | null;
-    'maxOccurs'?: MaxOccurs | null;
-    'schema': any | null;
+  "minOccurs"?: number | null;
+  "maxOccurs"?: MaxOccurs | null;
+  "schema": any | null;
 
-    static override readonly discriminator: string | undefined = undefined;
+  static override readonly discriminator: string | undefined = undefined;
 
-    static override readonly mapping: {[index: string]: string} | undefined = undefined;
+  static override readonly mapping: { [index: string]: string } | undefined =
+    undefined;
 
-    static override readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
-        {
-            "name": "minOccurs",
-            "baseName": "minOccurs",
-            "type": "number",
-            "format": "int64"
-        },
-        {
-            "name": "maxOccurs",
-            "baseName": "maxOccurs",
-            "type": "MaxOccurs",
-            "format": ""
-        },
-        {
-            "name": "schema",
-            "baseName": "schema",
-            "type": "any",
-            "format": ""
-        }    ];
+  static override readonly attributeTypeMap: Array<{
+    name: string;
+    baseName: string;
+    type: string;
+    format: string;
+  }> = [
+    {
+      name: "minOccurs",
+      baseName: "minOccurs",
+      type: "number",
+      format: "int64",
+    },
+    {
+      name: "maxOccurs",
+      baseName: "maxOccurs",
+      type: "MaxOccurs",
+      format: "",
+    },
+    {
+      name: "schema",
+      baseName: "schema",
+      type: "any",
+      format: "",
+    },
+  ];
 
-    static override getAttributeTypeMap() {
-        return super.getAttributeTypeMap().concat(InputDescription.attributeTypeMap);
-    }
+  static override getAttributeTypeMap() {
+    return super
+      .getAttributeTypeMap()
+      .concat(InputDescription.attributeTypeMap);
+  }
 
-    public constructor() {
-        super();
-    }
+  public constructor() {
+    super();
+  }
 }
