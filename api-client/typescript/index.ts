@@ -18,6 +18,7 @@ export type {
 export { Observable } from "./rxjsStub";
 export {
   PromiseCapabilitiesApi as CapabilitiesApi,
+  PromiseContactApi as ContactApi,
   PromiseDefaultApi as DefaultApi,
   PromiseProcessesApi as ProcessesApi,
   PromiseUserApi as UserApi,

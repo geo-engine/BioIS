@@ -132,6 +132,7 @@ impl<S> GeoEngineAuthMiddleware<S> {
                 exact: vec![
                     "/",
                     "/conformance",
+                    "/contact",
                     "/health",
                     "/processes",
                     "/processes/echo",

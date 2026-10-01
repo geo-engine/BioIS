@@ -47,7 +47,7 @@ export class UserService {
 
   // TODO: logout after session expires, refresh session, …
   async login(auth: { state: string; code: string; sessionState: string }): Promise<void> {
-    const userApi = new UserApi(configuration());
+    const userApi = new UserApi(publicApiConfiguration());
     const redirectUri = location.origin + location.pathname;
     const user = await userApi.authHandler(redirectUri, auth);
 
@@ -63,7 +63,7 @@ export class UserService {
   async oidcRedirect(): Promise<void> {
     // TODO: try out `angular-auth-oidc-client` or `oidc-client-ts` instead of implementing OIDC ourselves
 
-    const userApi = new UserApi(configuration());
+    const userApi = new UserApi(publicApiConfiguration());
     const redirectUri = oidcRedirectUri();
     const oidcUrl = await userApi.authRequestUrlHandler(redirectUri);
 
@@ -105,7 +105,12 @@ function oidcRedirectUri(): string {
   return location.origin + location.pathname;
 }
 
-function configuration(/*options: { authMethods?: OAuth2Configuration } = {}*/): Configuration {
+/**
+ * API configuration for endpoints that do not require authentication.
+ */
+export function publicApiConfiguration(
+  /*options: { authMethods?: OAuth2Configuration } = {}*/
+): Configuration {
   return createConfiguration({
     baseServer: new ServerConfiguration('/api', {}),
     // ...options,

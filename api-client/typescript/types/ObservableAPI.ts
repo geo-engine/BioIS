@@ -10,6 +10,7 @@ import { AuthCodeResponse } from "../models/AuthCodeResponse";
 import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
 import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
 import { Conformance } from "../models/Conformance";
+import { ContactRequest } from "../models/ContactRequest";
 import { Execute } from "../models/Execute";
 import { GetCreditsResponse } from "../models/GetCreditsResponse";
 import { HabitatDistanceProcessOutputs } from "../models/HabitatDistanceProcessOutputs";
@@ -185,6 +186,82 @@ export class ObservableCapabilitiesApi {
   public root(_options?: ConfigurationOptions): Observable<LandingPage> {
     return this.rootWithHttpInfo(_options).pipe(
       map((apiResponse: HttpInfo<LandingPage>) => apiResponse.data),
+    );
+  }
+}
+
+import {
+  ContactApiRequestFactory,
+  ContactApiResponseProcessor,
+} from "../apis/ContactApi";
+export class ObservableContactApi {
+  private requestFactory: ContactApiRequestFactory;
+  private responseProcessor: ContactApiResponseProcessor;
+  private configuration: Configuration;
+
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ContactApiRequestFactory,
+    responseProcessor?: ContactApiResponseProcessor,
+  ) {
+    this.configuration = configuration;
+    this.requestFactory =
+      requestFactory || new ContactApiRequestFactory(configuration);
+    this.responseProcessor =
+      responseProcessor || new ContactApiResponseProcessor();
+  }
+
+  /**
+   * Sends a request for pilot access to the `BioIS` team.
+   * @param contactRequest
+   */
+  public submitContactWithHttpInfo(
+    contactRequest: ContactRequest,
+    _options?: ConfigurationOptions,
+  ): Observable<HttpInfo<void>> {
+    const _config = mergeConfiguration(this.configuration, _options);
+
+    const requestContextPromise = this.requestFactory.submitContact(
+      contactRequest,
+      _config,
+    );
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (const middleware of _config.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (const middleware of _config.middleware.reverse()) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) =>
+              this.responseProcessor.submitContactWithHttpInfo(rsp),
+            ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Sends a request for pilot access to the `BioIS` team.
+   * @param contactRequest
+   */
+  public submitContact(
+    contactRequest: ContactRequest,
+    _options?: ConfigurationOptions,
+  ): Observable<void> {
+    return this.submitContactWithHttpInfo(contactRequest, _options).pipe(
+      map((apiResponse: HttpInfo<void>) => apiResponse.data),
     );
   }
 }

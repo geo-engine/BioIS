@@ -9,6 +9,7 @@ import { AuthCodeResponse } from "../models/AuthCodeResponse";
 import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
 import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
 import { Conformance } from "../models/Conformance";
+import { ContactRequest } from "../models/ContactRequest";
 import { Execute } from "../models/Execute";
 import { GetCreditsResponse } from "../models/GetCreditsResponse";
 import { HabitatDistanceProcessOutputs } from "../models/HabitatDistanceProcessOutputs";
@@ -110,6 +111,57 @@ export class PromiseCapabilitiesApi {
   public root(_options?: PromiseConfigurationOptions): Promise<LandingPage> {
     const observableOptions = wrapOptions(_options);
     const result = this.api.root(observableOptions);
+    return result.toPromise();
+  }
+}
+
+import { ObservableContactApi } from "./ObservableAPI";
+
+import {
+  ContactApiRequestFactory,
+  ContactApiResponseProcessor,
+} from "../apis/ContactApi";
+export class PromiseContactApi {
+  private api: ObservableContactApi;
+
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ContactApiRequestFactory,
+    responseProcessor?: ContactApiResponseProcessor,
+  ) {
+    this.api = new ObservableContactApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
+
+  /**
+   * Sends a request for pilot access to the `BioIS` team.
+   * @param contactRequest
+   */
+  public submitContactWithHttpInfo(
+    contactRequest: ContactRequest,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<void>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.submitContactWithHttpInfo(
+      contactRequest,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
+
+  /**
+   * Sends a request for pilot access to the `BioIS` team.
+   * @param contactRequest
+   */
+  public submitContact(
+    contactRequest: ContactRequest,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<void> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.submitContact(contactRequest, observableOptions);
     return result.toPromise();
   }
 }

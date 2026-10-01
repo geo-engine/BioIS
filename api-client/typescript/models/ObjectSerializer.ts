@@ -30,6 +30,8 @@ export * from "../models/Constraints6";
 export * from "../models/Constraints7";
 export * from "../models/Constraints8";
 export * from "../models/Constraints9";
+export * from "../models/ContactRequest";
+export * from "../models/ContactRole";
 export * from "../models/CreditsForJob";
 export * from "../models/DataResource";
 export * from "../models/DateField";
@@ -159,6 +161,7 @@ import { Constraints6 } from "../models/Constraints6";
 import { Constraints7 } from "../models/Constraints7";
 import { Constraints8 } from "../models/Constraints8";
 import { Constraints9 } from "../models/Constraints9";
+import { ContactRequest } from "../models/ContactRequest";
 import { CreditsForJob } from "../models/CreditsForJob";
 import { DataResourceClass } from "../models/DataResource";
 import { DateField } from "../models/DateField";
@@ -265,6 +268,7 @@ let enumsMap: Set<string> = new Set<string>([
   "BiodiversitySiteSpecification",
   "BooleanFieldTypeEnum",
   "BooleanFieldFormatEnum",
+  "ContactRole",
   "DateFieldTypeEnum",
   "DateTimeFieldTypeEnum",
   "DurationFieldTypeEnum",
@@ -349,6 +353,7 @@ let typeMap: { [index: string]: any } = {
   Constraints7: Constraints7,
   Constraints8: Constraints8,
   Constraints9: Constraints9,
+  ContactRequest: ContactRequest,
   CreditsForJob: CreditsForJob,
   DataResource: DataResourceClass,
   DateField: DateField,

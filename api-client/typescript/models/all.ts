@@ -30,6 +30,8 @@ export * from "../models/Constraints6";
 export * from "../models/Constraints7";
 export * from "../models/Constraints8";
 export * from "../models/Constraints9";
+export * from "../models/ContactRequest";
+export * from "../models/ContactRole";
 export * from "../models/CreditsForJob";
 export * from "../models/DataResource";
 export * from "../models/DateField";
