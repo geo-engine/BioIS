@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInput } from '../models/FeatureCollectionGeoJsonInput';
+import { FeatureCollectionGeoJsonInputBiodiversitySiteProperties } from '../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties';
 import { UnitForArea } from '../models/UnitForArea';
 import { HttpFile } from '../http/http';
 
@@ -18,7 +18,7 @@ export class BiodiversitySensitiveAreasProcessInputs {
     /**
     * Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.). The impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.).
     */
-    'sites': FeatureCollectionGeoJsonInput;
+    'sites': FeatureCollectionGeoJsonInputBiodiversitySiteProperties;
     /**
     * Name of the property in the input `GeoJSON` features that contains the location information.
     */
@@ -40,7 +40,7 @@ export class BiodiversitySensitiveAreasProcessInputs {
         {
             "name": "sites",
             "baseName": "sites",
-            "type": "FeatureCollectionGeoJsonInput",
+            "type": "FeatureCollectionGeoJsonInputBiodiversitySiteProperties",
             "format": ""
         },
         {

@@ -4,7 +4,7 @@ use crate::{
     processes::{
         land_use_sealed_area::types::{
             LandUseSummary, LandUseSummaryRow, LandUseSummaryRowType, SiteLandUseRow,
-            SiteSpecification, TypedPreviousLandUseSummary,
+            SiteProperties, SiteSpecification, TypedPreviousLandUseSummary,
         },
         parameters::{
             Area, BoundingBox, DocumentationSource, FeatureCollectionGeoJsonInput,
@@ -61,7 +61,7 @@ pub const AREA_COLUMN_NAME: &str = "area";
 pub async fn compute_site_land_use_data(
     configuration: &Configuration,
     year: Year,
-    sites: &FeatureCollectionGeoJsonInput,
+    sites: &FeatureCollectionGeoJsonInput<SiteProperties>,
     location_name_field: &str,
     location_type_field: &str,
 ) -> anyhow::Result<(Vec<SiteLandUseRow>, Vec<String>, ComputationId)> {
@@ -122,7 +122,7 @@ fn extract_site_land_use_rows(
 #[instrument(skip_all, err(Debug))]
 async fn upload_geo_json(
     configuration: &Configuration,
-    geo_json: &FeatureCollectionGeoJsonInput,
+    geo_json: &FeatureCollectionGeoJsonInput<SiteProperties>,
     location_name_field: &str,
     location_type_field: &str,
     bbox: &BoundingBox,
@@ -245,7 +245,7 @@ impl BboxAndErrors {
     reason = "keeping the last continue statement for clarity and future-proofing"
 )]
 fn validate_and_extract_bbox(
-    geo_json: &FeatureCollectionGeoJsonInput,
+    geo_json: &FeatureCollectionGeoJsonInput<SiteProperties>,
     location_name_field: &str,
     location_type_field: &str,
 ) -> Result<BboxAndErrors> {
@@ -841,7 +841,7 @@ mod tests {
         };
 
         let collection_input = FeatureCollectionGeoJsonInput {
-            value: GeoJsonFeatureCollection::from(collection),
+            value: collection.into(),
             media_type: crate::processes::parameters::GeoJsonInputMediaType::GeoJson,
         };
 
@@ -868,7 +868,7 @@ mod tests {
         };
 
         let collection_input = FeatureCollectionGeoJsonInput {
-            value: GeoJsonFeatureCollection::from(collection),
+            value: collection.into(),
             media_type: crate::processes::parameters::GeoJsonInputMediaType::GeoJson,
         };
 
@@ -897,7 +897,7 @@ mod tests {
         };
 
         let point_input = FeatureCollectionGeoJsonInput {
-            value: GeoJsonFeatureCollection::from(collection),
+            value: collection.into(),
             media_type: crate::processes::parameters::GeoJsonInputMediaType::GeoJson,
         };
 
@@ -920,7 +920,7 @@ mod tests {
         };
 
         let bad_input = FeatureCollectionGeoJsonInput {
-            value: GeoJsonFeatureCollection::from(collection),
+            value: collection.into(),
             media_type: crate::processes::parameters::GeoJsonInputMediaType::GeoJson,
         };
 
@@ -1170,7 +1170,7 @@ mod tests {
             api_config.base_path = server.url_str("/");
 
             // Create test input sites
-            let sites = serde_json::from_value::<FeatureCollectionGeoJsonInput>(json!({
+            let sites = serde_json::from_value::<FeatureCollectionGeoJsonInput<SiteProperties>>(json!({
                 "value": {
                     "type": "FeatureCollection",
                     "name": "test-sites",

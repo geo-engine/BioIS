@@ -14,6 +14,7 @@ import { BaseJSONSchema, JSONSchema } from 'ya-json-schema-types';
 import * as z from 'zod';
 import { convertJsonSchemaToZod } from 'zod-from-json-schema';
 import { assertNever } from '../util/assertions';
+import { DrawableGeometryType, FeatureField } from '../util/geo-json';
 
 export interface InputDescription {
   key: string;
@@ -395,4 +396,154 @@ function geoJsonPointFeature(coordinates: [number, number]): GeoJSONPoint {
   point.type = GeoJSONPointTypeEnum.Point;
   point.coordinates = coordinates;
   return point;
+}
+
+export function enumOptions(schema: JSONSchema | undefined): string[] {
+  if (!schema || typeof schema === 'boolean' || !schema.enum || !Array.isArray(schema.enum))
+    return [];
+
+  const options = [];
+  for (const value of schema.enum) {
+    if (typeof value === 'string') options.push(value);
+  }
+  return options;
+}
+
+const DRAWABLE_GEOMETRY_TYPES: readonly DrawableGeometryType[] = ['Point', 'Polygon'];
+
+/** Maps the GeoJSON schemas (https://geojson.org/schema/…) to the geometry type that can be drawn. */
+function drawableGeometryType(schemaUrl: string): DrawableGeometryType | undefined {
+  switch (schemaUrl.split('/').pop()) {
+    case 'Point.json':
+    case 'MultiPoint.json':
+      return 'Point';
+    case 'Polygon.json':
+    case 'MultiPolygon.json':
+      return 'Polygon';
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Retrieves the schemas of the feature members (`geometry`, `properties`, …)
+ * of a GeoJSON FeatureCollection input, i.e., `value.features.items.properties`.
+ */
+function featureMemberSchemas(inputSchema: JSONSchema): Record<string, JSONSchema> | undefined {
+  if (!inputSchema || typeof inputSchema !== 'object') return undefined;
+
+  const valueSchema = retrieveSubSchema(inputSchema, 'value', inputSchema);
+  if (!valueSchema || typeof valueSchema !== 'object') return undefined;
+
+  const candidates = [valueSchema, ...((valueSchema.allOf as JSONSchema[] | undefined) ?? [])];
+  for (const candidate of candidates) {
+    const featuresSchema = retrieveSubSchema(candidate, 'features', inputSchema);
+    if (!featuresSchema || typeof featuresSchema !== 'object') continue;
+
+    const items = featuresSchema.items;
+    if (!items || typeof items !== 'object' || Array.isArray(items)) continue;
+
+    const members = (items as BaseJSONSchema)['properties'];
+    if (members && typeof members === 'object') return members as Record<string, JSONSchema>;
+  }
+
+  return undefined;
+}
+
+/**
+ * Determines which geometry types can be drawn for a GeoJSON FeatureCollection input.
+ * If the schema does not restrict the geometry, all drawable geometry types are allowed.
+ */
+export function allowedGeometryTypes(inputSchema: JSONSchema): DrawableGeometryType[] {
+  const geometrySchema = featureMemberSchemas(inputSchema)?.['geometry'];
+  if (!geometrySchema || typeof geometrySchema !== 'object') return [...DRAWABLE_GEOMETRY_TYPES];
+
+  const subSchemas = geometrySchema.oneOf ?? geometrySchema.anyOf;
+  if (!Array.isArray(subSchemas)) return [...DRAWABLE_GEOMETRY_TYPES];
+
+  const types = new Set<DrawableGeometryType>();
+  for (const subSchema of subSchemas as JSONSchema[]) {
+    if (!subSchema || typeof subSchema !== 'object' || typeof subSchema.$ref !== 'string') continue;
+
+    const type = drawableGeometryType(subSchema.$ref);
+    if (type) types.add(type);
+  }
+
+  return DRAWABLE_GEOMETRY_TYPES.filter((type) => types.has(type));
+}
+
+/**
+ * Retrieves the schema of a feature property of a GeoJSON FeatureCollection input,
+ * e.g., to get the class labels of a `type` property.
+ */
+export function featurePropertySchema(
+  inputSchema: JSONSchema,
+  propertyKey: string,
+): JSONSchema | undefined {
+  const propertiesSchema = featureMemberSchemas(inputSchema)?.['properties'];
+  if (!propertiesSchema || typeof propertiesSchema !== 'object') return undefined;
+
+  const resolvedPropertiesSchema = resolveSchemaRef(inputSchema, propertiesSchema);
+  if (!resolvedPropertiesSchema || typeof resolvedPropertiesSchema !== 'object') return undefined;
+
+  const propertySchema = (
+    resolvedPropertiesSchema.properties as Record<string, JSONSchema> | undefined
+  )?.[propertyKey];
+  if (!propertySchema || typeof propertySchema !== 'object') return undefined;
+
+  // keep keywords next to a `$ref`, e.g., the `description`
+  const { $ref: _, ...siblings } = propertySchema;
+  const resolved = resolveSchemaRef(inputSchema, propertySchema);
+  return typeof resolved === 'object' ? { ...resolved, ...siblings } : resolved;
+}
+
+/**
+ * Determines the editable feature properties for each GeoJSON FeatureCollection input.
+ *
+ * The properties are given by the `RelativeJsonPointer` inputs that point into the features of a GeoJSON input
+ * (cf. `json-pointer-base` metadata), with their current value as the property name.
+ *
+ * @param inputs - The input descriptions of the process.
+ * @param formInputs - The current input values of the form.
+ * @returns The editable fields per GeoJSON input key.
+ */
+export function editableFeatureFields(
+  inputs: InputDescription[],
+  formInputs: Record<string, unknown>,
+): Record<string, FeatureField[]> {
+  const result: Record<string, FeatureField[]> = {};
+
+  for (const geoJsonInput of inputs) {
+    if (geoJsonInput.type !== FieldType.GeoJson) continue;
+
+    const pointerBasePrefix = `#/inputs/${geoJsonInput.key}/`;
+    const fields: FeatureField[] = [];
+
+    for (const pointerInput of inputs) {
+      if (pointerInput.type !== FieldType.RelativeJsonPointer) continue;
+
+      const pointerBase = pointerInput.metadata?.find(
+        (meta) => meta.role === 'json-pointer-base',
+      )?.href;
+      if (!pointerBase?.startsWith(pointerBasePrefix)) continue;
+
+      const key = formInputs[pointerInput.key];
+      if (typeof key !== 'string' || key === '') continue;
+
+      const propertySchema = featurePropertySchema(geoJsonInput.schema, key);
+      const baseSchema = typeof propertySchema === 'object' ? propertySchema : undefined;
+      const enumValues = enumOptions(propertySchema);
+
+      fields.push({
+        key,
+        title: baseSchema?.title ?? fieldName(key),
+        description: baseSchema?.description ?? pointerInput.description,
+        enumValues: enumValues.length > 0 ? enumValues : undefined,
+      });
+    }
+
+    result[geoJsonInput.key] = fields;
+  }
+
+  return result;
 }

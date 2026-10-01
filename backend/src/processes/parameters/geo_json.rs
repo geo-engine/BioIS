@@ -2,7 +2,13 @@ use anyhow::Result;
 use geojson::{Feature, FeatureCollection, PointType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use std::{borrow::Cow, marker::PhantomData};
+use utoipa::{
+    ToSchema,
+    openapi::{
+        AllOfBuilder, ArrayBuilder, ObjectBuilder, Ref, RefOr, Schema, schema::AnyOfBuilder,
+    },
+};
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -35,9 +41,150 @@ pub enum PointGeoJsonType {
     Point,
 }
 
-/// A `GeoJSON` `FeatureCollection` containing only Polygon features.
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct GeoJsonFeatureCollection(FeatureCollection);
+/// A `GeoJSON` `FeatureCollection`.
+///
+/// The type parameter `P` describes the expected feature properties and geometry types.
+/// It only affects the generated JSON schema, (de)serialization is not restricted.
+pub struct GeoJsonFeatureCollection<P = AnyFeatureProperties>(FeatureCollection, PhantomData<P>);
+
+/// Unrestricted feature properties, e.g., for results from Geo Engine.
+#[derive(Clone, Debug)]
+pub enum AnyFeatureProperties {}
+
+/// Describes the features of a [`GeoJsonFeatureCollection`] for its schema.
+///
+/// The implementing type is the schema of the feature properties.
+pub trait FeatureProperties {
+    /// The allowed geometry types of the features.
+    const GEOMETRY_TYPES: &'static [GeoJsonGeometryType];
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GeoJsonGeometryType {
+    Point,
+    MultiPoint,
+    Polygon,
+    MultiPolygon,
+}
+
+impl GeoJsonGeometryType {
+    const fn schema_url(self) -> &'static str {
+        match self {
+            GeoJsonGeometryType::Point => "https://geojson.org/schema/Point.json",
+            GeoJsonGeometryType::MultiPoint => "https://geojson.org/schema/MultiPoint.json",
+            GeoJsonGeometryType::Polygon => "https://geojson.org/schema/Polygon.json",
+            GeoJsonGeometryType::MultiPolygon => "https://geojson.org/schema/MultiPolygon.json",
+        }
+    }
+}
+
+const FEATURE_COLLECTION_SCHEMA_URL: &str = "https://geojson.org/schema/FeatureCollection.json";
+
+/// Removes the `required` keyword from a properties schema.
+///
+/// Feature properties are only hints for the expected properties,
+/// since the actual property names are selected by [`super::RelativeJsonPointer`] inputs.
+pub fn optional_feature_properties(schema: &mut schemars::Schema) {
+    schema.remove("required");
+}
+
+impl<P> Clone for GeoJsonFeatureCollection<P> {
+    fn clone(&self) -> Self {
+        GeoJsonFeatureCollection(self.0.clone(), PhantomData)
+    }
+}
+
+impl<P> std::fmt::Debug for GeoJsonFeatureCollection<P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("GeoJsonFeatureCollection")
+            .field(&self.0)
+            .finish()
+    }
+}
+
+impl<P> Serialize for GeoJsonFeatureCollection<P> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.serialize(serializer)
+    }
+}
+
+impl<'de, P> Deserialize<'de> for GeoJsonFeatureCollection<P> {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        FeatureCollection::deserialize(deserializer).map(Self::from)
+    }
+}
+
+impl<P: FeatureProperties + JsonSchema> JsonSchema for GeoJsonFeatureCollection<P> {
+    fn schema_name() -> Cow<'static, str> {
+        format!("GeoJsonFeatureCollection_{}", P::schema_name()).into()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(generator: &mut schemars::generate::SchemaGenerator) -> schemars::Schema {
+        let geometries = P::GEOMETRY_TYPES
+            .iter()
+            .map(|geometry_type| serde_json::json!({ "$ref": geometry_type.schema_url() }))
+            .collect::<Vec<_>>();
+        let properties = P::json_schema(generator);
+
+        schemars::json_schema!({
+            "allOf": [
+                { "$ref": FEATURE_COLLECTION_SCHEMA_URL },
+                {
+                    "type": "object",
+                    "properties": {
+                        "features": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    // `anyOf` since the geometry types are exclusive anyway and
+                                    // validators without the external schemas cannot distinguish them
+                                    "geometry": { "anyOf": geometries },
+                                    "properties": properties,
+                                },
+                            },
+                        },
+                    },
+                },
+            ],
+        })
+    }
+}
+
+// `ComposeSchema` is what `utoipa`'s derive uses for (generic) field types.
+// It also provides `utoipa::PartialSchema` via a blanket implementation.
+impl<P: FeatureProperties + ToSchema> utoipa::__dev::ComposeSchema for GeoJsonFeatureCollection<P> {
+    fn compose(_generics: Vec<RefOr<Schema>>) -> RefOr<Schema> {
+        let geometry = P::GEOMETRY_TYPES
+            .iter()
+            .fold(AnyOfBuilder::new(), |any_of, geometry_type| {
+                any_of.item(Ref::new(geometry_type.schema_url()))
+            });
+
+        let feature = ObjectBuilder::new()
+            .property("geometry", geometry)
+            .property("properties", P::schema());
+
+        AllOfBuilder::new()
+            .item(Ref::new(FEATURE_COLLECTION_SCHEMA_URL))
+            .item(ObjectBuilder::new().property("features", ArrayBuilder::new().items(feature)))
+            .into()
+    }
+}
+
+impl<P: FeatureProperties + ToSchema> ToSchema for GeoJsonFeatureCollection<P> {
+    fn name() -> Cow<'static, str> {
+        format!("GeoJsonFeatureCollection_{}", P::name()).into()
+    }
+
+    fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+        P::schemas(schemas);
+    }
+}
 
 impl TryFrom<geoengine_api_client::models::GeoJson> for GeoJsonFeatureCollection {
     type Error = anyhow::Error;
@@ -57,32 +204,33 @@ impl TryFrom<geoengine_api_client::models::GeoJson> for GeoJsonFeatureCollection
             foreign_members: None,
         };
 
-        Ok(GeoJsonFeatureCollection(feature_collection))
+        Ok(GeoJsonFeatureCollection::from(feature_collection))
     }
 }
 
-impl AsRef<FeatureCollection> for GeoJsonFeatureCollection {
+impl<P> AsRef<FeatureCollection> for GeoJsonFeatureCollection<P> {
     fn as_ref(&self) -> &FeatureCollection {
         &self.0
     }
 }
 
-impl From<FeatureCollection> for GeoJsonFeatureCollection {
+impl<P> From<FeatureCollection> for GeoJsonFeatureCollection<P> {
     fn from(fc: FeatureCollection) -> Self {
-        GeoJsonFeatureCollection(fc)
+        GeoJsonFeatureCollection(fc, PhantomData)
     }
 }
 
 /// A `GeoJSON` `FeatureCollection` input
+// The features are described by `P` (cf. [`GeoJsonFeatureCollection`]).
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct FeatureCollectionGeoJsonInput {
+pub struct FeatureCollectionGeoJsonInput<P: FeatureProperties> {
     #[schema(inline)]
-    pub value: GeoJsonFeatureCollection,
+    pub value: GeoJsonFeatureCollection<P>,
     pub media_type: GeoJsonInputMediaType,
 }
 
-impl FeatureCollectionGeoJsonInput {
+impl<P: FeatureProperties> FeatureCollectionGeoJsonInput<P> {
     pub fn value(&self) -> &FeatureCollection {
         self.value.as_ref()
     }

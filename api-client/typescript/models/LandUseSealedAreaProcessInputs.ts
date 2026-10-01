@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { FeatureCollectionGeoJsonInput } from '../models/FeatureCollectionGeoJsonInput';
+import { FeatureCollectionGeoJsonInputLandUseSiteProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSiteProperties';
 import { JsonInputPreviousLandUseSummary } from '../models/JsonInputPreviousLandUseSummary';
 import { UnitForArea } from '../models/UnitForArea';
 import { HttpFile } from '../http/http';
@@ -19,7 +19,7 @@ export class LandUseSealedAreaProcessInputs {
     /**
     * `GeoJSON` `FeatureCollection` representing sites to analyze for land-use calculation.
     */
-    'sites': FeatureCollectionGeoJsonInput;
+    'sites': FeatureCollectionGeoJsonInputLandUseSiteProperties;
     /**
     * Property name in the features that contains the location/site name.
     */
@@ -49,7 +49,7 @@ export class LandUseSealedAreaProcessInputs {
         {
             "name": "sites",
             "baseName": "sites",
-            "type": "FeatureCollectionGeoJsonInput",
+            "type": "FeatureCollectionGeoJsonInputLandUseSiteProperties",
             "format": ""
         },
         {

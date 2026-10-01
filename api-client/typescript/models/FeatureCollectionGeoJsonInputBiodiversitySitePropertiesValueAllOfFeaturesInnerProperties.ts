@@ -10,16 +10,21 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONFeatureCollection } from '../models/GeoJSONFeatureCollection';
-import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
+import { BiodiversitySiteSpecification } from '../models/BiodiversitySiteSpecification';
 import { HttpFile } from '../http/http';
 
 /**
-* A `GeoJSON` `FeatureCollection` input
+* Expected properties of a site feature in the input `GeoJSON`.
 */
-export class FeatureCollectionGeoJsonInput {
-    'value': GeoJSONFeatureCollection;
-    'mediaType': GeoJsonInputMediaType;
+export class FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties {
+    /**
+    * Name of the site
+    */
+    'name'?: string;
+    /**
+    * Type of the site, which determines its impact radius
+    */
+    'type'?: BiodiversitySiteSpecification;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -27,20 +32,20 @@ export class FeatureCollectionGeoJsonInput {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "value",
-            "baseName": "value",
-            "type": "GeoJSONFeatureCollection",
+            "name": "name",
+            "baseName": "name",
+            "type": "string",
             "format": ""
         },
         {
-            "name": "mediaType",
-            "baseName": "mediaType",
-            "type": "GeoJsonInputMediaType",
+            "name": "type",
+            "baseName": "type",
+            "type": "BiodiversitySiteSpecification",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return FeatureCollectionGeoJsonInput.attributeTypeMap;
+        return FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties.attributeTypeMap;
     }
 
     public constructor() {

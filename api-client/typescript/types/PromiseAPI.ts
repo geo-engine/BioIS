@@ -10,6 +10,8 @@ import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
 import { BiodiversitySensitiveAreasProcessParams } from '../models/BiodiversitySensitiveAreasProcessParams';
+import { BiodiversitySiteProperties } from '../models/BiodiversitySiteProperties';
+import { BiodiversitySiteSpecification } from '../models/BiodiversitySiteSpecification';
 import { BooleanField } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -40,10 +42,18 @@ import { DescriptionType } from '../models/DescriptionType';
 import { DurationField } from '../models/DurationField';
 import { Exception } from '../models/Exception';
 import { Execute } from '../models/Execute';
-import { FeatureCollectionGeoJsonInput } from '../models/FeatureCollectionGeoJsonInput';
+import { FeatureCollectionGeoJsonInputBiodiversitySiteProperties } from '../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties';
+import { FeatureCollectionGeoJsonInputLandUseSiteProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSiteProperties';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValue } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties';
 import { Format } from '../models/Format';
 import { GeoJSONFeature } from '../models/GeoJSONFeature';
-import { GeoJSONFeatureCollection } from '../models/GeoJSONFeatureCollection';
 import { GeoJSONFeatureGeometry } from '../models/GeoJSONFeatureGeometry';
 import { GeoJSONFeatureId } from '../models/GeoJSONFeatureId';
 import { GeoJSONField } from '../models/GeoJSONField';
@@ -75,6 +85,8 @@ import { JsonInputPreviousLandUseSummaryValue } from '../models/JsonInputPreviou
 import { LandUseSealedAreaProcessInputs } from '../models/LandUseSealedAreaProcessInputs';
 import { LandUseSealedAreaProcessOutputs } from '../models/LandUseSealedAreaProcessOutputs';
 import { LandUseSealedAreaProcessParams } from '../models/LandUseSealedAreaProcessParams';
+import { LandUseSiteProperties } from '../models/LandUseSiteProperties';
+import { LandUseSiteSpecification } from '../models/LandUseSiteSpecification';
 import { LandingPage } from '../models/LandingPage';
 import { License } from '../models/License';
 import { Link } from '../models/Link';
@@ -340,24 +352,24 @@ export class PromiseProcessesApi {
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results>> {
+    public executionWithHttpInfo(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<HttpInfo<Results | StatusInfo>> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.executionWithHttpInfo(processID, execute, observableOptions);
         return result.toPromise();
     }
 
     /**
-     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).
+     * Create a new job.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062/18-062.html#sc_create_job).  Schema: <https://schemas.opengis.net/ogcapi/processes/part1/1.0/openapi/ogcapi-processes-1.yaml>
      * Execute a process
      * @param processID
      * @param execute
      */
-    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results> {
+    public execution(processID: string, execute: Execute, _options?: PromiseConfigurationOptions): Promise<Results | StatusInfo> {
         const observableOptions = wrapOptions(_options);
         const result = this.api.execution(processID, execute, observableOptions);
         return result.toPromise();

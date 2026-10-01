@@ -10,13 +10,16 @@
  * Do not edit the class manually.
  */
 
-import { GeoJSONFeature } from '../models/GeoJSONFeature';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValue } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue';
+import { GeoJsonInputMediaType } from '../models/GeoJsonInputMediaType';
 import { HttpFile } from '../http/http';
 
-export class GeoJSONFeatureCollection {
-    'type': GeoJSONFeatureCollectionTypeEnum;
-    'features': Array<GeoJSONFeature>;
-    'bbox'?: Array<number>;
+/**
+* A `GeoJSON` `FeatureCollection` input
+*/
+export class FeatureCollectionGeoJsonInputLandUseSiteProperties {
+    'value': FeatureCollectionGeoJsonInputLandUseSitePropertiesValue;
+    'mediaType': GeoJsonInputMediaType;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,33 +27,24 @@ export class GeoJSONFeatureCollection {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "type",
-            "baseName": "type",
-            "type": "GeoJSONFeatureCollectionTypeEnum",
+            "name": "value",
+            "baseName": "value",
+            "type": "FeatureCollectionGeoJsonInputLandUseSitePropertiesValue",
             "format": ""
         },
         {
-            "name": "features",
-            "baseName": "features",
-            "type": "Array<GeoJSONFeature>",
-            "format": ""
-        },
-        {
-            "name": "bbox",
-            "baseName": "bbox",
-            "type": "Array<number>",
+            "name": "mediaType",
+            "baseName": "mediaType",
+            "type": "GeoJsonInputMediaType",
             "format": ""
         }    ];
 
     static getAttributeTypeMap() {
-        return GeoJSONFeatureCollection.attributeTypeMap;
+        return FeatureCollectionGeoJsonInputLandUseSiteProperties.attributeTypeMap;
     }
 
     public constructor() {
     }
 }
 
-export enum GeoJSONFeatureCollectionTypeEnum {
-    FeatureCollection = 'FeatureCollection'
-}
 

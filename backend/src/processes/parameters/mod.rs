@@ -17,8 +17,9 @@ pub use data_resource::{
 #[cfg(test)]
 pub use geo_json::GeoJsonInputMediaType;
 pub use geo_json::{
-    FeatureCollectionGeoJsonInput, GeoJsonFeatureCollection, PointGeoJson, PointGeoJsonInput,
-    geojson_feature_collection_utils, geojson_feature_utils,
+    FeatureCollectionGeoJsonInput, FeatureProperties, GeoJsonFeatureCollection,
+    GeoJsonGeometryType, PointGeoJson, PointGeoJsonInput, geojson_feature_collection_utils,
+    geojson_feature_utils, optional_feature_properties,
 };
 #[cfg(test)]
 pub use units::Hectare;
@@ -87,12 +88,6 @@ impl_extern_schema!(
     PointGeoJson,
     "GeoJSON Point",
     "https://geojson.org/schema/Point.json"
-);
-
-impl_extern_schema!(
-    GeoJsonFeatureCollection,
-    "GeoJSON FeatureCollection",
-    "https://geojson.org/schema/FeatureCollection.json"
 );
 
 impl_extern_schema!(
@@ -173,6 +168,18 @@ pub struct RelativeJsonPointer(#[schemars(length(min = 1))] pub String);
 
 fn relative_json_pointer_format(schema: &mut schemars::Schema) {
     schema.insert("format".into(), "relative-json-pointer".into());
+}
+
+impl RelativeJsonPointer {
+    /// The schema of a [`RelativeJsonPointer`] input with a `default` value, e.g., the name of the expected property.
+    pub fn schema_with_default(
+        generator: &mut schemars::generate::SchemaGenerator,
+        default: &str,
+    ) -> schemars::Schema {
+        let mut schema = generator.root_schema_for::<Self>();
+        schema.insert("default".into(), default.into());
+        schema
+    }
 }
 
 impl AsRef<str> for RelativeJsonPointer {

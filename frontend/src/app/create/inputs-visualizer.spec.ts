@@ -4,6 +4,7 @@ import { defaultInputs, InputDescription, retrieveInputDescription } from './sch
 import { enumOptions, integerRangeList, InputsFormComponent } from './inputs-visualizer.component';
 import { InputDescription as ApiInputDescription } from '@geoengine/biois';
 import { form, MaybeFieldTree } from '@angular/forms/signals';
+import { mockResizeObserverClass } from '../util/mock-resize-observer';
 
 describe('enumOptions', () => {
   it('should handle invalid or missing schemas', () => {
@@ -136,6 +137,8 @@ describe('InputsFormComponent', () => {
   let fixture: ComponentFixture<InputsFormComponent>;
 
   beforeEach(async () => {
+    globalThis.ResizeObserver = mockResizeObserverClass([]);
+
     await TestBed.configureTestingModule({
       imports: [InputsFormComponent],
     }).compileComponents();

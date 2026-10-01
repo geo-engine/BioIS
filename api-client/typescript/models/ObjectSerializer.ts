@@ -6,6 +6,8 @@ export * from '../models/AuthCodeResponse';
 export * from '../models/BiodiversitySensitiveAreasProcessInputs';
 export * from '../models/BiodiversitySensitiveAreasProcessOutputs';
 export * from '../models/BiodiversitySensitiveAreasProcessParams';
+export * from '../models/BiodiversitySiteProperties';
+export * from '../models/BiodiversitySiteSpecification';
 export * from '../models/BooleanField';
 export * from '../models/BoundingBox';
 export * from '../models/Conformance';
@@ -36,10 +38,18 @@ export * from '../models/DescriptionType';
 export * from '../models/DurationField';
 export * from '../models/Exception';
 export * from '../models/Execute';
-export * from '../models/FeatureCollectionGeoJsonInput';
+export * from '../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties';
+export * from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue';
+export * from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner';
+export * from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry';
+export * from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties';
+export * from '../models/FeatureCollectionGeoJsonInputLandUseSiteProperties';
+export * from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue';
+export * from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner';
+export * from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry';
+export * from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties';
 export * from '../models/Format';
 export * from '../models/GeoJSONFeature';
-export * from '../models/GeoJSONFeatureCollection';
 export * from '../models/GeoJSONFeatureGeometry';
 export * from '../models/GeoJSONFeatureId';
 export * from '../models/GeoJSONField';
@@ -71,6 +81,8 @@ export * from '../models/JsonInputPreviousLandUseSummaryValue';
 export * from '../models/LandUseSealedAreaProcessInputs';
 export * from '../models/LandUseSealedAreaProcessOutputs';
 export * from '../models/LandUseSealedAreaProcessParams';
+export * from '../models/LandUseSiteProperties';
+export * from '../models/LandUseSiteSpecification';
 export * from '../models/LandingPage';
 export * from '../models/License';
 export * from '../models/Link';
@@ -124,6 +136,8 @@ import { AuthCodeResponse } from '../models/AuthCodeResponse';
 import { BiodiversitySensitiveAreasProcessInputs     } from '../models/BiodiversitySensitiveAreasProcessInputs';
 import { BiodiversitySensitiveAreasProcessOutputs } from '../models/BiodiversitySensitiveAreasProcessOutputs';
 import { BiodiversitySensitiveAreasProcessParams    } from '../models/BiodiversitySensitiveAreasProcessParams';
+import { BiodiversitySiteProperties   } from '../models/BiodiversitySiteProperties';
+import { BiodiversitySiteSpecification } from '../models/BiodiversitySiteSpecification';
 import { BooleanField     , BooleanFieldTypeEnum  , BooleanFieldFormatEnum       } from '../models/BooleanField';
 import { BoundingBox } from '../models/BoundingBox';
 import { Conformance } from '../models/Conformance';
@@ -154,10 +168,18 @@ import { DescriptionType } from '../models/DescriptionType';
 import { DurationField     , DurationFieldTypeEnum  , DurationFieldFormatEnum     } from '../models/DurationField';
 import { Exception } from '../models/Exception';
 import { Execute     } from '../models/Execute';
-import { FeatureCollectionGeoJsonInput   } from '../models/FeatureCollectionGeoJsonInput';
+import { FeatureCollectionGeoJsonInputBiodiversitySiteProperties   } from '../models/FeatureCollectionGeoJsonInputBiodiversitySiteProperties';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue, FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum     } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry, FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum     } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry';
+import { FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties   } from '../models/FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties';
+import { FeatureCollectionGeoJsonInputLandUseSiteProperties   } from '../models/FeatureCollectionGeoJsonInputLandUseSiteProperties';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValue, FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum     } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValue';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry, FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum     } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry';
+import { FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties   } from '../models/FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties';
 import { Format } from '../models/Format';
 import { GeoJSONFeature, GeoJSONFeatureTypeEnum       } from '../models/GeoJSONFeature';
-import { GeoJSONFeatureCollection, GeoJSONFeatureCollectionTypeEnum     } from '../models/GeoJSONFeatureCollection';
 import { GeoJSONFeatureGeometryClass } from '../models/GeoJSONFeatureGeometry';
 import { GeoJSONFeatureIdClass } from '../models/GeoJSONFeatureId';
 import { GeoJSONField     , GeoJSONFieldTypeEnum  , GeoJSONFieldFormatEnum     } from '../models/GeoJSONField';
@@ -189,6 +211,8 @@ import { JsonInputPreviousLandUseSummaryValue      } from '../models/JsonInputPr
 import { LandUseSealedAreaProcessInputs       } from '../models/LandUseSealedAreaProcessInputs';
 import { LandUseSealedAreaProcessOutputs } from '../models/LandUseSealedAreaProcessOutputs';
 import { LandUseSealedAreaProcessParams    } from '../models/LandUseSealedAreaProcessParams';
+import { LandUseSiteProperties   } from '../models/LandUseSiteProperties';
+import { LandUseSiteSpecification } from '../models/LandUseSiteSpecification';
 import { LandingPage } from '../models/LandingPage';
 import { License } from '../models/License';
 import { Link } from '../models/Link';
@@ -250,14 +274,18 @@ let enumsMap: Set<string> = new Set<string>([
     "AnyFieldTypeEnum",
     "ArrayFieldTypeEnum",
     "ArrayFieldFormatEnum",
+    "BiodiversitySiteSpecification",
     "BooleanFieldTypeEnum",
     "BooleanFieldFormatEnum",
     "DateFieldTypeEnum",
     "DateTimeFieldTypeEnum",
     "DurationFieldTypeEnum",
     "DurationFieldFormatEnum",
+    "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueTypeEnum",
+    "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum",
+    "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueTypeEnum",
+    "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometryTypeEnum",
     "GeoJSONFeatureTypeEnum",
-    "GeoJSONFeatureCollectionTypeEnum",
     "GeoJSONFeatureGeometryTypeEnum",
     "GeoJSONFieldTypeEnum",
     "GeoJSONFieldFormatEnum",
@@ -277,6 +305,7 @@ let enumsMap: Set<string> = new Set<string>([
     "JobControlOptions",
     "JobType",
     "JsonInputMediaType",
+    "LandUseSiteSpecification",
     "NumberFieldTypeEnum",
     "NumberFieldFormatEnum",
     "ObjectFieldTypeEnum",
@@ -306,6 +335,7 @@ let typeMap: {[index: string]: any} = {
     "BiodiversitySensitiveAreasProcessInputs": BiodiversitySensitiveAreasProcessInputs,
     "BiodiversitySensitiveAreasProcessOutputs": BiodiversitySensitiveAreasProcessOutputs,
     "BiodiversitySensitiveAreasProcessParams": BiodiversitySensitiveAreasProcessParams,
+    "BiodiversitySiteProperties": BiodiversitySiteProperties,
     "BooleanField": BooleanField,
     "BoundingBox": BoundingBox,
     "Conformance": Conformance,
@@ -336,10 +366,18 @@ let typeMap: {[index: string]: any} = {
     "DurationField": DurationField,
     "Exception": Exception,
     "Execute": Execute,
-    "FeatureCollectionGeoJsonInput": FeatureCollectionGeoJsonInput,
+    "FeatureCollectionGeoJsonInputBiodiversitySiteProperties": FeatureCollectionGeoJsonInputBiodiversitySiteProperties,
+    "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue": FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValue,
+    "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner": FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInner,
+    "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry": FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerGeometry,
+    "FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties": FeatureCollectionGeoJsonInputBiodiversitySitePropertiesValueAllOfFeaturesInnerProperties,
+    "FeatureCollectionGeoJsonInputLandUseSiteProperties": FeatureCollectionGeoJsonInputLandUseSiteProperties,
+    "FeatureCollectionGeoJsonInputLandUseSitePropertiesValue": FeatureCollectionGeoJsonInputLandUseSitePropertiesValue,
+    "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner": FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInner,
+    "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry": FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerGeometry,
+    "FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties": FeatureCollectionGeoJsonInputLandUseSitePropertiesValueAllOfFeaturesInnerProperties,
     "Format": Format,
     "GeoJSONFeature": GeoJSONFeature,
-    "GeoJSONFeatureCollection": GeoJSONFeatureCollection,
     "GeoJSONFeatureGeometry": GeoJSONFeatureGeometryClass,
     "GeoJSONFeatureId": GeoJSONFeatureIdClass,
     "GeoJSONField": GeoJSONField,
@@ -366,6 +404,7 @@ let typeMap: {[index: string]: any} = {
     "LandUseSealedAreaProcessInputs": LandUseSealedAreaProcessInputs,
     "LandUseSealedAreaProcessOutputs": LandUseSealedAreaProcessOutputs,
     "LandUseSealedAreaProcessParams": LandUseSealedAreaProcessParams,
+    "LandUseSiteProperties": LandUseSiteProperties,
     "LandingPage": LandingPage,
     "License": License,
     "Link": Link,

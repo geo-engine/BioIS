@@ -1,6 +1,7 @@
 use crate::processes::parameters::{
-    Area, DataResource, Fields, HasTableSchemaType, Percentage, SquareMeter, TableSchemaField,
-    TableSchemaType, UnitForArea,
+    Area, DataResource, FeatureProperties, Fields, GeoJsonGeometryType, HasTableSchemaType,
+    Percentage, SquareMeter, TableSchemaField, TableSchemaType, UnitForArea,
+    optional_feature_properties,
 };
 use anyhow::Result;
 use schemars::JsonSchema;
@@ -188,10 +189,37 @@ pub fn site_land_use_row_to_output(
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, ToSchema)]
 #[serde(rename_all = "camelCase")]
+#[schema(as = LandUseSiteSpecification)]
+#[schemars(rename = "LandUseSiteSpecification")]
 pub enum SiteSpecification {
     Site,
     NatureOnSite,
     NatureOffSite,
+}
+
+/// Expected properties of a site feature in the input `GeoJSON`.
+#[derive(Deserialize, Serialize, Debug, Clone, JsonSchema, ToSchema)]
+#[schema(as = LandUseSiteProperties)]
+#[schemars(transform = optional_feature_properties)]
+pub struct SiteProperties {
+    /// Name of the site
+    #[schema(required = false)]
+    pub name: String,
+    /// Land-use type of the site
+    #[schema(required = false)]
+    pub r#type: SiteSpecification,
+}
+
+impl SiteProperties {
+    pub const NAME: &'static str = "name";
+    pub const TYPE: &'static str = "type";
+}
+
+impl FeatureProperties for SiteProperties {
+    const GEOMETRY_TYPES: &'static [GeoJsonGeometryType] = &[
+        GeoJsonGeometryType::Polygon,
+        GeoJsonGeometryType::MultiPolygon,
+    ];
 }
 
 impl SiteSpecification {

@@ -14,8 +14,12 @@ export function mockResizeObserverClass(
       // jsdom does not implement ResizeObserver in the test environment, so we mock it to test our logic
     }
 
+    unobserve(_el: Element): void {
+      // not needed for the tests
+    }
+
     disconnect(): void {
       this.disconnected = true;
     }
-  } as unknown as typeof ResizeObserver;
+  };
 }

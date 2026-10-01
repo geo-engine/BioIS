@@ -6,8 +6,9 @@ use crate::{
         habitat_distance::natura2000_exists,
         parameters::{
             Area, DataResource, DataResourceSchema, DocumentationSource,
-            FeatureCollectionGeoJsonInput, Fields, Kilometers, RelativeJsonPointer, SquareMeter,
-            TableSchemaField, TableSchemaItemType, TableSchemaType, UnitForArea,
+            FeatureCollectionGeoJsonInput, FeatureProperties, Fields, GeoJsonGeometryType,
+            Kilometers, RelativeJsonPointer, SquareMeter, TableSchemaField, TableSchemaItemType,
+            TableSchemaType, UnitForArea, optional_feature_properties,
         },
         util::{json_input_value, to_output_keys},
     },
@@ -47,7 +48,10 @@ mod buffers {
     pub const OTHER_IMPACT: Kilometers = Kilometers(20.0);
 }
 
-#[derive(Debug, Clone, Copy, Serialize)]
+/// The schema uses the lowercase names that are parsed by [`SiteSpecification::from_str`].
+#[derive(Debug, Clone, Copy, Serialize, JsonSchema, ToSchema)]
+#[schemars(rename = "BiodiversitySiteSpecification", rename_all = "lowercase")]
+#[schema(as = BiodiversitySiteSpecification, rename_all = "lowercase")]
 enum SiteSpecification {
     Office,
     Agriculture,
@@ -87,6 +91,35 @@ impl FromStr for SiteSpecification {
     }
 }
 
+/// Expected properties of a site feature in the input `GeoJSON`.
+#[derive(Deserialize, Serialize, Debug, Clone, JsonSchema, ToSchema)]
+#[schema(as = BiodiversitySiteProperties)]
+#[schemars(transform = optional_feature_properties)]
+pub struct SiteProperties {
+    /// Name of the site
+    #[schema(required = false)]
+    pub name: String,
+    /// Type of the site, which determines its impact radius
+    #[schema(required = false)]
+    #[schemars(with = "SiteSpecification")]
+    #[schema(value_type = SiteSpecification)]
+    pub r#type: String,
+}
+
+impl SiteProperties {
+    pub const NAME: &'static str = "name";
+    pub const TYPE: &'static str = "type";
+}
+
+impl FeatureProperties for SiteProperties {
+    const GEOMETRY_TYPES: &'static [GeoJsonGeometryType] = &[
+        GeoJsonGeometryType::Point,
+        GeoJsonGeometryType::MultiPoint,
+        GeoJsonGeometryType::Polygon,
+        GeoJsonGeometryType::MultiPolygon,
+    ];
+}
+
 #[doc = include_str!("description.md")]
 #[derive(Debug, Clone)]
 pub struct BiodiversitySensitiveAreasProcess {
@@ -99,7 +132,7 @@ pub struct BiodiversitySensitiveAreasProcess {
 pub struct BiodiversitySensitiveAreasProcessInputs {
     /// Collection of all sites to be analyzed, including their location and specification (e.g. office building, agricultural field, mine, etc.).
     /// The impact radius will be determined based on the specification of each site (e.g. 5 km for office buildings, 10 km for agricultural fields, etc.).
-    pub sites: FeatureCollectionGeoJsonInput,
+    pub sites: FeatureCollectionGeoJsonInput<SiteProperties>,
 
     /// Name of the property in the input `GeoJSON` features that contains the location information.
     pub location_name_field: RelativeJsonPointer,
@@ -233,7 +266,7 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                             ..Default::default()
                         },
                         schema: generator
-                            .root_schema_for::<FeatureCollectionGeoJsonInput>()
+                            .root_schema_for::<FeatureCollectionGeoJsonInput<SiteProperties>>()
                             .to_value(),
                         ..Default::default()
                     },
@@ -255,9 +288,11 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                             }],
                             ..Default::default()
                         },
-                        schema: generator
-                            .root_schema_for::<RelativeJsonPointer>()
-                            .to_value(),
+                        schema: RelativeJsonPointer::schema_with_default(
+                            &mut generator,
+                            SiteProperties::NAME,
+                        )
+                        .to_value(),
                         ..Default::default()
                     },
                 ),
@@ -278,9 +313,11 @@ impl Processor for BiodiversitySensitiveAreasProcess {
                             }],
                             ..Default::default()
                         },
-                        schema: generator
-                            .root_schema_for::<RelativeJsonPointer>()
-                            .to_value(),
+                        schema: RelativeJsonPointer::schema_with_default(
+                            &mut generator,
+                            SiteProperties::TYPE,
+                        )
+                        .to_value(),
                         ..Default::default()
                     },
                 ),
@@ -862,7 +899,7 @@ fn site_row_into_output(
 pub async fn compute_biodiversity_sensitive_areas(
     db: &mut DbHandle,
     natura2000_schema: &str,
-    sites: FeatureCollectionGeoJsonInput,
+    sites: FeatureCollectionGeoJsonInput<SiteProperties>,
     location_property: &str,
     site_type_property: &str,
     unit_for_area: UnitForArea,
@@ -1201,6 +1238,31 @@ mod tests {
                 process.outputs.contains_key(key),
                 "expected output key `{key}` in process outputs"
             );
+        }
+
+        // sites describe their geometries and properties
+        let sites_schema = &process.inputs[input_keys::SITES].schema;
+        let feature_schema = &sites_schema["properties"]["value"]["allOf"][1]["properties"]["features"]
+            ["items"]["properties"];
+        assert_eq!(
+            feature_schema["geometry"]["anyOf"].as_array().map(Vec::len),
+            Some(4)
+        );
+        assert_eq!(
+            feature_schema["properties"]["properties"]["type"]["$ref"],
+            "#/$defs/BiodiversitySiteSpecification"
+        );
+        assert_eq!(
+            sites_schema["$defs"]["BiodiversitySiteSpecification"]["enum"],
+            json!(["office", "agriculture", "marine", "mining", "other"])
+        );
+
+        // pointers default to the described properties
+        for (key, default) in [
+            (input_keys::LOCATION_NAME_FIELD, SiteProperties::NAME),
+            (input_keys::SITE_TYPE_FIELD, SiteProperties::TYPE),
+        ] {
+            assert_eq!(process.inputs[key].schema["default"], default);
         }
     }
 
