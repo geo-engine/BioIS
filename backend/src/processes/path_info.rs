@@ -8,9 +8,11 @@ use crate::processes::{
     biodiversity_sensitive_areas::{
         BiodiversitySensitiveAreasProcessInputs, BiodiversitySensitiveAreasProcessOutputs,
     },
+    climate_risk::{ClimateRiskInputs, ClimateRiskRawRow, ClimateRiskRow},
     habitat_distance::{HabitatDistanceProcessInputs, HabitatDistanceProcessOutputs},
     land_use_sealed_area::{LandUseSealedAreaProcessInputs, LandUseSealedAreaProcessOutputs},
     ndvi::{NDVIProcessInputs, NDVIProcessOutputs},
+    parameters::{DataResource, DataResourceSchema},
 };
 use axum::Json;
 use ogcapi::types::processes::Response;
@@ -85,6 +87,48 @@ fn execute_biodiversity_sensitive_areas(
 ) {
 }
 
+/// Process execution (Climate Risk)
+#[allow(unused, reason = "Placeholder for spec only")]
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct ClimateRiskProcessParams {
+    pub inputs: ClimateRiskInputs,
+    #[serde(default)]
+    #[allow(clippy::zero_sized_map_values, reason = "Placeholder for spec only")]
+    pub outputs: HashMap<String, ()>,
+    #[serde(default)]
+    pub response: Response,
+}
+
+/// Response body of a climate-risk execution: one summary table per computed scenario, plus the
+/// optional `inputs` echo and `rawEnsembleData`. Which scenario keys are present depends on the
+/// requested outputs and on the model registry (`conf/nexgddp_models.toml`); the process
+/// description's `outputs` is the authoritative list for a given deployment.
+#[allow(unused, reason = "Placeholder for spec only")]
+#[derive(ToSchema, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ClimateRiskProcessResponses {
+    /// Summary table for SSP2-4.5.
+    #[schema(value_type = Option<DataResourceSchema>, inline)]
+    pub ssp245: Option<DataResource<Vec<ClimateRiskRow>>>,
+    /// Summary table for SSP5-8.5.
+    #[schema(value_type = Option<DataResourceSchema>, inline)]
+    pub ssp585: Option<DataResource<Vec<ClimateRiskRow>>>,
+    /// Per-model raw values for each variable x scenario combination.
+    #[schema(value_type = Option<DataResourceSchema>, inline)]
+    pub raw_ensemble_data: Option<DataResource<Vec<ClimateRiskRawRow>>>,
+    /// The submitted inputs, echoed back.
+    pub inputs: Option<ClimateRiskInputs>,
+}
+
+#[allow(unused, reason = "Placeholder for spec only")]
+#[utoipa::path(
+    post,
+    path = "/processes/climate-risk/execution",
+    tag = "Processes",
+    responses((status = OK, body = ClimateRiskProcessResponses))
+)]
+fn execute_climate_risk(Json(_input): Json<ClimateRiskProcessParams>) {}
+
 /// Process execution (Land Use Sealed Area – ESRS E4-5)
 #[allow(unused, reason = "Placeholder for spec only")]
 #[derive(Deserialize, ToSchema, Debug)]
@@ -113,6 +157,7 @@ fn execute_land_use_sealed_area(Json(_input): Json<LandUseSealedAreaProcessParam
     execute_ndvi,
     execute_habitat_distance,
     execute_biodiversity_sensitive_areas,
+    execute_climate_risk,
     execute_land_use_sealed_area
 ))]
 pub struct ProcessesOpenApiSpec;

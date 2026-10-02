@@ -1,0 +1,36 @@
+# Full NEX-GDDP-CMIP6 model matrix, not yet ingested.
+#
+# The dev registry (`nexgddp_models.toml`) is trimmed to the models/scenarios that actually have
+# GeoEngine datasets, so the process description and the `models` dropdown only offer what can run.
+# This file is the restore path: copy it over `nexgddp_models.toml` once the remaining datasets are
+# ingested via `notebooks/nexgddp_cmip6_ingest.ipynb` (which reads this file for id/variant/grid).
+
+[[model]]
+id = "ACCESS-CM2"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp585"]
+
+[[model]]
+id = "MPI-ESM1-2-LR"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp585"]
+
+[[model]]
+id = "IPSL-CM6A-LR"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp585"]
+
+[[model]]
+id = "MRI-ESM2-0"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp585"]
+
+[[model]]
+id = "GFDL-ESM4"
+variant = "r1i1p1f1"
+grid = "gr1"
+scenarios = ["historical", "ssp245", "ssp585"]

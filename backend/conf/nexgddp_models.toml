@@ -1,0 +1,11 @@
+# NEX-GDDP-CMIP6 model registry — the source of truth for what climate-risk can compute.
+#
+# Only models/scenarios with a registered GeoEngine dataset belong here; the process description and
+# the `models` dropdown are derived from this file. `nexgddp_models.full.toml` holds the full
+# not-yet-ingested matrix — copy it over this file after a full ingest.
+
+[[model]]
+id = "ACCESS-CM2"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245"]
