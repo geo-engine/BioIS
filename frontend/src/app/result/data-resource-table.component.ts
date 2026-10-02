@@ -25,9 +25,21 @@ import { RowOverflowDirective } from './row-overflow.directive';
               </td>
             }
             @case (ColumnType.Number) {
-              <td mat-cell *matCellDef="let element">
-                <span class="cell-content">{{ element[column.key] | number: '1.0-2' }}</span>
-              </td>
+              @if (column.displayKind) {
+                <td mat-cell *matCellDef="let element" class="cell-content">
+                  <mat-chip class="cell-content">
+                    <span
+                      class="color-dot"
+                      [style.background-color]="displayColor(column, element)"
+                    ></span>
+                    {{ displayValue(column, element) }}
+                  </mat-chip>
+                </td>
+              } @else {
+                <td mat-cell *matCellDef="let element">
+                  <span>{{ formatValue(column, element) }}</span>
+                </td>
+              }
             }
             @case (ColumnType.Boolean) {
               <td mat-cell *matCellDef="let element">
@@ -94,6 +106,12 @@ import { RowOverflowDirective } from './row-overflow.directive';
       padding-bottom: 1rem;
       vertical-align: top; /* Keeps text nicely aligned at the top during expansion */
 
+      mat-chip:has(.color-dot) {
+        min-width: 5rem;
+        width: max-content;
+        justify-content: center;
+      }
+
       .cell-content {
         max-height: calc(2 * 1.4em); /* Limits text to roughly 2 lines */
         line-height: 1.4;
@@ -103,6 +121,15 @@ import { RowOverflowDirective } from './row-overflow.directive';
         text-overflow: ellipsis;
 
         transition: max-height 0.25s ease-out;
+      }
+
+      .color-dot {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+        margin-right: 0.5rem;
+        border: 1px solid var(--mat-sys-outline);
+        border-radius: 50%;
       }
     }
 
@@ -164,6 +191,23 @@ export class DataResourceTableComponent {
   toggleRow(element: Row): void {
     this.expandedElement.set(this.isExpanded(element) ? null : element);
   }
+
+  formatValue(column: Column, element: Row): string {
+    const value = element[column.key];
+    if (typeof value !== 'number') return String(value);
+    return new Intl.NumberFormat('en', { maximumFractionDigits: 2 }).format(value);
+  }
+
+  displayValue(column: Column, element: Row): string {
+    const label = column.labelField ? element[column.labelField] : undefined;
+    if (typeof label === 'string') return label;
+    return this.formatValue(column, element);
+  }
+
+  displayColor(column: Column, element: Row): string {
+    const color = column.colorField ? element[column.colorField] : undefined;
+    return typeof color === 'string' ? color : 'transparent';
+  }
 }
 
 export type Row = Record<string, unknown>;
@@ -173,7 +217,12 @@ export interface Column {
   key: string;
   type: ColumnType;
   isPrimaryKey: boolean;
+  displayKind?: DisplayKind;
+  labelField?: string;
+  colorField?: string;
 }
+
+export type DisplayKind = 'riskProbability' | 'riskAnomaly';
 
 export enum ColumnType {
   String = 'string',
@@ -221,13 +270,18 @@ export function tableColumnInfoFromValue(
 ): Array<Column> {
   if (!('fields' in schema)) return [];
 
-  const fields = schema['fields'] as [
-    {
-      name: string;
-      type?: 'string' | 'number' | 'integer' | 'boolean' | 'list';
-      title?: string;
-    },
-  ];
+  const fields = schema['fields'] as Array<{
+    name: string;
+    type?: 'string' | 'number' | 'integer' | 'boolean' | 'list';
+    title?: string;
+  }>;
+
+  const display = schema['biois'] as
+    | {
+        display?: Record<string, { kind?: DisplayKind; labelField?: string; colorField?: string }>;
+        hiddenFields?: string[];
+      }
+    | undefined;
 
   const primaryKey = new Array<string>();
   if ('primaryKey' in schema) {
@@ -241,14 +295,21 @@ export function tableColumnInfoFromValue(
     }
   }
 
-  return fields.map((field) => {
-    const sampleValue = data[0]?.[field.name];
-    const columnType = columnTypeOfField(field.type, sampleValue);
-    return {
-      name: field.title ?? field.name,
-      key: field.name,
-      type: columnType,
-      isPrimaryKey: primaryKey.includes(field.name),
-    };
-  });
+  const hiddenFields = new Set(display?.hiddenFields ?? []);
+  return fields
+    .filter((field) => !hiddenFields.has(field.name))
+    .map((field) => {
+      const sampleValue = data[0]?.[field.name];
+      const columnType = columnTypeOfField(field.type, sampleValue);
+      const metadata = display?.display?.[field.name];
+      return {
+        name: field.title ?? field.name,
+        key: field.name,
+        type: columnType,
+        isPrimaryKey: primaryKey.includes(field.name),
+        displayKind: metadata?.kind,
+        labelField: metadata?.labelField,
+        colorField: metadata?.colorField,
+      };
+    });
 }

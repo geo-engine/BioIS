@@ -9,7 +9,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormValueControl, ValidationError, WithOptionalFieldTree } from '@angular/forms/signals';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInput, MatInputModule } from '@angular/material/input';
 import { FieldType } from './schema-info';
 
@@ -20,10 +19,6 @@ import { FieldType } from './schema-info';
       <mat-label>{{ title() }}</mat-label>
 
       @switch (type()) {
-        @case (FieldType.String)
-        @default {
-          <input matInput type="text" [value]="value()" (input)="value.set($event.target.value)" />
-        }
         @case (FieldType.Integer) {
           <input
             matInput
@@ -42,10 +37,9 @@ import { FieldType } from './schema-info';
             (input)="value.set($event.target.valueAsNumber)"
           />
         }
-        @case (FieldType.Boolean) {
-          <mat-checkbox [checked]="value()" (change)="value.set($event.checked)"
-            >True/False</mat-checkbox
-          >
+        @case (FieldType.String)
+        @default {
+          <input matInput type="text" [value]="value()" (input)="value.set($event.target.value)" />
         }
       }
 
@@ -56,7 +50,7 @@ import { FieldType } from './schema-info';
   `,
   styles: ``,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatFormFieldModule, MatInputModule, MatCheckboxModule],
+  imports: [CommonModule, MatFormFieldModule, MatInputModule],
 })
 export class SimpleFormFieldComponent implements FormValueControl<unknown> {
   readonly title = input.required<string>();
