@@ -29,16 +29,40 @@ pub use types::{ClimateRiskInputs, ClimateRiskOutputs, ClimateRiskRawRow, Climat
 use self::{compute::*, types::*};
 
 // ponytail: model registry loaded once at startup from TOML; add models by editing conf/nexgddp_models.toml, no recompile
-static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> = LazyLock::new(|| {
+static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> =
+    LazyLock::new(load_model_registry);
+
+/// Reads the model registry, returning an empty one if it cannot be read or parsed.
+///
+/// A missing or broken registry must not take down the other processes, so this only warns; the
+/// reason is kept in [`REGISTRY_PROBLEM`] so that a climate-risk execution can report *why* no
+/// models are available instead of an unexplained empty selection.
+fn load_model_registry() -> HashMap<String, ClimateModelProperties> {
     let path = &CONFIG.nexgddp_cmip6.model_registry_path;
-    let content = std::fs::read_to_string(path).unwrap_or_else(|_| {
-        tracing::warn!("Could not read model registry from {path}, using empty registry");
-        String::new()
-    });
-    let registry: ModelRegistryToml = toml::from_str(&content).unwrap_or_else(|e| {
-        tracing::warn!("Could not parse model registry: {e}");
-        ModelRegistryToml { model: Vec::new() }
-    });
+    let content = match std::fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(error) => {
+            let reason = format!("model registry `{path}` could not be read: {error}");
+            tracing::warn!("{reason}, climate-risk will offer no models");
+            REGISTRY_PROBLEM
+                .lock()
+                .expect("registry problem lock poisoned")
+                .replace(reason);
+            return HashMap::new();
+        }
+    };
+    let registry: ModelRegistryToml = match toml::from_str(&content) {
+        Ok(registry) => registry,
+        Err(error) => {
+            let reason = format!("model registry `{path}` could not be parsed: {error}");
+            tracing::warn!("{reason}, climate-risk will offer no models");
+            REGISTRY_PROBLEM
+                .lock()
+                .expect("registry problem lock poisoned")
+                .replace(reason);
+            return HashMap::new();
+        }
+    };
     let mut entries: Vec<(String, ClimateModelProperties)> = registry
         .model
         .into_iter()
@@ -67,7 +91,18 @@ static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> = LazyL
     // ponytail: sort by model id for deterministic iteration order
     entries.sort_by(|a, b| a.0.cmp(&b.0));
     entries.into_iter().collect()
-});
+}
+
+/// Why the registry is empty, if loading it failed, cf. [`load_model_registry`].
+static REGISTRY_PROBLEM: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+/// The reason the registry could not be loaded, if it failed.
+fn registry_problem() -> Option<String> {
+    REGISTRY_PROBLEM
+        .lock()
+        .ok()
+        .and_then(|problem| problem.clone())
+}
 
 #[derive(serde::Deserialize)]
 struct ModelRegistryToml {
@@ -359,13 +394,15 @@ impl Processor for ClimateRiskProcess {
             );
         }
         if model_props.is_empty() {
-            let detail = if dropped_models.is_empty() {
-                String::new()
-            } else {
+            let detail = if !dropped_models.is_empty() {
                 format!(
                     "; none of the requested models ({}) are available",
                     dropped_models.join(", ")
                 )
+            } else if let Some(problem) = registry_problem() {
+                format!("; {problem}")
+            } else {
+                "; the model registry is empty".to_string()
             };
             anyhow::bail!("No climate models valid / available{detail}");
         }
