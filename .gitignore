@@ -26,3 +26,12 @@ Settings.toml
 
 api-client/typescript/node_modules
 api-client/typescript/package-lock.json
+
+# Local review/plan notes
+PLAN-review-comments.md
+
+# Local run logs
+RUN_LOG.md
+
+# Frontend test coverage output
+frontend/coverage/
