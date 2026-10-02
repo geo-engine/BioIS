@@ -5,6 +5,7 @@ apis/CapabilitiesApi.ts
 apis/ContactApi.ts
 apis/DefaultApi.ts
 apis/ProcessesApi.ts
+apis/ProfilesApi.ts
 apis/UserApi.ts
 apis/baseapi.ts
 apis/exception.ts
@@ -14,6 +15,7 @@ docs/CapabilitiesApi.md
 docs/ContactApi.md
 docs/DefaultApi.md
 docs/ProcessesApi.md
+docs/ProfilesApi.md
 docs/UserApi.md
 git_push.sh
 http/http.ts
@@ -32,6 +34,10 @@ models/BiodiversitySiteProperties.ts
 models/BiodiversitySiteSpecification.ts
 models/BooleanField.ts
 models/BoundingBox.ts
+models/ClimateRiskInputs.ts
+models/ClimateRiskProcessParams.ts
+models/ClimateRiskProcessResponses.ts
+models/ClimateVariable.ts
 models/Conformance.ts
 models/Constraints.ts
 models/Constraints1.ts

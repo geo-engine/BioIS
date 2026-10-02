@@ -9,6 +9,8 @@ import { mergeMap, map } from "../rxjsStub";
 import { AuthCodeResponse } from "../models/AuthCodeResponse";
 import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
 import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
+import { ClimateRiskProcessParams } from "../models/ClimateRiskProcessParams";
+import { ClimateRiskProcessResponses } from "../models/ClimateRiskProcessResponses";
 import { Conformance } from "../models/Conformance";
 import { ContactRequest } from "../models/ContactRequest";
 import { Execute } from "../models/Execute";
@@ -461,6 +463,64 @@ export class ObservableProcessesApi {
     ).pipe(
       map(
         (apiResponse: HttpInfo<BiodiversitySensitiveAreasProcessOutputs>) =>
+          apiResponse.data,
+      ),
+    );
+  }
+
+  /**
+   * @param climateRiskProcessParams
+   */
+  public executeClimateRiskWithHttpInfo(
+    climateRiskProcessParams: ClimateRiskProcessParams,
+    _options?: ConfigurationOptions,
+  ): Observable<HttpInfo<ClimateRiskProcessResponses>> {
+    const _config = mergeConfiguration(this.configuration, _options);
+
+    const requestContextPromise = this.requestFactory.executeClimateRisk(
+      climateRiskProcessParams,
+      _config,
+    );
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (const middleware of _config.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (const middleware of _config.middleware.reverse()) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) =>
+              this.responseProcessor.executeClimateRiskWithHttpInfo(rsp),
+            ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * @param climateRiskProcessParams
+   */
+  public executeClimateRisk(
+    climateRiskProcessParams: ClimateRiskProcessParams,
+    _options?: ConfigurationOptions,
+  ): Observable<ClimateRiskProcessResponses> {
+    return this.executeClimateRiskWithHttpInfo(
+      climateRiskProcessParams,
+      _options,
+    ).pipe(
+      map(
+        (apiResponse: HttpInfo<ClimateRiskProcessResponses>) =>
           apiResponse.data,
       ),
     );
@@ -962,6 +1022,78 @@ export class ObservableProcessesApi {
   ): Observable<StatusInfo> {
     return this.statusWithHttpInfo(jobId, _options).pipe(
       map((apiResponse: HttpInfo<StatusInfo>) => apiResponse.data),
+    );
+  }
+}
+
+import {
+  ProfilesApiRequestFactory,
+  ProfilesApiResponseProcessor,
+} from "../apis/ProfilesApi";
+export class ObservableProfilesApi {
+  private requestFactory: ProfilesApiRequestFactory;
+  private responseProcessor: ProfilesApiResponseProcessor;
+  private configuration: Configuration;
+
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ProfilesApiRequestFactory,
+    responseProcessor?: ProfilesApiResponseProcessor,
+  ) {
+    this.configuration = configuration;
+    this.requestFactory =
+      requestFactory || new ProfilesApiRequestFactory(configuration);
+    this.responseProcessor =
+      responseProcessor || new ProfilesApiResponseProcessor();
+  }
+
+  /**
+   * The profile of the `schema.biois` extension: a Table Schema extension that declares per-column display metadata for `BioIS` result tables.
+   */
+  public climateRiskTableSchemaProfileWithHttpInfo(
+    _options?: ConfigurationOptions,
+  ): Observable<HttpInfo<string>> {
+    const _config = mergeConfiguration(this.configuration, _options);
+
+    const requestContextPromise =
+      this.requestFactory.climateRiskTableSchemaProfile(_config);
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (const middleware of _config.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => _config.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (const middleware of _config.middleware.reverse()) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) =>
+              this.responseProcessor.climateRiskTableSchemaProfileWithHttpInfo(
+                rsp,
+              ),
+            ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * The profile of the `schema.biois` extension: a Table Schema extension that declares per-column display metadata for `BioIS` result tables.
+   */
+  public climateRiskTableSchemaProfile(
+    _options?: ConfigurationOptions,
+  ): Observable<string> {
+    return this.climateRiskTableSchemaProfileWithHttpInfo(_options).pipe(
+      map((apiResponse: HttpInfo<string>) => apiResponse.data),
     );
   }
 }
