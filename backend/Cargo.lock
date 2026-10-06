@@ -1467,9 +1467,8 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "402ed2cf40b5c36ae9c2d027f19f17130f98dafac14312ba19bfb09dc28a6236"
+version = "0.9.4"
+source = "git+https://github.com/geo-engine/geoengine?branch=feature%2Fmd-gdal-source#8e4bc2dfacbcaf709462379112e3caa63272ed61"
 dependencies = [
  "reqwest",
  "serde",

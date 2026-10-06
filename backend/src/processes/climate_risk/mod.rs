@@ -783,7 +783,7 @@ mod tests {
 
         let result = ClimateRiskProcess::dataset_raster_source(&var, &model, &scenario);
 
-        assert!(matches!(result, RasterOperator::GdalSource(_)));
+        assert!(matches!(result, RasterOperator::MdGdalSource(_)));
 
         let value = serde_json::to_value(&result).unwrap();
         assert_eq!(

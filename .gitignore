@@ -35,3 +35,6 @@ RUN_LOG.md
 
 # Frontend test coverage output
 frontend/coverage/
+
+# Notebook run artifacts (the clean notebook is what's tracked)
+*.out.ipynb

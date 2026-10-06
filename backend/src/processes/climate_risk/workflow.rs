@@ -1,14 +1,14 @@
 use geoengine_api_client::models::{
-    Aggregation, ContinuousMeasurement, Expression, ExpressionParameters, GdalSource,
-    GdalSourceParameters, Measurement, RasterBandDescriptor, RasterOperator, SingleRasterSource,
-    SumAggregation, TemporalRasterAggregation, TemporalRasterAggregationParameters,
+    Aggregation, AggregationSum, ContinuousMeasurement, Expression, ExpressionParameters,
+    MdGdalSource, MdGdalSourceParameters, Measurement, RasterBandDescriptor, RasterOperator,
+    SingleRasterSource, TemporalRasterAggregation, TemporalRasterAggregationParameters,
     TimeGranularity, TimeStep,
 };
 use tracing::instrument;
 
 use super::{ClimateRiskProcess, types::*};
 impl ClimateRiskProcess {
-    /// Builds the GDAL raster source for a variable/model/scenario combination.
+    /// Builds the netCDF raster source for a variable/model/scenario combination.
     #[instrument(skip(var, model, scenario))]
     pub(crate) fn dataset_raster_source(
         var: &ClimateVariableProperties,
@@ -19,14 +19,12 @@ impl ClimateRiskProcess {
             "nexgddp_cmip6_{}_{}_{}",
             model.id, scenario.dataset_prefix, var.dataset_variable_suffix
         );
-        RasterOperator::GdalSource(
-            GdalSource {
+        // ponytail: `GdalSource` cannot read an Md dataset — its `GdalMetaData` enum has no MD
+        // variant, so the registered netCDF files are only reachable through `MdGdalSource`.
+        RasterOperator::MdGdalSource(
+            MdGdalSource {
                 r#type: Default::default(),
-                params: GdalSourceParameters {
-                    data: dataset_name,
-                    overview_level: None,
-                }
-                .into(),
+                params: MdGdalSourceParameters { data: dataset_name }.into(),
             }
             .into(),
         )
@@ -81,7 +79,7 @@ impl ClimateRiskProcess {
             TemporalRasterAggregation {
                 r#type: Default::default(),
                 params: TemporalRasterAggregationParameters {
-                    aggregation: Aggregation::SumAggregation(Box::new(SumAggregation {
+                    aggregation: Aggregation::Sum(Box::new(AggregationSum {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }))

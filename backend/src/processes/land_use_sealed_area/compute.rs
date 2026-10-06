@@ -15,7 +15,9 @@ use crate::{
             raster_result_descriptor, vector_result_descriptor, year_range_from_time_descriptor,
         },
     },
-    util::{spawn_blocking, to_api_raster_process, to_api_vector_process},
+    util::{
+        register_processing_graph, spawn_blocking, to_api_raster_process, to_api_vector_process,
+    },
 };
 use anyhow::{Context, Result};
 use geoengine_api_client::{
@@ -23,11 +25,8 @@ use geoengine_api_client::{
         configuration::Configuration,
         datasets_api::create_dataset_handler,
         ogcwfs_api::wfs_handler,
-        processing_graphs_api::{
-            get_processing_graph_metadata_handler, get_processing_graph_provenance_handler,
-            register_processing_graph_handler,
-        },
         uploads_api::upload_handler,
+        workflows_api::{get_workflow_metadata_handler, get_workflow_provenance_handler},
     },
     models::{
         AddDataset, ClassificationMeasurement, ColumnNames, ContinuousMeasurement, CreateDataset,
@@ -330,16 +329,15 @@ async fn sealed_area_process(
 ) -> Result<(GeoJson, ComputationId)> {
     let operators = build_sealed_area_vector_operator(upload_data_id);
 
-    let processing_graph_id =
-        register_processing_graph_handler(configuration, operators.sealed_area())
-            .await?
-            .id
-            .to_string();
+    let processing_graph_id = register_processing_graph(configuration, &operators.sealed_area())
+        .await?
+        .id
+        .to_string();
 
     let time_str = format!("{year}-01-01T00:00:00Z");
 
     let locations_projected_id =
-        register_processing_graph_handler(configuration, operators.locations_projected())
+        register_processing_graph(configuration, &operators.locations_projected())
             .await?
             .id
             .to_string();
@@ -614,7 +612,7 @@ pub async fn compute_available_time_range_from_imperviousness_raster(
     configuration: &Configuration,
 ) -> Result<(Year, Year)> {
     let operator = to_api_raster_process(&imperviousness_raster_operator());
-    let processing_graph_id = register_processing_graph_handler(configuration, operator)
+    let processing_graph_id = register_processing_graph(configuration, &operator)
         .await?
         .id
         .to_string();
@@ -633,7 +631,7 @@ pub async fn compute_documentation_sources(
     configuration: &Configuration,
 ) -> Result<Vec<DocumentationSource>> {
     let operator = to_api_raster_process(&imperviousness_raster_operator());
-    let processing_graph_id = register_processing_graph_handler(configuration, operator)
+    let processing_graph_id = register_processing_graph(configuration, &operator)
         .await?
         .id
         .to_string();
