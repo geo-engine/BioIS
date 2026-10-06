@@ -1,6 +1,6 @@
 use geoengine_api_client::models::{
-    RasterOperator, TypedOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
-    Workflow, typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
+    ProcessingGraph, RasterOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
+    typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
 };
 use serde::Deserialize;
 use std::ops::Deref;
@@ -10,24 +10,76 @@ use tracing_subscriber::{
     EnvFilter, filter::Directive, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
-/// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_vector_process(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
-    Workflow::TypedOperator(Box::new(TypedOperator::TypedVectorOperator(Box::new(
-        TypedVectorOperator {
-            operator: Box::new(operator.clone()),
-            r#type: VectorType::Vector,
-        },
-    ))))
+/// Converts a Geo Engine operator to an Geo Engine OpenAPI processing graph.
+pub fn to_api_vector_process(
+    operator: &VectorOperator,
+) -> geoengine_api_client::models::ProcessingGraph {
+    ProcessingGraph::TypedVectorOperator(Box::new(TypedVectorOperator {
+        operator: Box::new(operator.clone()),
+        r#type: VectorType::Vector,
+    }))
 }
 
-/// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_raster_process(operator: &RasterOperator) -> geoengine_api_client::models::Workflow {
-    Workflow::TypedOperator(Box::new(TypedOperator::TypedRasterOperator(Box::new(
-        TypedRasterOperator {
-            operator: Box::new(operator.clone()),
-            r#type: RasterType::Raster,
-        },
-    ))))
+/// Converts a Geo Engine operator to an Geo Engine OpenAPI processing graph.
+pub fn to_api_raster_process(
+    operator: &RasterOperator,
+) -> geoengine_api_client::models::ProcessingGraph {
+    ProcessingGraph::TypedRasterOperator(Box::new(TypedRasterOperator {
+        operator: Box::new(operator.clone()),
+        r#type: RasterType::Raster,
+    }))
+}
+
+/// Registers a processing graph with Geo Engine.
+///
+/// The generated client serializes `Aggregation` with a duplicated `type` discriminator
+/// (`#[serde(tag = "type")]` on the enum plus the inner structs' own `type` field), which
+/// the server rejects. Serializing through a `Value` first folds the duplicate key in
+/// `serde_json`'s map serializer, so this posts the normalized value instead of the typed
+/// graph. Has the same signature and error handling as the generated
+/// `register_workflow_handler`, minus the duplication.
+pub async fn register_processing_graph(
+    configuration: &geoengine_api_client::apis::configuration::Configuration,
+    processing_graph: &geoengine_api_client::models::ProcessingGraph,
+) -> Result<
+    geoengine_api_client::models::IdResponse,
+    geoengine_api_client::apis::Error<
+        geoengine_api_client::apis::workflows_api::RegisterWorkflowHandlerError,
+    >,
+> {
+    let normalized = serde_json::to_value(processing_graph).expect("processing graph serializes");
+    let uri = format!("{}/workflow", configuration.base_path);
+
+    let request_builder = configuration.client.post(&uri);
+    let request_builder = match &configuration.bearer_access_token {
+        Some(token) => request_builder.bearer_auth(token),
+        None => request_builder,
+    };
+
+    let response = request_builder
+        .json(&normalized)
+        .send()
+        .await
+        .map_err(geoengine_api_client::apis::Error::Reqwest)?;
+
+    let status = response.status();
+    let content = response
+        .text()
+        .await
+        .map_err(geoengine_api_client::apis::Error::Reqwest)?;
+
+    if status.is_client_error() || status.is_server_error() {
+        let entity = serde_json::from_str(&content).ok();
+        Err(geoengine_api_client::apis::Error::ResponseError(
+            geoengine_api_client::apis::ResponseContent {
+                status,
+                content,
+                entity,
+            },
+        ))
+    } else {
+        serde_json::from_str(&content).map_err(geoengine_api_client::apis::Error::Serde)
+    }
 }
 
 pub fn error_response<T>(
@@ -294,10 +346,7 @@ mod tests {
                         "vector": {
                             "type": "MockPointSource",
                             "params": {
-                                "points": [],
-                                "spatialBounds": {
-                                    "type": "derive"
-                                }
+                                "points": []
                             },
                         },
                         "rasters": [{

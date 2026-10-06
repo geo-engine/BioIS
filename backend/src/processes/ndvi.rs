@@ -1,23 +1,20 @@
 use anyhow::Result;
 use geoengine_api_client::{
-    apis::{
-        configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
-        workflows_api::register_workflow_handler,
-    },
+    apis::{configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler},
     models::{
-        Aggregation, BandFilter, BandFilterParameters, BandsByNameOrIndex, ColumnNames,
-        ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
+        Aggregation, AggregationFirst, BandFilter, BandFilterParameters, BandsByNameOrIndex,
+        ColumnNames, ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
         DeriveOutRasterSpecsSource, Expression, ExpressionParameters, FeatureAggregationMethod,
-        FirstAggregation, Fraction, GdalSourceParameters, GeoJson, Interpolation,
-        InterpolationMethod, InterpolationParameters, InterpolationResolution, Measurement,
-        MockPointSource, MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor,
-        RasterDataType, RasterOperator, RasterStacker, RasterStackerParameters,
-        RasterTypeConversion, RasterTypeConversionParameters, RasterVectorJoin,
-        RasterVectorJoinParameters, RenameBands, Reprojection, ReprojectionParameters,
-        SingleRasterOrVectorOperator, SingleRasterOrVectorSource, SingleRasterSource,
-        SingleVectorMultipleRasterSources, SpatialBoundsDerive, SpatialBoundsDeriveNone,
-        TemporalAggregationMethod, TemporalRasterAggregation, TemporalRasterAggregationParameters,
-        TimeGranularity, TimeStep, VectorOperator, WfsRequest, WfsService,
+        GdalSourceParameters, GeoJson, Interpolation, InterpolationMethod, InterpolationParameters,
+        InterpolationResolution, InterpolationResolutionFraction, Measurement, MockPointSource,
+        MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor, RasterDataType,
+        RasterOperator, RasterStacker, RasterStackerParameters, RasterTypeConversion,
+        RasterTypeConversionParameters, RasterVectorJoin, RasterVectorJoinParameters, RenameBands,
+        Reprojection, ReprojectionParameters, SingleRasterOrVectorOperator,
+        SingleRasterOrVectorSource, SingleRasterSource, SingleVectorMultipleRasterSources,
+        SpatialBoundsDerive, SpatialBoundsDeriveNone, TemporalAggregationMethod,
+        TemporalRasterAggregation, TemporalRasterAggregationParameters, TimeGranularity, TimeStep,
+        VectorOperator, WfsRequest, WfsService,
     },
 };
 use geojson::PointType;
@@ -45,7 +42,7 @@ use crate::{
     db::{DbHandle, model::ComputationId},
     processes::parameters::{Month, PointGeoJsonInput, Year},
     state::{CONTEXT, TaskLocalContext},
-    util::{error_response, to_api_vector_process},
+    util::{error_response, register_processing_graph, to_api_vector_process},
 };
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
@@ -449,7 +446,7 @@ async fn compute_ndvi(
         .into(),
     ));
 
-    let workflow_id = match register_workflow_handler(configuration, workflow.clone()).await {
+    let workflow_id = match register_processing_graph(configuration, &workflow).await {
         Ok(id) => id,
         Err(e) => {
             let workflow_json = serde_json::to_string_pretty(&workflow)
@@ -561,13 +558,12 @@ fn vector_reprojection_source(coordinate: &PointType) -> VectorOperator {
             r#type: Default::default(),
             params: MockPointSourceParameters {
                 points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
-                spatial_bounds: SpatialBoundsDerive::None(
+                spatial_bounds: Some(Box::new(SpatialBoundsDerive::None(
                     SpatialBoundsDeriveNone {
                         r#type: Default::default(),
                     }
                     .into(),
-                )
-                .into(),
+                ))),
             }
             .into(),
         }
@@ -596,8 +592,8 @@ fn ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::FirstAggregation(
-                    FirstAggregation {
+                aggregation: Aggregation::First(
+                    AggregationFirst {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -627,8 +623,8 @@ fn k_ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::FirstAggregation(
-                    FirstAggregation {
+                aggregation: Aggregation::First(
+                    AggregationFirst {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -720,7 +716,7 @@ fn scl_source() -> RasterOperator {
                             interpolation: InterpolationMethod::NearestNeighbor,
                             output_origin_reference: None,
                             output_resolution: InterpolationResolution::Fraction(
-                                Fraction {
+                                InterpolationResolutionFraction {
                                     r#type: Default::default(),
                                     x: 2.0,
                                     y: 2.0,

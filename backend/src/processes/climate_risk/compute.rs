@@ -6,15 +6,12 @@ use crate::{
         DataResource, DataResourceName, Days, Fields, TableSchemaField, TableSchemaType, Year,
         YearRange,
     },
-    util::{error_response, to_api_vector_process},
+    util::{error_response, register_processing_graph, to_api_vector_process},
 };
 use anyhow::Result;
 use futures::{TryStreamExt, stream::StreamExt};
 use geoengine_api_client::{
-    apis::{
-        configuration::Configuration, ogcwfs_api::WfsHandlerError, ogcwfs_api::wfs_handler,
-        workflows_api::register_workflow_handler,
-    },
+    apis::{configuration::Configuration, ogcwfs_api::WfsHandlerError, ogcwfs_api::wfs_handler},
     models::{
         ColumnNames, Coordinate2D, FeatureAggregationMethod, GeoJson, MockPointSource,
         MockPointSourceParameters, Names, RasterVectorJoin, RasterVectorJoinParameters,
@@ -409,7 +406,7 @@ struct WorkflowRequest {
     models: Vec<ClimateModelProperties>,
     variable: ClimateVariable,
     scenario: ClimateScenarioProperties,
-    workflow: geoengine_api_client::models::Workflow,
+    workflow: geoengine_api_client::models::ProcessingGraph,
 }
 
 /// Builds one workflow per (variable, scenario) pair, using only models that support the scenario.
@@ -539,7 +536,7 @@ async fn register_workflows(
             .map(|request| {
                 let workflow = &request.workflow;
                 move || async move {
-                    register_workflow_handler(configuration, workflow.clone())
+                    register_processing_graph(configuration, workflow)
                         .await
                         .map(|id| id.id.to_string())
                 }
@@ -722,6 +719,10 @@ pub(crate) async fn compute_climate(
     let workflow_requests = build_workflows(coordinate, requests, models, None);
     let workflow_ids = register_workflows(configuration, &workflow_requests).await?;
     log_registered_workflows(&workflow_ids, &workflow_requests);
+    eprintln!(
+        "ANALYSIS_IDS {workflow_ids:?} GRAPH {}",
+        serde_json::to_string_pretty(&workflow_requests[0].workflow).expect("workflow serializes")
+    );
 
     let analysis_results = query_workflows(
         configuration,
@@ -830,13 +831,12 @@ pub(crate) fn vector_source(coordinate: &PointType) -> VectorOperator {
             r#type: Default::default(),
             params: MockPointSourceParameters {
                 points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
-                spatial_bounds: SpatialBoundsDerive::None(
+                spatial_bounds: Some(Box::new(SpatialBoundsDerive::None(
                     SpatialBoundsDeriveNone {
                         r#type: Default::default(),
                     }
                     .into(),
-                )
-                .into(),
+                ))),
             }
             .into(),
         }
@@ -1483,7 +1483,19 @@ mod tests {
             }],
             variable,
             scenario: scenario.properties(),
-            workflow: geoengine_api_client::models::Workflow::default(),
+            // `ProcessingGraph::default()` recurses forever (the generated `VectorOperator::default`
+            // is `ColumnRangeFilter`, whose `sources` nests another vector operator), so build the
+            // leaf-only graph the default is *meant* to produce.
+            workflow: geoengine_api_client::models::ProcessingGraph::TypedVectorOperator(Box::new(
+                geoengine_api_client::models::TypedVectorOperator {
+                    operator: Box::new(
+                        geoengine_api_client::models::VectorOperator::MockPointSource(
+                            Default::default(),
+                        ),
+                    ),
+                    r#type: Default::default(),
+                },
+            )),
         }
     }
 
@@ -1613,5 +1625,83 @@ mod tests {
 
         assert_abs_diff_eq!(result["MPI-ESM1-2-LR"], 8.0);
         assert_abs_diff_eq!(result["ACCESS-CM2"], 4.0);
+    }
+
+    /// Full live check of the `MdGdalSource` composition: registers the real workflow
+    /// (`MdGdalSource` -> `Expression` -> `TemporalRasterAggregation` -> `RasterVectorJoin`)
+    /// against a running `GeoEngine` and queries heat/ice days over the 2015-2019 analysis and
+    /// the 1950-1954 reference. Only runs on demand - `cargo test -- --ignored it_runs_a_*`.
+    ///
+    /// Requires `nexgddp_cmip6_ACCESS-CM2_{historical,ssp245}_tasmax` registered with
+    /// anonymous read (see `notebooks/nexgddp_cmip6_ingest_manual.ipynb`) and a reachable
+    /// `GeoEngine` at `local`:
+    #[tokio::test]
+    #[ignore = "requires a live GeoEngine with the NEX-GDDP-CMIP6 datasets registered"]
+    async fn it_runs_a_climate_risk_query_against_live_geoengine() {
+        let mut configuration = geoengine_api_client::apis::configuration::Configuration::new();
+        configuration.base_path = "http://localhost:3030/api".into();
+
+        // Workflow registration requires an authenticated session (anonymous read covers the
+        // data, not the workflows).
+        let session = geoengine_api_client::apis::session_api::login_handler(
+            &configuration,
+            geoengine_api_client::models::UserCredentials {
+                email: "admin@localhost".to_string(),
+                password: "adminadmin".to_string(),
+            },
+        )
+        .await
+        .expect("GeoEngine admin login failed");
+        configuration.bearer_access_token = Some(session.id.to_string());
+
+        let coordinate = PointType::from((13.4050, 52.5200)); // Berlin: a known land cell
+        let periods = ClimatePeriods {
+            analysis_start: Year(2015),
+            range: YearRange(5),
+            reference_start: Year(1950),
+        };
+        let requests = vec![
+            (
+                ClimateVariableRequest::new(ClimateVariable::HeatDays),
+                ClimateScenario::Ssp245.properties(),
+            ),
+            (
+                ClimateVariableRequest::new(ClimateVariable::IceDays),
+                ClimateScenario::Ssp245.properties(),
+            ),
+        ];
+        let models = vec![ClimateModelProperties {
+            id: "ACCESS-CM2".to_string(),
+            variant: "r1i1p1f1".to_string(),
+            grid: "gn".to_string(),
+            scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
+        }];
+
+        let (outputs, computation_ids) =
+            compute_climate(&configuration, &coordinate, &periods, &requests, &models)
+                .await
+                .expect("climate-risk query against the live GeoEngine failed");
+
+        let rows = outputs.climate_risk.as_ref().expect("climate risk rows");
+        assert_eq!(
+            rows.data.len(),
+            2,
+            "expected one row per variable: {rows:?}"
+        );
+        for row in &rows.data {
+            let mean = row.mean.0;
+            assert!(
+                (0.0..=366.0).contains(&mean),
+                "daily count out of bounds: {row:?}"
+            );
+            assert!(
+                row.anomaly.is_some(),
+                "expected an anomaly against the reference period: {row:?}"
+            );
+        }
+        assert!(
+            !computation_ids.is_empty(),
+            "expected WFS computation ids for credit accounting"
+        );
     }
 }
