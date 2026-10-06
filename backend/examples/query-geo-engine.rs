@@ -6,8 +6,9 @@ use geoengine_api_client::{
         session_api::anonymous_handler, workflows_api::register_workflow_handler,
     },
     models::{
-        Coordinate2D, LegacyTypedOperator, LegacyTypedOperatorOperator, SpatialPartition2D,
-        WfsRequest, WfsService, Workflow, legacy_typed_operator::Type,
+        Coordinate2D, OgrSource, OgrSourceParameters, ProcessingGraph, SpatialPartition2D,
+        TypedVectorOperator, VectorOperator, WfsRequest, WfsService,
+        typed_vector_operator::Type as VectorType,
     },
 };
 
@@ -22,15 +23,17 @@ async fn main() {
     eprintln!("{session:#?}");
     configuration.bearer_access_token = Some(session.id.to_string());
 
-    let workflow = Workflow::LegacyTypedOperator(Box::new(LegacyTypedOperator {
-        operator: Box::new(LegacyTypedOperatorOperator {
-            params: Some(serde_json::json!({
-                "data": "ne_10m_ports"
-            })),
-            sources: None,
-            r#type: "OgrSource".into(),
-        }),
-        r#type: Type::Vector,
+    let workflow = ProcessingGraph::TypedVectorOperator(Box::new(TypedVectorOperator {
+        operator: Box::new(VectorOperator::OgrSource(Box::new(OgrSource {
+            r#type: Default::default(),
+            params: OgrSourceParameters {
+                data: "ne_10m_ports".into(),
+                attribute_projection: None,
+                attribute_filters: None,
+            }
+            .into(),
+        }))),
+        r#type: VectorType::Vector,
     }));
 
     let workflow_id = register_workflow_handler(&configuration, workflow)

@@ -763,6 +763,27 @@
         }
       }
     },
+    "/profiles/table-schema/climate-risk/1.0/schema.json": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "The profile of the `schema.biois` extension: a Table Schema extension that declares per-column\ndisplay metadata for `BioIS` result tables.",
+        "operationId": "climate_risk_table_schema_profile",
+        "responses": {
+          "200": {
+            "description": "The BioIS table schema profile.",
+            "content": {
+              "application/schema+json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/processes/ndvi/execution": {
       "post": {
         "tags": [
@@ -846,6 +867,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BiodiversitySensitiveAreasProcessOutputs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/processes/climate-risk/execution": {
+      "post": {
+        "tags": [
+          "Processes"
+        ],
+        "operationId": "execute_climate_risk",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClimateRiskProcessParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClimateRiskProcessResponses"
                 }
               }
             }
@@ -1098,6 +1149,138 @@
             "type": "string"
           }
         }
+      },
+      "ClimateRiskInputs": {
+        "type": "object",
+        "description": "User-supplied inputs for the climate risk process.",
+        "required": [
+          "coordinate",
+          "referenceYearBegin"
+        ],
+        "properties": {
+          "coordinate": {
+            "$ref": "#/components/schemas/PointGeoJsonInput"
+          },
+          "yearBegin": {
+            "$ref": "#/components/schemas/Year"
+          },
+          "yearRange": {
+            "$ref": "#/components/schemas/YearRange"
+          },
+          "referenceYearBegin": {
+            "$ref": "#/components/schemas/Year"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClimateVariable"
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ClimateRiskProcessParams": {
+        "type": "object",
+        "description": "Process execution (Climate Risk)",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/ClimateRiskInputs"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {
+              "default": null
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "response": {
+            "$ref": "#/components/schemas/Response"
+          }
+        }
+      },
+      "ClimateRiskProcessResponses": {
+        "type": "object",
+        "description": "Response body of a climate-risk execution: one summary table per computed scenario, plus the\noptional `inputs` echo and `rawEnsembleData`. Which scenario keys are present depends on the\nrequested outputs and on the model registry (`conf/nexgddp_models.toml`); the process\ndescription's `outputs` is the authoritative list for a given deployment.",
+        "properties": {
+          "ssp245": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Summary table for SSP2-4.5."
+          },
+          "ssp370": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Summary table for SSP3-7.0."
+          },
+          "ssp585": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Summary table for SSP5-8.5."
+          },
+          "rawEnsembleData": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Per-model raw values for each variable x scenario combination."
+          },
+          "inputs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ClimateRiskInputs",
+                "description": "The submitted inputs, echoed back."
+              }
+            ]
+          }
+        }
+      },
+      "ClimateVariable": {
+        "type": "string",
+        "title": "ClimateVariable",
+        "description": "Climate variable to compute (WMO-based daily threshold indicators).",
+        "enum": [
+          "heatDays",
+          "iceDays",
+          "tropicalNights",
+          "frostDays",
+          "dryDays",
+          "heavyRainDays"
+        ]
       },
       "Conformance": {
         "type": "object",
@@ -2378,6 +2561,12 @@
         "type": "integer",
         "format": "int32",
         "description": "Year of reporting or change (e.g., 2023, 2024, etc.)",
+        "minimum": 0
+      },
+      "YearRange": {
+        "type": "integer",
+        "format": "int32",
+        "description": "Length of a time window in years (e.g., 5 years).",
         "minimum": 0
       }
     }

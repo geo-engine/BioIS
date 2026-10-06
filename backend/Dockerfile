@@ -48,6 +48,9 @@ FROM gcr.io/distroless/cc-debian13:nonroot
 COPY --from=builder /usr/src/biois/target/release/biois-server /usr/local/bin/biois-server
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /emptydir /biois
+# Absolute destination: the distroless base sets `WORKDIR /home/nonroot`, so a relative
+# destination would land there instead of in the directory the server runs from.
+COPY --from=builder /usr/src/biois/conf /biois/conf
 
 WORKDIR /biois
 

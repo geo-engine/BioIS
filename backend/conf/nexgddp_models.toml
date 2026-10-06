@@ -1,0 +1,36 @@
+# NEX-GDDP-CMIP6 model registry - the source of truth for what climate-risk can compute.
+#
+# Every model/scenario listed here has a registered GeoEngine dataset, so the process
+# description and the `models` dropdown offer exactly what can run. This file is rewritten
+# from `nexgddp_models.full.toml` by `notebooks/nexgddp_cmip6_ingest_full.ipynb` once the
+# ingest is verified. To add a model, edit that full matrix and re-run the notebook.
+
+[[model]]
+id = "ACCESS-CM2"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
+
+[[model]]
+id = "MPI-ESM1-2-LR"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
+
+[[model]]
+id = "IPSL-CM6A-LR"
+variant = "r1i1p1f1"
+grid = "gr"
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
+
+[[model]]
+id = "MRI-ESM2-0"
+variant = "r1i1p1f1"
+grid = "gn"
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
+
+[[model]]
+id = "GFDL-ESM4"
+variant = "r1i1p1f1"
+grid = "gr1"
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]

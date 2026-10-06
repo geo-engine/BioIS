@@ -4,6 +4,8 @@ import { Configuration, ConfigurationOptions } from "../configuration";
 import { AuthCodeResponse } from "../models/AuthCodeResponse";
 import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
 import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
+import { ClimateRiskProcessParams } from "../models/ClimateRiskProcessParams";
+import { ClimateRiskProcessResponses } from "../models/ClimateRiskProcessResponses";
 import { Conformance } from "../models/Conformance";
 import { ContactRequest } from "../models/ContactRequest";
 import { Execute } from "../models/Execute";
@@ -244,6 +246,15 @@ export interface ProcessesApiExecuteBiodiversitySensitiveAreasRequest {
   biodiversitySensitiveAreasProcessParams: BiodiversitySensitiveAreasProcessParams;
 }
 
+export interface ProcessesApiExecuteClimateRiskRequest {
+  /**
+   *
+   * @type ClimateRiskProcessParams
+   * @memberof ProcessesApiexecuteClimateRisk
+   */
+  climateRiskProcessParams: ClimateRiskProcessParams;
+}
+
 export interface ProcessesApiExecuteHabitatDistanceRequest {
   /**
    *
@@ -404,6 +415,30 @@ export class ObjectProcessesApi {
         param.biodiversitySensitiveAreasProcessParams,
         options,
       )
+      .toPromise();
+  }
+
+  /**
+   * @param param the request object
+   */
+  public executeClimateRiskWithHttpInfo(
+    param: ProcessesApiExecuteClimateRiskRequest,
+    options?: ConfigurationOptions,
+  ): Promise<HttpInfo<ClimateRiskProcessResponses>> {
+    return this.api
+      .executeClimateRiskWithHttpInfo(param.climateRiskProcessParams, options)
+      .toPromise();
+  }
+
+  /**
+   * @param param the request object
+   */
+  public executeClimateRisk(
+    param: ProcessesApiExecuteClimateRiskRequest,
+    options?: ConfigurationOptions,
+  ): Promise<ClimateRiskProcessResponses> {
+    return this.api
+      .executeClimateRisk(param.climateRiskProcessParams, options)
       .toPromise();
   }
 
@@ -631,6 +666,54 @@ export class ObjectProcessesApi {
     options?: ConfigurationOptions,
   ): Promise<StatusInfo> {
     return this.api.status(param.jobId, options).toPromise();
+  }
+}
+
+import { ObservableProfilesApi } from "./ObservableAPI";
+import {
+  ProfilesApiRequestFactory,
+  ProfilesApiResponseProcessor,
+} from "../apis/ProfilesApi";
+
+export interface ProfilesApiClimateRiskTableSchemaProfileRequest {}
+
+export class ObjectProfilesApi {
+  private api: ObservableProfilesApi;
+
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ProfilesApiRequestFactory,
+    responseProcessor?: ProfilesApiResponseProcessor,
+  ) {
+    this.api = new ObservableProfilesApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
+
+  /**
+   * The profile of the `schema.biois` extension: a Table Schema extension that declares per-column display metadata for `BioIS` result tables.
+   * @param param the request object
+   */
+  public climateRiskTableSchemaProfileWithHttpInfo(
+    param: ProfilesApiClimateRiskTableSchemaProfileRequest = {},
+    options?: ConfigurationOptions,
+  ): Promise<HttpInfo<string>> {
+    return this.api
+      .climateRiskTableSchemaProfileWithHttpInfo(options)
+      .toPromise();
+  }
+
+  /**
+   * The profile of the `schema.biois` extension: a Table Schema extension that declares per-column display metadata for `BioIS` result tables.
+   * @param param the request object
+   */
+  public climateRiskTableSchemaProfile(
+    param: ProfilesApiClimateRiskTableSchemaProfileRequest = {},
+    options?: ConfigurationOptions,
+  ): Promise<string> {
+    return this.api.climateRiskTableSchemaProfile(options).toPromise();
   }
 }
 

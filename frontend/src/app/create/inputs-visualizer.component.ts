@@ -6,7 +6,13 @@ import {
   input,
   output,
 } from '@angular/core';
-import { InputDescription, FieldType, defaultInput, enumOptions } from './schema-info';
+import {
+  InputDescription,
+  FieldType,
+  defaultInput,
+  enumOptions,
+  resolveArrayEnumSchema,
+} from './schema-info';
 
 export { enumOptions };
 import { CommonModule } from '@angular/common';
@@ -65,6 +71,16 @@ import { InfoIconComponent } from '../util/info-icon.component';
               <mat-label>{{ input.title }}</mat-label>
               <mat-select [formField]="asPrimitiveInput(form()[input.key])">
                 @for (option of enumOptions(input.schema); track option) {
+                  <mat-option [value]="option">{{ option }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @case (FieldType.StringArray) {
+            <mat-form-field>
+              <mat-label>{{ input.title }}</mat-label>
+              <mat-select multiple [formField]="asStringArrayInput(form()[input.key])">
+                @for (option of stringArrayOptions(input.schema); track option) {
                   <mat-option [value]="option">{{ option }}</mat-option>
                 }
               </mat-select>
@@ -165,6 +181,7 @@ export class InputsFormComponent {
   readonly FieldType = FieldType;
   readonly enumOptions = enumOptions;
   readonly integerRangeList = integerRangeList;
+  readonly stringArrayOptions = stringArrayOptions;
 
   readonly isFieldSet = computed<Record<string, boolean>>(() => {
     const form = this.form();
@@ -193,6 +210,10 @@ export class InputsFormComponent {
     return formInput as FieldTree<string | number | boolean, string>;
   }
 
+  asStringArrayInput(formInput: MaybeFieldTree<unknown, string>): FieldTree<string[], string> {
+    return formInput as FieldTree<string[], string>;
+  }
+
   asGeoJsonInput(
     formInput: MaybeFieldTree<unknown, string>,
   ): FieldTree<FeatureCollectionGeoJsonInput, string> {
@@ -219,6 +240,7 @@ export class InputsFormComponent {
   }
 }
 
+/** Expands a small bounded integer schema into select options. */
 export function integerRangeList(schema: JSONSchema | undefined): number[] {
   if (
     !schema ||
@@ -234,4 +256,12 @@ export function integerRangeList(schema: JSONSchema | undefined): number[] {
     range.push(i);
   }
   return range;
+}
+
+/** Returns all enum values for a string-array input. */
+export function stringArrayOptions(schema: JSONSchema | undefined): string[] {
+  if (!schema || typeof schema === 'boolean') return [];
+
+  const items = resolveArrayEnumSchema(schema);
+  return items ? enumOptions(items) : [];
 }
