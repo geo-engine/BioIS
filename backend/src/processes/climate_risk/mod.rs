@@ -73,6 +73,7 @@ fn load_model_registry() -> HashMap<String, ClimateModelProperties> {
                 .filter_map(|s| match s.as_str() {
                     "historical" => Some(ClimateScenario::Historical),
                     "ssp245" => Some(ClimateScenario::Ssp245),
+                    "ssp370" => Some(ClimateScenario::Ssp370),
                     "ssp585" => Some(ClimateScenario::Ssp585),
                     _ => None,
                 })

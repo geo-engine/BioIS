@@ -110,6 +110,9 @@ pub struct ClimateRiskProcessResponses {
     /// Summary table for SSP2-4.5.
     #[schema(value_type = Option<DataResourceSchema>, inline)]
     pub ssp245: Option<DataResource<Vec<ClimateRiskRow>>>,
+    /// Summary table for SSP3-7.0.
+    #[schema(value_type = Option<DataResourceSchema>, inline)]
+    pub ssp370: Option<DataResource<Vec<ClimateRiskRow>>>,
     /// Summary table for SSP5-8.5.
     #[schema(value_type = Option<DataResourceSchema>, inline)]
     pub ssp585: Option<DataResource<Vec<ClimateRiskRow>>>,

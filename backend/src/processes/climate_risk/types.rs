@@ -120,18 +120,20 @@ pub struct ClimateModelProperties {
 pub enum ClimateScenario {
     Historical,
     Ssp245,
+    Ssp370,
     Ssp585,
 }
 
 impl ClimateScenario {
-    pub const ALL: &'static [Self] = &[Self::Historical, Self::Ssp245, Self::Ssp585];
+    pub const ALL: &'static [Self] = &[Self::Historical, Self::Ssp245, Self::Ssp370, Self::Ssp585];
 
-    pub const FUTURE: &'static [Self] = &[Self::Ssp245, Self::Ssp585];
+    pub const FUTURE: &'static [Self] = &[Self::Ssp245, Self::Ssp370, Self::Ssp585];
 
     pub fn name(self) -> &'static str {
         match self {
             Self::Historical => "historical",
             Self::Ssp245 => "ssp245",
+            Self::Ssp370 => "ssp370",
             Self::Ssp585 => "ssp585",
         }
     }
@@ -146,6 +148,11 @@ impl ClimateScenario {
                 name: "SSP2-4.5 (Intermediate emissions)",
                 dataset_prefix: "ssp245",
                 scenario: ClimateScenario::Ssp245,
+            },
+            ClimateScenario::Ssp370 => ClimateScenarioProperties {
+                name: "SSP3-7.0 (Moderate-high emissions)",
+                dataset_prefix: "ssp370",
+                scenario: ClimateScenario::Ssp370,
             },
             ClimateScenario::Ssp585 => ClimateScenarioProperties {
                 name: "SSP5-8.5 (High emissions)",
@@ -544,6 +551,11 @@ mod tests {
                 "ssp245",
             ),
             (
+                ClimateScenario::Ssp370,
+                "SSP3-7.0 (Moderate-high emissions)",
+                "ssp370",
+            ),
+            (
                 ClimateScenario::Ssp585,
                 "SSP5-8.5 (High emissions)",
                 "ssp585",
@@ -580,6 +592,7 @@ mod tests {
                 match scenario {
                     ClimateScenario::Historical => "Historical (1950–2014)",
                     ClimateScenario::Ssp245 => "SSP2-4.5 (Intermediate emissions)",
+                    ClimateScenario::Ssp370 => "SSP3-7.0 (Moderate-high emissions)",
                     ClimateScenario::Ssp585 => "SSP5-8.5 (High emissions)",
                 }
             );

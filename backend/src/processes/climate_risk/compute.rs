@@ -1011,9 +1011,19 @@ mod tests {
 
     #[test]
     fn it_scenario_output_id_maps_display_name_to_declared_output_id() {
+        // Every declared scenario, so a new one cannot ship with its card under a key
+        // that does not match the process description.
+        for scenario in ClimateScenario::ALL {
+            let props = scenario.properties();
+            assert_eq!(scenario_output_id(props.name), scenario.name());
+        }
         assert_eq!(
             scenario_output_id("SSP2-4.5 (Intermediate emissions)"),
             "ssp245"
+        );
+        assert_eq!(
+            scenario_output_id("SSP3-7.0 (Moderate-high emissions)"),
+            "ssp370"
         );
         assert_eq!(scenario_output_id("SSP5-8.5 (High emissions)"), "ssp585");
         // Unknown names pass through, so rows already carrying output ids keep working.
