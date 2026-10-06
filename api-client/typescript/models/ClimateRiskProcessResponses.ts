@@ -18,6 +18,7 @@ import { DataResource } from "../models/DataResource";
  */
 export class ClimateRiskProcessResponses {
   "ssp245"?: DataResource | null;
+  "ssp370"?: DataResource | null;
   "ssp585"?: DataResource | null;
   "rawEnsembleData"?: DataResource | null;
   /**
@@ -38,6 +39,12 @@ export class ClimateRiskProcessResponses {
     {
       name: "ssp245",
       baseName: "ssp245",
+      type: "DataResource",
+      format: "",
+    },
+    {
+      name: "ssp370",
+      baseName: "ssp370",
       type: "DataResource",
       format: "",
     },

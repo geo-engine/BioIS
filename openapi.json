@@ -1223,6 +1223,17 @@
             ],
             "description": "Summary table for SSP2-4.5."
           },
+          "ssp370": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://datapackage.org/profiles/2.0/dataresource.json"
+              }
+            ],
+            "description": "Summary table for SSP3-7.0."
+          },
           "ssp585": {
             "oneOf": [
               {

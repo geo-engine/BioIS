@@ -9,28 +9,28 @@
 id = "ACCESS-CM2"
 variant = "r1i1p1f1"
 grid = "gn"
-scenarios = ["historical", "ssp245", "ssp585"]
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
 
 [[model]]
 id = "MPI-ESM1-2-LR"
 variant = "r1i1p1f1"
 grid = "gn"
-scenarios = ["historical", "ssp245", "ssp585"]
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
 
 [[model]]
 id = "IPSL-CM6A-LR"
 variant = "r1i1p1f1"
-grid = "gn"
-scenarios = ["historical", "ssp245", "ssp585"]
+grid = "gr"
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
 
 [[model]]
 id = "MRI-ESM2-0"
 variant = "r1i1p1f1"
 grid = "gn"
-scenarios = ["historical", "ssp245", "ssp585"]
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
 
 [[model]]
 id = "GFDL-ESM4"
 variant = "r1i1p1f1"
 grid = "gr1"
-scenarios = ["historical", "ssp245", "ssp585"]
+scenarios = ["historical", "ssp245", "ssp370", "ssp585"]
