@@ -1466,9 +1466,9 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.9.4"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fa718487ebe0957cfec69a03bbd73342aa97526caebfad6790c70750dc44eee"
+checksum = "402ed2cf40b5c36ae9c2d027f19f17130f98dafac14312ba19bfb09dc28a6236"
 dependencies = [
  "reqwest",
  "serde",
