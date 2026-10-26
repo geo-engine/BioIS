@@ -23,11 +23,11 @@ use geoengine_api_client::{
         configuration::Configuration,
         datasets_api::create_dataset_handler,
         ogcwfs_api::wfs_handler,
-        uploads_api::upload_handler,
-        workflows_api::{
-            get_workflow_metadata_handler, get_workflow_provenance_handler,
-            register_workflow_handler,
+        processing_graphs_api::{
+            get_processing_graph_metadata_handler, get_processing_graph_provenance_handler,
+            register_processing_graph_handler,
         },
+        uploads_api::upload_handler,
     },
     models::{
         AddDataset, ClassificationMeasurement, ColumnNames, ContinuousMeasurement, CreateDataset,
@@ -330,23 +330,24 @@ async fn sealed_area_process(
 ) -> Result<(GeoJson, ComputationId)> {
     let operators = build_sealed_area_vector_operator(upload_data_id);
 
-    let processing_graph_id = register_workflow_handler(configuration, operators.sealed_area())
-        .await?
-        .id
-        .to_string();
+    let processing_graph_id =
+        register_processing_graph_handler(configuration, operators.sealed_area())
+            .await?
+            .id
+            .to_string();
 
     let time_str = format!("{year}-01-01T00:00:00Z");
 
     let locations_projected_id =
-        register_workflow_handler(configuration, operators.locations_projected())
+        register_processing_graph_handler(configuration, operators.locations_projected())
             .await?
             .id
             .to_string();
 
     let bbox = BoundingBox::try_from(&vector_result_descriptor(
-        get_workflow_metadata_handler(configuration, &locations_projected_id)
+        get_processing_graph_metadata_handler(configuration, &locations_projected_id)
             .await
-            .context("unable to get workflow metadata")?,
+            .context("unable to get processing graph metadata")?,
     )?)?;
 
     let mut computation_id = String::new();
@@ -470,11 +471,11 @@ struct ComputeOperators {
 }
 
 impl ComputeOperators {
-    fn sealed_area(&self) -> geoengine_api_client::models::Workflow {
+    fn sealed_area(&self) -> geoengine_api_client::models::ProcessingGraph {
         to_api_vector_process(&self.sealed_area)
     }
 
-    fn locations_projected(&self) -> geoengine_api_client::models::Workflow {
+    fn locations_projected(&self) -> geoengine_api_client::models::ProcessingGraph {
         to_api_vector_process(&self.locations_projected)
     }
 }
@@ -486,6 +487,7 @@ fn projected_locations_operator(upload_data_id: String) -> VectorOperator {
         params: OgrSourceParameters {
             data: upload_data_id,
             attribute_projection: None,
+            attribute_filters: None,
         }
         .into(),
     }));
@@ -612,12 +614,12 @@ pub async fn compute_available_time_range_from_imperviousness_raster(
     configuration: &Configuration,
 ) -> Result<(Year, Year)> {
     let operator = to_api_raster_process(&imperviousness_raster_operator());
-    let processing_graph_id = register_workflow_handler(configuration, operator)
+    let processing_graph_id = register_processing_graph_handler(configuration, operator)
         .await?
         .id
         .to_string();
     let result_descriptor = raster_result_descriptor(
-        get_workflow_metadata_handler(configuration, &processing_graph_id)
+        get_processing_graph_metadata_handler(configuration, &processing_graph_id)
             .await
             .context("unable to get process metadata")?,
     )?;
@@ -631,11 +633,11 @@ pub async fn compute_documentation_sources(
     configuration: &Configuration,
 ) -> Result<Vec<DocumentationSource>> {
     let operator = to_api_raster_process(&imperviousness_raster_operator());
-    let processing_graph_id = register_workflow_handler(configuration, operator)
+    let processing_graph_id = register_processing_graph_handler(configuration, operator)
         .await?
         .id
         .to_string();
-    let provenance = get_workflow_provenance_handler(configuration, &processing_graph_id)
+    let provenance = get_processing_graph_provenance_handler(configuration, &processing_graph_id)
         .await
         .context("unable to get process provenance")?;
 
@@ -1061,9 +1063,9 @@ mod tests {
                     )),
             );
 
-            // Mock workflow registration - 2 calls expected
+            // Mock processing graph registration - 2 calls expected
             server.expect(
-                Expectation::matching(request::method_path("POST", "//workflow"))
+                Expectation::matching(request::method_path("POST", "//processingGraphs"))
                 .times(2)
                     .respond_with(
                         cycle(vec![
@@ -1081,9 +1083,9 @@ mod tests {
                     ),
             );
 
-            // Mock workflow metadata endpoint for locations_projected
+            // Mock processing graph metadata endpoint for locations_projected
             server.expect(
-                Expectation::matching(request::method_path("GET", "//workflow/00000000-0000-0000-0000-000000000003/metadata"))
+                Expectation::matching(request::method_path("GET", "//processingGraphs/00000000-0000-0000-0000-000000000003/metadata"))
                     .respond_with(json_encoded(
                         TypedResultDescriptor::Vector(
                             Box::new(TypedVectorResultDescriptor {

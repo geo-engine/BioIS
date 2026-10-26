@@ -1,6 +1,6 @@
 use geoengine_api_client::models::{
-    RasterOperator, TypedOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
-    Workflow, typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
+    ProcessingGraph, RasterOperator, TypedRasterOperator, TypedVectorOperator, VectorOperator,
+    typed_raster_operator::Type as RasterType, typed_vector_operator::Type as VectorType,
 };
 use serde::Deserialize;
 use std::ops::Deref;
@@ -10,24 +10,20 @@ use tracing_subscriber::{
     EnvFilter, filter::Directive, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
-/// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_vector_process(operator: &VectorOperator) -> geoengine_api_client::models::Workflow {
-    Workflow::TypedOperator(Box::new(TypedOperator::TypedVectorOperator(Box::new(
-        TypedVectorOperator {
-            operator: Box::new(operator.clone()),
-            r#type: VectorType::Vector,
-        },
-    ))))
+/// Converts a Geo Engine operator to an Geo Engine OpenAPI processing graph.
+pub fn to_api_vector_process(operator: &VectorOperator) -> ProcessingGraph {
+    ProcessingGraph::TypedVectorOperator(Box::new(TypedVectorOperator {
+        operator: Box::new(operator.clone()),
+        r#type: VectorType::Vector,
+    }))
 }
 
-/// Converts a Geo Engine operator to an Geo Engine OpenAPI workflow.
-pub fn to_api_raster_process(operator: &RasterOperator) -> geoengine_api_client::models::Workflow {
-    Workflow::TypedOperator(Box::new(TypedOperator::TypedRasterOperator(Box::new(
-        TypedRasterOperator {
-            operator: Box::new(operator.clone()),
-            r#type: RasterType::Raster,
-        },
-    ))))
+/// Converts a Geo Engine operator to an Geo Engine OpenAPI processing graph.
+pub fn to_api_raster_process(operator: &RasterOperator) -> ProcessingGraph {
+    ProcessingGraph::TypedRasterOperator(Box::new(TypedRasterOperator {
+        operator: Box::new(operator.clone()),
+        r#type: RasterType::Raster,
+    }))
 }
 
 pub fn error_response<T>(
@@ -241,7 +237,7 @@ mod tests {
     use std::sync::{Arc, RwLock};
 
     #[test]
-    fn it_converts_operator_to_api_workflow() {
+    fn it_converts_operator_to_api_processing_graph() {
         let raster_vector_join = VectorOperator::RasterVectorJoin(
             RasterVectorJoin {
                 r#type: Default::default(),
@@ -273,10 +269,10 @@ mod tests {
             .into(),
         );
 
-        let api_workflow = to_api_vector_process(&raster_vector_join);
+        let api_processing_graph = to_api_vector_process(&raster_vector_join);
 
         assert_eq!(
-            serde_json::to_value(&api_workflow).unwrap(),
+            serde_json::to_value(&api_processing_graph).unwrap(),
             serde_json::json!({
                 "type": "Vector",
                 "operator": {
@@ -294,10 +290,7 @@ mod tests {
                         "vector": {
                             "type": "MockPointSource",
                             "params": {
-                                "points": [],
-                                "spatialBounds": {
-                                    "type": "derive"
-                                }
+                                "points": []
                             },
                         },
                         "rasters": [{

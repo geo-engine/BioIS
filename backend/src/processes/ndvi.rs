@@ -1,23 +1,23 @@
 use anyhow::Result;
 use geoengine_api_client::{
     apis::{
-        configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler,
-        workflows_api::register_workflow_handler,
+        configuration::Configuration, ogcwfs_api::wfs_handler,
+        processing_graphs_api::register_processing_graph_handler, uploads_api::upload_handler,
     },
     models::{
-        Aggregation, BandFilter, BandFilterParameters, BandsByNameOrIndex, ColumnNames,
-        ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
+        Aggregation, AggregationFirst, BandFilter, BandFilterParameters, BandsByNameOrIndex,
+        ColumnNames, ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
         DeriveOutRasterSpecsSource, Expression, ExpressionParameters, FeatureAggregationMethod,
-        FirstAggregation, Fraction, GdalSourceParameters, GeoJson, Interpolation,
-        InterpolationMethod, InterpolationParameters, InterpolationResolution, Measurement,
-        MockPointSource, MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor,
-        RasterDataType, RasterOperator, RasterStacker, RasterStackerParameters,
-        RasterTypeConversion, RasterTypeConversionParameters, RasterVectorJoin,
-        RasterVectorJoinParameters, RenameBands, Reprojection, ReprojectionParameters,
-        SingleRasterOrVectorOperator, SingleRasterOrVectorSource, SingleRasterSource,
-        SingleVectorMultipleRasterSources, SpatialBoundsDerive, SpatialBoundsDeriveNone,
-        TemporalAggregationMethod, TemporalRasterAggregation, TemporalRasterAggregationParameters,
-        TimeGranularity, TimeStep, VectorOperator, WfsRequest, WfsService,
+        GdalSourceParameters, GeoJson, Interpolation, InterpolationMethod, InterpolationParameters,
+        InterpolationResolution, InterpolationResolutionFraction, Measurement, MockPointSource,
+        MockPointSourceParameters, MultiBandGdalSource, RasterBandDescriptor, RasterDataType,
+        RasterOperator, RasterStacker, RasterStackerParameters, RasterTypeConversion,
+        RasterTypeConversionParameters, RasterVectorJoin, RasterVectorJoinParameters, RenameBands,
+        Reprojection, ReprojectionParameters, SingleRasterOrVectorOperator,
+        SingleRasterOrVectorSource, SingleRasterSource, SingleVectorMultipleRasterSources,
+        SpatialBoundsDerive, SpatialBoundsDeriveNone, TemporalAggregationMethod,
+        TemporalRasterAggregation, TemporalRasterAggregationParameters, TimeGranularity, TimeStep,
+        VectorOperator, WfsRequest, WfsService,
     },
 };
 use geojson::PointType;
@@ -423,7 +423,7 @@ async fn compute_ndvi(
             ));
         }
     };
-    let workflow = to_api_vector_process(&VectorOperator::RasterVectorJoin(
+    let processing_graph = to_api_vector_process(&VectorOperator::RasterVectorJoin(
         RasterVectorJoin {
             r#type: Default::default(),
             params: RasterVectorJoinParameters {
@@ -449,22 +449,25 @@ async fn compute_ndvi(
         .into(),
     ));
 
-    let workflow_id = match register_workflow_handler(configuration, workflow.clone()).await {
-        Ok(id) => id,
-        Err(e) => {
-            let workflow_json = serde_json::to_string_pretty(&workflow)
-                .unwrap_or_else(|_| "<failed to serialize workflow>".to_string());
-            if let Some(error) = error_response(&e) {
-                anyhow::bail!("Failed to register workflow `{workflow_json}`: {error:?}");
+    let processing_graph_id =
+        match register_processing_graph_handler(configuration, processing_graph.clone()).await {
+            Ok(id) => id,
+            Err(e) => {
+                let processing_graph_json = serde_json::to_string_pretty(&processing_graph)
+                    .unwrap_or_else(|_| "<failed to serialize processing graph>".to_string());
+                if let Some(error) = error_response(&e) {
+                    anyhow::bail!(
+                        "Failed to register processing graph `{processing_graph_json}`: {error:?}"
+                    );
+                }
+
+                anyhow::bail!("Failed to register processing graph `{processing_graph_json}`: {e}");
             }
+        };
 
-            anyhow::bail!("Failed to register workflow `{workflow_json}`: {e}");
-        }
-    };
+    let processing_graph_id = processing_graph_id.id.to_string();
 
-    let workflow_id = workflow_id.id.to_string();
-
-    // eprintln!("Registered workflow with ID: {workflow_id}");
+    // eprintln!("Registered processing graph with ID: {processing_graph_id}");
 
     let time_str = format!("{year}-{month:02}-01T00:00:00Z");
 
@@ -473,12 +476,12 @@ async fn compute_ndvi(
     tracing::info!(
         coordinate = ?coordinate,
         time = time_str,
-        workflow_id = workflow_id,
+        processing_graph_id = processing_graph_id,
         "Requesting NDVI process"
     );
 
     // query the whole UTM zone 32N (EPSG:32632), as the result only contains a single coordinate, but the wfs call requires specifying a bbox
-    // TODO: create a workflow that works with points of any UTM zone
+    // TODO: create a processing graph that works with points of any UTM zone
     let minx = 399_960;
     let miny = 5_590_200;
     let maxx = 509_760;
@@ -488,7 +491,7 @@ async fn compute_ndvi(
 
     let feature_collection = wfs_handler(
         configuration,
-        &workflow_id,
+        &processing_graph_id,
         WfsRequest::GetFeature,
         Some(&format!("{minx},{miny},{maxx},{maxy}")), // TODO
         None,
@@ -500,7 +503,7 @@ async fn compute_ndvi(
         None,
         Some("EPSG:32632"),
         Some(&time_str),
-        Some(&workflow_id),
+        Some(&processing_graph_id),
         None,
         Some(&mut computation_id),
     )
@@ -561,13 +564,15 @@ fn vector_reprojection_source(coordinate: &PointType) -> VectorOperator {
             r#type: Default::default(),
             params: MockPointSourceParameters {
                 points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
-                spatial_bounds: SpatialBoundsDerive::None(
-                    SpatialBoundsDeriveNone {
-                        r#type: Default::default(),
-                    }
+                spatial_bounds: Some(
+                    SpatialBoundsDerive::None(
+                        SpatialBoundsDeriveNone {
+                            r#type: Default::default(),
+                        }
+                        .into(),
+                    )
                     .into(),
-                )
-                .into(),
+                ),
             }
             .into(),
         }
@@ -596,8 +601,8 @@ fn ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::FirstAggregation(
-                    FirstAggregation {
+                aggregation: Aggregation::First(
+                    AggregationFirst {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -627,8 +632,8 @@ fn k_ndvi_source() -> RasterOperator {
         TemporalRasterAggregation {
             r#type: Default::default(),
             params: TemporalRasterAggregationParameters {
-                aggregation: Aggregation::FirstAggregation(
-                    FirstAggregation {
+                aggregation: Aggregation::First(
+                    AggregationFirst {
                         ignore_no_data: true,
                         r#type: Default::default(),
                     }
@@ -720,7 +725,7 @@ fn scl_source() -> RasterOperator {
                             interpolation: InterpolationMethod::NearestNeighbor,
                             output_origin_reference: None,
                             output_resolution: InterpolationResolution::Fraction(
-                                Fraction {
+                                InterpolationResolutionFraction {
                                     r#type: Default::default(),
                                     x: 2.0,
                                     y: 2.0,
@@ -910,14 +915,14 @@ mod tests {
         // Start httptest server and mock the external Geo Engine endpoints
         let server = Server::run();
 
-        // Mock workflow registration (POST /workflow -> { id: "..." })
+        // Mock processing graph registration (POST /processingGraphs -> { id: "..." })
         server.expect(
             Expectation::matching(request::method("POST")).respond_with(json_encoded(
                 json!({ "id": "00000000-0000-0000-0000-000000000003" }),
             )),
         );
 
-        // Mock WFS feature handler (GET /wfs/{workflow} -> GeoJSON with NDVI properties)
+        // Mock WFS feature handler (GET /wfs/{processingGraph} -> GeoJSON with NDVI properties)
         server.expect(
             Expectation::matching(request::method("GET")).respond_with(
                 json_encoded(json!({

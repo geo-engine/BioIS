@@ -891,10 +891,8 @@ fn site_row_into_output(
     })
 }
 
-/// Compute the impact metrics from inputs. This helper performs optional HTTP GET requests
-/// to any provided `workflow_refs` (if they are HTTP URLs) and includes their responses
-/// in the `sources` output for auditing. The spatial computations are placeholders and
-/// should be replaced by Geo Engine workflow calls in future.
+/// Compute the impact metrics from inputs. Intersects the (buffered) sites with the Natura 2000
+/// polygons in the database. Features that cannot be parsed are skipped and reported as errors.
 #[instrument(skip(db), err(Debug))]
 pub async fn compute_biodiversity_sensitive_areas(
     db: &mut DbHandle,

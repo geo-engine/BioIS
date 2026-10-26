@@ -979,7 +979,7 @@ mod tests {
             ),
         );
         server.expect(
-            Expectation::matching(request::method_path("POST", "//workflow"))
+            Expectation::matching(request::method_path("POST", "//processingGraphs"))
                 .times(3)
                 .respond_with(cycle(vec![
                     Box::new(json_encoded(IdResponse::new(
@@ -996,7 +996,7 @@ mod tests {
         server.expect(
             Expectation::matching(request::method_path(
                 "GET",
-                "//workflow/00000000-0000-0000-0000-000000000003/metadata",
+                "//processingGraphs/00000000-0000-0000-0000-000000000003/metadata",
             ))
             .respond_with(json_encoded(TypedResultDescriptor::Vector(Box::new(
                 TypedVectorResultDescriptor {
@@ -1093,7 +1093,7 @@ mod tests {
         server.expect(
             Expectation::matching(request::method_path(
                 "GET",
-                "//workflow/00000000-0000-0000-0000-000000000004/provenance",
+                "//processingGraphs/00000000-0000-0000-0000-000000000004/provenance",
             ))
             .respond_with(json_encoded(vec![ProvenanceEntry {
                 provenance: Box::new(Provenance {
