@@ -38,3 +38,6 @@ frontend/coverage/
 
 # Notebook run artifacts (the clean notebook is what's tracked)
 *.out.ipynb
+
+# Notebook outputs: spot checks, export packages, import reports
+notebooks/out/

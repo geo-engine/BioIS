@@ -1,9 +1,9 @@
 # NEX-GDDP-CMIP6 model registry - the source of truth for what climate-risk can compute.
 #
-# Every model/scenario listed here has a registered GeoEngine dataset, so the process
-# description and the `models` dropdown offer exactly what can run. This file is rewritten
-# from `nexgddp_models.full.toml` by `notebooks/nexgddp_cmip6_ingest_full.ipynb` once the
-# ingest is verified. To add a model, edit that full matrix and re-run the notebook.
+# Every model/scenario listed here has all six yearly indicator datasets
+# (`nexgddp_cmip6_{model}_{scenario}_{indicator}_yearly`), so the process description and
+# the `models` dropdown offer exactly what can run. This file is rewritten from
+# `nexgddp_models.full.toml` by `notebooks/nexgddp_cmip6_aggregate_yearly.ipynb`.
 
 [[model]]
 id = "ACCESS-CM2"

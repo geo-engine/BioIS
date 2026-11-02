@@ -251,6 +251,29 @@ describe('DataResourceTableComponent', () => {
     expect(dot?.style.backgroundColor).toBe('rgb(253, 219, 199)');
   });
 
+  it('renders a label without color as plain text', async () => {
+    fixture.componentRef.setInput('columns', [
+      {
+        name: 'Mean (days/year)',
+        key: 'mean',
+        type: ColumnType.Number,
+        isPrimaryKey: false,
+        displayKind: 'meanUncertainty',
+        labelField: 'meanLabel',
+      },
+    ]);
+    fixture.componentRef.setInput('rows', [{ mean: 14.1, meanLabel: '14.1 ± 2.9' }]);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const cell = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('tbody td');
+    expect(cell?.textContent).toContain('14.1 ± 2.9');
+    expect(cell?.querySelector('mat-chip')).toBeNull();
+    expect(cell?.querySelector('.color-dot')).toBeNull();
+  });
+
   it('falls back to the raw value when display metadata is incomplete', async () => {
     fixture.componentRef.setInput('columns', [
       {

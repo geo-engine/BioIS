@@ -25,7 +25,7 @@ import { RowOverflowDirective } from './row-overflow.directive';
               </td>
             }
             @case (ColumnType.Number) {
-              @if (column.displayKind) {
+              @if (column.displayKind && column.colorField) {
                 <td mat-cell *matCellDef="let element" class="cell-content">
                   <mat-chip class="cell-content">
                     <span
@@ -34,6 +34,11 @@ import { RowOverflowDirective } from './row-overflow.directive';
                     ></span>
                     {{ displayValue(column, element) }}
                   </mat-chip>
+                </td>
+              } @else if (column.displayKind) {
+                <!-- a label without color, e.g. a mean with its uncertainty -->
+                <td mat-cell *matCellDef="let element">
+                  <span>{{ displayValue(column, element) }}</span>
                 </td>
               } @else {
                 <td mat-cell *matCellDef="let element">
@@ -222,7 +227,7 @@ export interface Column {
   colorField?: string;
 }
 
-export type DisplayKind = 'riskProbability' | 'riskAnomaly';
+export type DisplayKind = 'riskProbability' | 'riskAnomaly' | 'meanUncertainty';
 
 export enum ColumnType {
   String = 'string',

@@ -140,6 +140,7 @@ impl TryFrom<Vec<DocumentationSource>> for DataResource<Vec<DocumentationSource>
         Ok(Self {
             name: "documentation-sources".try_into()?,
             title: Some("Documentation Sources".to_string()),
+            description: None,
             data: value,
             schema: Fields {
                 fields: vec![

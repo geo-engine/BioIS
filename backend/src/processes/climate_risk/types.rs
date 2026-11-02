@@ -1,10 +1,9 @@
 use crate::processes::parameters::{
     DataResource, DataResourceSchema, Days, PointGeoJsonInput, Year, YearRange,
 };
-use geoengine_api_client::models::RasterDataType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use utoipa::ToSchema;
 
 /// Climate variable to compute (WMO-based daily threshold indicators).
@@ -42,57 +41,21 @@ impl ClimateVariable {
         }
     }
 
-    /// Returns the dataset suffix and `GeoEngine` expression for this variable.
+    /// The display name of the indicator, e.g. "Heat Days".
     ///
-    /// Expressions operate on daily values `A`: temperature in Kelvin (converted via
-    /// `A - 273.15` to °C) or precipitation in mm/s (converted via `A * 86400` to mm/day).
-    /// Thresholds follow WMO climate-index definitions:
-    /// heat ≥ 30 °C, ice/frost < 0 °C, tropical night > 20 °C, dry < 1 mm, heavy rain > 20 mm.
-    pub fn properties(self) -> ClimateVariableProperties {
+    /// The counts are precomputed by `notebooks/nexgddp_cmip6_aggregate_yearly.ipynb` from the
+    /// daily data with WMO climate-index thresholds: heat ≥ 30 °C (tasmax), ice < 0 °C (tasmax),
+    /// tropical night > 20 °C (tasmin), frost < 0 °C (tasmin), dry < 1 mm (pr),
+    /// heavy rain > 20 mm (pr).
+    pub fn display_name(self) -> &'static str {
         match self {
-            ClimateVariable::HeatDays => ClimateVariableProperties {
-                name: "Heat Days",
-                dataset_variable_suffix: "tasmax",
-                expression: "let c = (A - 273.15); if c >= 30 { 1 } else { 0 }",
-            },
-            ClimateVariable::IceDays => ClimateVariableProperties {
-                name: "Ice Days",
-                dataset_variable_suffix: "tasmax",
-                expression: "let c = (A - 273.15); if c < 0 { 1 } else { 0 }",
-            },
-            ClimateVariable::TropicalNights => ClimateVariableProperties {
-                name: "Tropical Nights",
-                dataset_variable_suffix: "tasmin",
-                expression: "let c = (A - 273.15); if c > 20 { 1 } else { 0 }",
-            },
-            ClimateVariable::FrostDays => ClimateVariableProperties {
-                name: "Frost Days",
-                dataset_variable_suffix: "tasmin",
-                expression: "let c = (A - 273.15); if c < 0 { 1 } else { 0 }",
-            },
-            ClimateVariable::DryDays => ClimateVariableProperties {
-                name: "Dry Days",
-                dataset_variable_suffix: "pr",
-                expression: "if (A * 86400) < 1 { 1 } else { 0 }",
-            },
-            ClimateVariable::HeavyRainDays => ClimateVariableProperties {
-                name: "Heavy Rain Days",
-                dataset_variable_suffix: "pr",
-                expression: "if (A * 86400) > 20 { 1 } else { 0 }",
-            },
+            Self::HeatDays => "Heat Days",
+            Self::IceDays => "Ice Days",
+            Self::TropicalNights => "Tropical Nights",
+            Self::FrostDays => "Frost Days",
+            Self::DryDays => "Dry Days",
+            Self::HeavyRainDays => "Heavy Rain Days",
         }
-    }
-}
-
-/// A climate variable selected for computation.
-#[derive(Debug, Clone)]
-pub struct ClimateVariableRequest {
-    pub variable: ClimateVariable,
-}
-
-impl ClimateVariableRequest {
-    pub fn new(variable: ClimateVariable) -> Self {
-        Self { variable }
     }
 }
 
@@ -113,11 +76,26 @@ pub struct ClimateModelProperties {
 }
 
 /// Shared Socioeconomic Pathway scenario.
-#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(
+    Deserialize,
+    Serialize,
+    Debug,
+    JsonSchema,
+    ToSchema,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Default,
+)]
 #[schema(title = "ClimateScenario")]
 #[schemars(rename = "ClimateScenario")]
 #[serde(rename_all = "lowercase")]
 pub enum ClimateScenario {
+    #[default]
     Historical,
     Ssp245,
     Ssp370,
@@ -183,8 +161,12 @@ pub(crate) const FUTURE_END_YEAR: u16 = 2100;
 pub(crate) const HISTORICAL_START_YEAR: u16 = 1950;
 /// Last year with available NEX-GDDP-CMIP6 historical data.
 pub(crate) const HISTORICAL_END_YEAR: u16 = 2014;
-/// Days in a Julian year (IAU: 365 d + 1 leap day / 4). Used to convert annual occurrence counts to probabilities.
-pub(crate) const DAYS_PER_JULIAN_YEAR: f64 = 365.25;
+/// Shortest and longest aggregation window in years, cf. [`YearRange`].
+pub(crate) const MIN_YEAR_RANGE: u16 = 5;
+pub(crate) const MAX_YEAR_RANGE: u16 = 30;
+/// Length of the reference period: a WMO climate normal, independent of the analysis window, so
+/// that the reference 10-year level rests on enough years even for short analysis windows.
+pub(crate) const REFERENCE_YEARS: u16 = 30;
 
 pub(crate) fn default_reference_year_begin() -> Year {
     Year(1981)
@@ -209,13 +191,13 @@ fn default_models() -> Vec<String> {
 pub struct ClimateRiskInputs {
     pub coordinate: PointGeoJsonInput,
     #[serde(default = "default_year_begin")]
-    #[schema(minimum = 2015, maximum = 2100)]
+    #[schema(minimum = 2015, maximum = 2096)]
     pub year_begin: Year,
     #[serde(default = "default_year_range")]
     #[schemars(default = "default_year_range")]
     pub year_range: YearRange,
     #[schemars(default = "default_reference_year_begin")]
-    #[schema(minimum = 1950, maximum = 2014)]
+    #[schema(minimum = 1950, maximum = 2010)]
     pub reference_year_begin: Year,
     #[serde(default = "default_variables")]
     pub variables: Vec<ClimateVariable>,
@@ -231,9 +213,21 @@ pub struct ClimateVariableResult {
     pub mean: Days,
     pub median: Days,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub occurrence_probability: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub raw_members: Option<HashMap<String, f64>>,
+    /// Standard error of `mean` from the year-to-year variability within the window.
+    #[serde(skip)]
+    pub standard_error: Option<f64>,
+}
+
+/// One model's yearly values for a variable/scenario over the queried window.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct ModelYears {
+    /// Mean number of event days per year.
+    pub mean: f64,
+    /// Number of event days of each year in the window.
+    pub values: Vec<f64>,
+    /// Variance of the yearly values around their linear trend; `None` for fewer than 3 years.
+    pub residual_variance: Option<f64>,
 }
 
 /// A single row in the climate risk `DataResource` output.
@@ -242,6 +236,9 @@ pub struct ClimateVariableResult {
 pub struct ClimateRiskRow {
     pub variable: String,
     pub scenario: String,
+    /// The scenario as the output id it is reported under; the display name is `scenario`.
+    #[serde(skip)]
+    pub scenario_id: ClimateScenario,
     /// Mean number of days per year in the analysis period.
     pub mean: Days,
     /// Median number of days per year in the analysis period.
@@ -250,9 +247,15 @@ pub struct ClimateRiskRow {
     pub min: Days,
     /// Maximum number of days per year across models.
     pub max: Days,
-    /// Occurrence probability as a ratio from 0 to 1.
+    /// Annual probability of a 10-year event of the reference period, as a ratio from 0 to 1:
+    /// the share of years (across models) with more days than the model's reference 1-in-10-year
+    /// level. See `ten_year_event_probabilities`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub occurrence_probability: Option<f64>,
+    /// How many times more often the 10-year event occurs than in the reference period
+    /// (IPCC "probability ratio"); `None` if it never occurred there.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub risk_ratio: Option<f64>,
     /// Difference in days per year from the reference period.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anomaly: Option<Days>,
@@ -268,6 +271,19 @@ pub struct ClimateRiskRow {
     /// Cell color for the anomaly.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anomaly_color: Option<String>,
+    /// Half width of the 95 % confidence interval of `mean` from the year-to-year variability
+    /// within the window (around its trend), in days per year.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uncertainty: Option<Days>,
+    /// Ready-to-display mean with its uncertainty, e.g. "14.1 ± 2.9".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mean_label: Option<String>,
+    /// Standard error of `mean`, for comparing scenarios.
+    #[serde(skip)]
+    pub standard_error: Option<f64>,
+    /// Multi-year mean per model, for the model agreement between scenarios.
+    #[serde(skip)]
+    pub model_means: HashMap<String, f64>,
 }
 
 /// A single row in the raw ensemble data output.
@@ -291,10 +307,14 @@ pub struct ClimateRiskOutputs {
     /// Reference window used for anomalies as `"1981–2010"`, `None` when no reference period.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reference_period: Option<String>,
-    #[schema(value_type = Option<DataResourceSchema>, inline)]
-    pub climate_risk: Option<DataResource<Vec<ClimateRiskRow>>>,
+    /// Summary rows of all computed scenarios, reported as one table per scenario.
+    #[serde(default)]
+    pub climate_risk: Vec<ClimateRiskRow>,
     #[schema(value_type = Option<DataResourceSchema>, inline)]
     pub raw_ensemble_data: Option<DataResource<Vec<ClimateRiskRawRow>>>,
+    /// Per scenario, the variables that cannot be told apart from other scenarios in this window.
+    #[serde(skip)]
+    pub scenario_notes: BTreeMap<ClimateScenario, String>,
 }
 
 /// Column title for the anomaly: "Anomaly (days/year compared to 1981–2010)".
@@ -303,6 +323,22 @@ pub(crate) fn anomaly_title(reference_period: Option<&str>) -> String {
     match reference_period {
         Some(period) => format!("Anomaly (days/year compared to {period})"),
         None => "Anomaly (days/year)".to_string(),
+    }
+}
+
+/// Column title for the occurrence probability: "Occurrence Probability (10-year event of 1981–2010)".
+pub(crate) fn occurrence_probability_title(reference_period: Option<&str>) -> String {
+    match reference_period {
+        Some(period) => format!("Occurrence Probability (10-year event of {period})"),
+        None => "Occurrence Probability (10-year event)".to_string(),
+    }
+}
+
+/// Column title for the risk ratio: "Risk Ratio (vs. 1981–2010)".
+pub(crate) fn risk_ratio_title(reference_period: Option<&str>) -> String {
+    match reference_period {
+        Some(period) => format!("Risk Ratio (vs. {period})"),
+        None => "Risk Ratio".to_string(),
     }
 }
 
@@ -421,6 +457,28 @@ pub(crate) fn probability_label(p: f64) -> String {
     format!("{} · {} ({pct} %)", class.number(), class.label())
 }
 
+/// Occurrence-probability label with the classes of the 95 % interval `low..=high`: like
+/// [`probability_label`] if they are one class, otherwise e.g. "7–10 · high to extreme (12 %)".
+pub(crate) fn probability_range_label(p: f64, low: f64, high: f64) -> String {
+    let (low, high) = (
+        ProbabilityClass::from_probability(low),
+        ProbabilityClass::from_probability(high),
+    );
+    if low == high {
+        return probability_label(p);
+    }
+    let pct = format!("{:.1}", p * 100.0)
+        .trim_end_matches(".0")
+        .to_string();
+    format!(
+        "{}–{} · {} to {} ({pct} %)",
+        low.number(),
+        high.number(),
+        low.label(),
+        high.label()
+    )
+}
+
 pub(crate) fn probability_color(p: f64) -> String {
     ProbabilityClass::from_probability(p).color().to_string()
 }
@@ -443,15 +501,20 @@ pub(crate) fn percentage_color(pct: f64) -> String {
 }
 
 /// Percentage change of the analysis mean relative to the reference mean, unclamped.
-/// A missing/zero reference mean maps to the extreme percentages by sign of the anomaly.
-pub(crate) fn anomaly_pct(analysis_mean: f64, reference_mean: f64) -> f64 {
+/// `None` for a zero reference mean with a change, where no percentage exists.
+pub(crate) fn anomaly_pct(analysis_mean: f64, reference_mean: f64) -> Option<f64> {
     if (analysis_mean - reference_mean).abs() <= f64::EPSILON {
-        0.0
+        Some(0.0)
     } else if reference_mean.abs() <= f64::EPSILON {
-        (analysis_mean - reference_mean).signum() * 100.0
+        None
     } else {
-        (analysis_mean - reference_mean) / reference_mean * 100.0
+        Some((analysis_mean - reference_mean) / reference_mean * 100.0)
     }
+}
+
+/// Anomaly color; without a percentage (zero reference), the strongest stop by sign.
+pub(crate) fn anomaly_color(anomaly_days: f64, pct: Option<f64>) -> String {
+    percentage_color(pct.unwrap_or(anomaly_days.signum() * 100.0))
 }
 
 /// Formats a signed value with `decimals` places, trailing zeros trimmed, e.g. 10.0 -> "+10".
@@ -468,40 +531,13 @@ fn format_signed(value: f64, decimals: usize) -> String {
     format!("{sign}{trimmed}")
 }
 
-/// Ready-to-display anomaly label, e.g. "+10 days (+20 %)".
-pub(crate) fn anomaly_label(anomaly_days: f64, pct: f64) -> String {
-    format!(
-        "{} days ({} %)",
-        format_signed(anomaly_days, 2),
-        format_signed(pct, 1)
-    )
-}
-
-/// Dataset suffix and `GeoEngine` expression for a climate variable.
-pub struct ClimateVariableProperties {
-    pub(crate) name: &'static str,
-    pub(crate) dataset_variable_suffix: &'static str,
-    pub(crate) expression: &'static str,
-}
-
-impl ClimateVariableProperties {
-    pub fn name_string(&self) -> String {
-        self.name.to_string()
-    }
-    pub fn measurement_string() -> String {
-        "Days".to_string()
-    }
-    pub fn measurement_unit() -> String {
-        "Days".to_string()
-    }
-    pub fn expression_string(&self) -> String {
-        self.expression.to_string()
-    }
-    pub fn expression_dtype() -> RasterDataType {
-        RasterDataType::I8
-    }
-    pub fn year_agg_dtype() -> RasterDataType {
-        RasterDataType::U16
+/// Ready-to-display anomaly label, e.g. "+10 days (+20 %)", or "+2 days (new)" when the event
+/// did not occur in the reference period.
+pub(crate) fn anomaly_label(anomaly_days: f64, pct: Option<f64>) -> String {
+    let days = format_signed(anomaly_days, 2);
+    match pct {
+        Some(pct) => format!("{days} days ({} %)", format_signed(pct, 1)),
+        None => format!("{days} days (new)"),
     }
 }
 
@@ -511,30 +547,13 @@ mod tests {
     use approx::assert_abs_diff_eq;
 
     #[test]
-    fn it_exposes_climate_variable_properties() {
-        for (var, expected_name, expected_suffix, expected_expr) in [
-            (ClimateVariable::HeatDays, "Heat Days", "tasmax", "c >= 30"),
-            (ClimateVariable::IceDays, "Ice Days", "tasmax", "c < 0"),
-            (
-                ClimateVariable::TropicalNights,
-                "Tropical Nights",
-                "tasmin",
-                "c > 20",
-            ),
-            (ClimateVariable::FrostDays, "Frost Days", "tasmin", "c < 0"),
-            (ClimateVariable::DryDays, "Dry Days", "pr", "86400) < 1"),
-            (
-                ClimateVariable::HeavyRainDays,
-                "Heavy Rain Days",
-                "pr",
-                "86400) > 20",
-            ),
-        ] {
-            let props = var.properties();
-            assert_eq!(props.name, expected_name);
-            assert_eq!(props.dataset_variable_suffix, expected_suffix);
-            assert!(props.expression.contains(expected_expr));
-        }
+    fn it_names_climate_variables() {
+        assert_eq!(ClimateVariable::HeatDays.display_name(), "Heat Days");
+        assert_eq!(
+            ClimateVariable::HeavyRainDays.display_name(),
+            "Heavy Rain Days"
+        );
+        assert_eq!(ClimateVariable::HeavyRainDays.name(), "heavyRainDays");
     }
 
     #[test]
@@ -566,22 +585,6 @@ mod tests {
             assert_eq!(props.name, expected_name);
             assert_eq!(props.dataset_prefix, expected_prefix);
         }
-    }
-
-    #[test]
-    fn it_provides_climate_variable_property_accessors() {
-        let props = ClimateVariable::HeatDays.properties();
-        assert_eq!(props.name_string(), "Heat Days");
-        assert_eq!(ClimateVariableProperties::measurement_unit(), "Days");
-        assert_eq!(ClimateVariableProperties::measurement_string(), "Days");
-        assert_eq!(
-            ClimateVariableProperties::expression_dtype(),
-            RasterDataType::I8
-        );
-        assert_eq!(
-            ClimateVariableProperties::year_agg_dtype(),
-            RasterDataType::U16
-        );
     }
 
     #[test]
@@ -627,6 +630,14 @@ mod tests {
         assert_eq!(probability_label(0.1), "9 · extremely high (10 %)");
         assert_eq!(probability_label(0.2), "10 · extreme (20 %)");
         assert_eq!(probability_label(0.9), "10 · extreme (90 %)");
+        assert_eq!(
+            probability_range_label(0.4, 0.23, 0.59),
+            "10 · extreme (40 %)"
+        );
+        assert_eq!(
+            probability_range_label(0.12, 0.04, 0.3),
+            "7–10 · high to extreme (12 %)"
+        );
     }
 
     #[test]
@@ -668,24 +679,31 @@ mod tests {
 
     #[test]
     fn it_anomaly_pct_maps_change_and_zero_reference() {
-        assert_abs_diff_eq!(anomaly_pct(120.0, 100.0), 20.0);
-        assert_abs_diff_eq!(anomaly_pct(50.0, 100.0), -50.0);
-        assert_abs_diff_eq!(anomaly_pct(10.0, 0.0), 100.0);
-        assert_abs_diff_eq!(anomaly_pct(-10.0, 0.0), -100.0);
-        assert_abs_diff_eq!(anomaly_pct(0.0, 0.0), 0.0);
+        assert_abs_diff_eq!(anomaly_pct(120.0, 100.0).unwrap(), 20.0);
+        assert_abs_diff_eq!(anomaly_pct(50.0, 100.0).unwrap(), -50.0);
+        assert_abs_diff_eq!(anomaly_pct(0.0, 0.0).unwrap(), 0.0);
+        // No percentage of a zero reference: the event is new.
+        assert_eq!(anomaly_pct(10.0, 0.0), None);
     }
 
     #[test]
     fn it_anomaly_label_maps_days_and_raw_pct() {
-        assert_eq!(anomaly_label(10.0, 20.0), "+10 days (+20 %)");
-        assert_eq!(anomaly_label(-5.0, -10.0), "-5 days (-10 %)");
-        assert_eq!(anomaly_label(0.0, 0.0), "0 days (0 %)");
-        assert_eq!(anomaly_label(10.5, 33.3), "+10.5 days (+33.3 %)");
+        assert_eq!(anomaly_label(10.0, Some(20.0)), "+10 days (+20 %)");
+        assert_eq!(anomaly_label(-5.0, Some(-10.0)), "-5 days (-10 %)");
+        assert_eq!(anomaly_label(0.0, Some(0.0)), "0 days (0 %)");
+        assert_eq!(anomaly_label(10.5, Some(33.3)), "+10.5 days (+33.3 %)");
         assert_eq!(
-            anomaly_label(10.0, 250.0),
+            anomaly_label(10.0, Some(250.0)),
             "+10 days (+250 %)",
             "label shows the raw percentage, the color clamps separately"
         );
+        assert_eq!(anomaly_label(2.0, None), "+2 days (new)");
+    }
+
+    #[test]
+    fn it_anomaly_color_falls_back_to_the_strongest_stop_without_pct() {
+        assert_eq!(anomaly_color(2.0, None), "#b2182b");
+        assert_eq!(anomaly_color(2.0, Some(0.0)), "#f7f7f7");
     }
 
     #[test]
@@ -706,6 +724,7 @@ mod tests {
         let row = ClimateRiskRow {
             variable: "Heat Days".to_string(),
             scenario: "ssp245".to_string(),
+            scenario_id: ClimateScenario::Ssp245,
             mean: Days(50.0),
             median: Days(50.0),
             min: Days(0.0),
@@ -716,11 +735,13 @@ mod tests {
             occurrence_probability_color: Some("#e53935".to_string()),
             anomaly_label: Some("+10 days (+20 %)".to_string()),
             anomaly_color: Some("#fddbc7".to_string()),
+            ..Default::default()
         };
         let json = serde_json::to_value(&row).unwrap();
         assert_eq!(json["occurrenceProbabilityLabel"], "7 · high (3 %)");
         assert_eq!(json["occurrenceProbabilityColor"], "#e53935");
         assert_eq!(json["anomalyLabel"], "+10 days (+20 %)");
         assert_eq!(json["anomalyColor"], "#fddbc7");
+        assert!(json.get("scenarioId").is_none());
     }
 }

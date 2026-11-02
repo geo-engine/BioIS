@@ -249,6 +249,7 @@ pub fn summary_to_data_resource(
     Ok(DataResource {
         name: "land-use".try_into()?,
         title: Some("Land Use".to_string()),
+        description: None,
         schema: Fields {
             fields: vec![
                 TableSchemaField {
@@ -295,6 +296,7 @@ pub fn site_to_data_resource(
     Ok(DataResource {
         name: "site-land-use".try_into()?,
         title: Some("Site Land Use".to_string()),
+        description: None,
         schema: Fields {
             fields: vec![
                 TableSchemaField {

@@ -56,7 +56,14 @@ import { InfoIconComponent } from '../util/info-icon.component';
       </p>
       @if (!input.optional || isFieldSet()[input.key]) {
         @switch (input.type) {
-          @case (FieldType.Boolean)
+          @case (FieldType.Boolean) {
+            <!-- outside mat-form-field: a toggle is not a MatFormFieldControl -->
+            <mat-slide-toggle
+              [checked]="asBooleanInput(form()[input.key])().value()"
+              (change)="asBooleanInput(form()[input.key])().value.set($event.checked)"
+              >{{ fieldName(input.key) }}</mat-slide-toggle
+            >
+          }
           @case (FieldType.Integer)
           @case (FieldType.Number)
           @case (FieldType.String) {
@@ -208,6 +215,10 @@ export class InputsFormComponent {
     formInput: MaybeFieldTree<unknown, string>,
   ): FieldTree<string | number | boolean, string> {
     return formInput as FieldTree<string | number | boolean, string>;
+  }
+
+  asBooleanInput(formInput: MaybeFieldTree<unknown, string>): FieldTree<boolean, string> {
+    return formInput as FieldTree<boolean, string>;
   }
 
   asStringArrayInput(formInput: MaybeFieldTree<unknown, string>): FieldTree<string[], string> {

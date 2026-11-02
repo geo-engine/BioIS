@@ -50,7 +50,7 @@ const CLIMATE_RISK_TABLE_SCHEMA: &str = r##"{
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["riskProbability", "riskAnomaly"]
+          "enum": ["riskProbability", "riskAnomaly", "meanUncertainty"]
         },
         "labelField": {
           "type": "string",
@@ -110,6 +110,7 @@ mod tests {
         let display = &profile["$defs"]["display"];
         assert_eq!(display["properties"]["kind"]["enum"][0], "riskProbability");
         assert_eq!(display["properties"]["kind"]["enum"][1], "riskAnomaly");
+        assert_eq!(display["properties"]["kind"]["enum"][2], "meanUncertainty");
         assert_eq!(display["properties"]["labelField"]["type"], "string");
         assert_eq!(display["properties"]["colorField"]["type"], "string");
         assert_eq!(

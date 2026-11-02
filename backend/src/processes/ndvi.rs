@@ -903,7 +903,7 @@ mod tests {
         // Start httptest server and mock the external Geo Engine endpoints
         let server = Server::run();
 
-        // Mock processing graph registration (POST /processingGraphs -> { id: "..." })
+        // Mock workflow registration (POST /processingGraphs -> { id: "..." })
         server.expect(
             Expectation::matching(request::method("POST")).respond_with(json_encoded(
                 json!({ "id": "00000000-0000-0000-0000-000000000003" }),

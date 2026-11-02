@@ -15,6 +15,9 @@ pub struct DataResource<R> {
     /// A resource MUST contain a name property.
     pub name: DataResourceName,
     pub title: Option<String>,
+    /// A description of the resource, e.g. how to read its values.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
     pub data: R,
     pub schema: Fields,
 }
@@ -165,6 +168,8 @@ pub struct BioisDisplayMetadata {
 pub enum BioisDisplayKind {
     RiskProbability,
     RiskAnomaly,
+    /// A mean shown with its uncertainty, e.g. "14.1 ± 2.9"; label only, no color.
+    MeanUncertainty,
 }
 
 #[cfg(test)]
@@ -236,6 +241,7 @@ mod tests {
         let data_resource = DataResource {
             name: DataResourceName::new("test_resource").unwrap(),
             title: None,
+            description: None,
             data: vec!["item1", "item2"],
             schema: Fields {
                 fields: vec![TableSchemaField {

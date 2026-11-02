@@ -3,7 +3,7 @@
 # The dev registry (`nexgddp_models.toml`) is trimmed to the models/scenarios that actually have
 # GeoEngine datasets, so the process description and the `models` dropdown only offer what can run.
 # This file is the restore path: copy it over `nexgddp_models.toml` once the remaining datasets are
-# ingested via `notebooks/nexgddp_cmip6_ingest.ipynb` (which reads this file for id/variant/grid).
+# ingested via `notebooks/nexgddp_cmip6_ingest_full.ipynb` (which reads this file for id/variant/grid).
 
 [[model]]
 id = "ACCESS-CM2"

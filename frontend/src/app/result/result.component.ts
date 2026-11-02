@@ -98,6 +98,7 @@ export class ResultComponent {
         return {
           key,
           title: dataResourceTitle(innerValue) ?? this.fieldName(key),
+          description: dataResourceDescription(innerValue),
           value: innerValue,
           type: this.typeOfValue(value),
         };
@@ -223,6 +224,13 @@ export class ResultComponent {
 }
 
 /** Returns the Data Resource name when a result value contains one. */
+/** A data resource's `description`, e.g. a note on how to read a climate-risk table. */
+function dataResourceDescription(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  if ('description' in value && typeof value.description === 'string') return value.description;
+  return undefined;
+}
+
 function dataResourceTitle(value: unknown): string | undefined {
   if (typeof value !== 'object' || value === null) return undefined;
   if ('title' in value && typeof value.title === 'string') return value.title;

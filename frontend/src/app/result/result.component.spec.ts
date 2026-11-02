@@ -83,4 +83,28 @@ describe('ResultComponent', () => {
     expect(indicator).not.toBeNull();
     expect(root.textContent).toContain('0.42');
   });
+
+  it('shows the description of a data resource below its table', async () => {
+    const table = new QualifiedInputValue();
+    table.mediaType = 'application/vnd.dataresource+json';
+    table.value = {
+      name: 'climate-risk-ssp245',
+      title: 'SSP2-4.5',
+      description: 'Not distinguishable from other scenarios in this window: Heat Days (SSP5-8.5).',
+      schema: { fields: [{ name: 'variable', type: 'string', title: 'Variable' }] },
+      data: [{ variable: 'Heat Days' }],
+    };
+
+    vi.spyOn(component.result, 'value').mockReturnValue({ ssp245: table } as Record<
+      string,
+      InlineOrRefData
+    >);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const note = (fixture.nativeElement as HTMLElement).querySelector('.table-note');
+    expect(note?.textContent).toContain('Heat Days (SSP5-8.5)');
+  });
 });

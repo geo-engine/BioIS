@@ -36,7 +36,7 @@ async fn main() {
         r#type: VectorType::Vector,
     }));
 
-    let processing_graph_id = register_processing_graph_handler(&configuration, processing_graph)
+    let workflow_id = register_processing_graph_handler(&configuration, workflow)
         .await
         .unwrap();
 

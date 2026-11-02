@@ -37,18 +37,18 @@ pub fn to_api_raster_process(
 /// the server rejects. Serializing through a `Value` first folds the duplicate key in
 /// `serde_json`'s map serializer, so this posts the normalized value instead of the typed
 /// graph. Has the same signature and error handling as the generated
-/// `register_workflow_handler`, minus the duplication.
+/// `register_processing_graph_handler`, minus the duplication.
 pub async fn register_processing_graph(
     configuration: &geoengine_api_client::apis::configuration::Configuration,
     processing_graph: &geoengine_api_client::models::ProcessingGraph,
 ) -> Result<
     geoengine_api_client::models::IdResponse,
     geoengine_api_client::apis::Error<
-        geoengine_api_client::apis::workflows_api::RegisterWorkflowHandlerError,
+        geoengine_api_client::apis::processing_graphs_api::RegisterProcessingGraphHandlerError,
     >,
 > {
     let normalized = serde_json::to_value(processing_graph).expect("processing graph serializes");
-    let uri = format!("{}/workflow", configuration.base_path);
+    let uri = format!("{}/processingGraphs", configuration.base_path);
 
     let request_builder = configuration.client.post(&uri);
     let request_builder = match &configuration.bearer_access_token {

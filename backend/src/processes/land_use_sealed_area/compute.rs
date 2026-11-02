@@ -25,8 +25,10 @@ use geoengine_api_client::{
         configuration::Configuration,
         datasets_api::create_dataset_handler,
         ogcwfs_api::wfs_handler,
+        processing_graphs_api::{
+            get_processing_graph_metadata_handler, get_processing_graph_provenance_handler,
+        },
         uploads_api::upload_handler,
-        workflows_api::{get_workflow_metadata_handler, get_workflow_provenance_handler},
     },
     models::{
         AddDataset, ClassificationMeasurement, ColumnNames, ContinuousMeasurement, CreateDataset,

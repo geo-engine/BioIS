@@ -17,7 +17,7 @@ use ogcapi::{
     },
 };
 use schemars::generate::SchemaSettings;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::LazyLock;
 
 mod compute;
@@ -28,81 +28,67 @@ pub use types::{ClimateRiskInputs, ClimateRiskOutputs, ClimateRiskRawRow, Climat
 
 use self::{compute::*, types::*};
 
-// ponytail: model registry loaded once at startup from TOML; add models by editing conf/nexgddp_models.toml, no recompile
-static MODEL_REGISTRY: LazyLock<HashMap<String, ClimateModelProperties>> =
-    LazyLock::new(load_model_registry);
+type ModelRegistry = BTreeMap<String, ClimateModelProperties>;
 
-/// Reads the model registry, returning an empty one if it cannot be read or parsed.
+// ponytail: model registry loaded once at startup from TOML; add models by editing conf/nexgddp_models.toml, no recompile
+/// The registered models by id, or why the registry could not be loaded.
 ///
-/// A missing or broken registry must not take down the other processes, so this only warns; the
-/// reason is kept in [`REGISTRY_PROBLEM`] so that a climate-risk execution can report *why* no
-/// models are available instead of an unexplained empty selection.
-fn load_model_registry() -> HashMap<String, ClimateModelProperties> {
-    let path = &CONFIG.nexgddp_cmip6.model_registry_path;
-    let content = match std::fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(error) => {
-            let reason = format!("model registry `{path}` could not be read: {error}");
-            tracing::warn!("{reason}, climate-risk will offer no models");
-            REGISTRY_PROBLEM
-                .lock()
-                .expect("registry problem lock poisoned")
-                .replace(reason);
-            return HashMap::new();
-        }
-    };
-    let registry: ModelRegistryToml = match toml::from_str(&content) {
-        Ok(registry) => registry,
-        Err(error) => {
-            let reason = format!("model registry `{path}` could not be parsed: {error}");
-            tracing::warn!("{reason}, climate-risk will offer no models");
-            REGISTRY_PROBLEM
-                .lock()
-                .expect("registry problem lock poisoned")
-                .replace(reason);
-            return HashMap::new();
-        }
-    };
-    let mut entries: Vec<(String, ClimateModelProperties)> = registry
-        .model
-        .into_iter()
-        .map(|entry| {
-            let scenarios: Vec<ClimateScenario> = entry
-                .scenarios
-                .into_iter()
-                .filter_map(|s| match s.as_str() {
-                    "historical" => Some(ClimateScenario::Historical),
-                    "ssp245" => Some(ClimateScenario::Ssp245),
-                    "ssp370" => Some(ClimateScenario::Ssp370),
-                    "ssp585" => Some(ClimateScenario::Ssp585),
-                    _ => None,
-                })
-                .collect();
-            (
-                entry.id.clone(),
-                ClimateModelProperties {
-                    id: entry.id,
-                    variant: entry.variant,
-                    grid: entry.grid,
-                    scenarios,
-                },
-            )
-        })
-        .collect();
-    // ponytail: sort by model id for deterministic iteration order
-    entries.sort_by(|a, b| a.0.cmp(&b.0));
-    entries.into_iter().collect()
+/// A missing or broken registry must not take down the other processes, so it only warns; the
+/// reason is kept so that a climate-risk execution can report *why* no models are available.
+static MODEL_REGISTRY: LazyLock<Result<ModelRegistry, String>> = LazyLock::new(|| {
+    load_model_registry(&CONFIG.nexgddp_cmip6.model_registry_path)
+        .inspect_err(|reason| tracing::warn!("{reason}, climate-risk will offer no models"))
+});
+
+static EMPTY_REGISTRY: ModelRegistry = BTreeMap::new();
+
+/// The registered models, empty if the registry could not be loaded.
+fn registry() -> &'static ModelRegistry {
+    MODEL_REGISTRY.as_ref().unwrap_or(&EMPTY_REGISTRY)
 }
 
-/// Why the registry is empty, if loading it failed, cf. [`load_model_registry`].
-static REGISTRY_PROBLEM: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+fn load_model_registry(path: &str) -> Result<ModelRegistry, String> {
+    let content = std::fs::read_to_string(path)
+        .map_err(|error| format!("model registry `{path}` could not be read: {error}"))?;
+    let registry: ModelRegistryToml = toml::from_str(&content)
+        .map_err(|error| format!("model registry `{path}` could not be parsed: {error}"))?;
+    Ok(registry
+        .model
+        .into_iter()
+        .map(|entry| (entry.id.clone(), model_from_entry(entry)))
+        .collect())
+}
 
-/// The reason the registry could not be loaded, if it failed.
-fn registry_problem() -> Option<String> {
-    REGISTRY_PROBLEM
-        .lock()
-        .ok()
-        .and_then(|problem| problem.clone())
+fn model_from_entry(entry: ModelRegistryEntry) -> ClimateModelProperties {
+    let scenarios: Vec<ClimateScenario> = entry
+        .scenarios
+        .iter()
+        .filter_map(|name| {
+            let scenario = ClimateScenario::ALL
+                .iter()
+                .copied()
+                .find(|scenario| scenario.name() == name);
+            if scenario.is_none() {
+                tracing::warn!(
+                    "Model registry: ignoring unknown scenario `{name}` of model `{}`",
+                    entry.id
+                );
+            }
+            scenario
+        })
+        .collect();
+    if !scenarios.is_empty() && !scenarios.contains(&ClimateScenario::Historical) {
+        tracing::warn!(
+            "Model registry: model `{}` has no `historical` scenario, so it adds no anomaly",
+            entry.id
+        );
+    }
+    ClimateModelProperties {
+        id: entry.id,
+        variant: entry.variant,
+        grid: entry.grid,
+        scenarios,
+    }
 }
 
 #[derive(serde::Deserialize)]
@@ -148,7 +134,7 @@ fn registered_models(schema: &mut schemars::Schema) {
     items.insert(
         "enum".to_string(),
         serde_json::Value::Array(
-            MODEL_REGISTRY
+            registry()
                 .keys()
                 .map(|id| serde_json::Value::String(id.clone()))
                 .collect(),
@@ -167,12 +153,14 @@ fn models_schema(generator: &mut schemars::SchemaGenerator) -> serde_json::Value
 fn build_inputs(generator: &mut schemars::SchemaGenerator) -> HashMap<String, InputDescription> {
     let mut year_begin_schema = generator.root_schema_for::<Year>().to_value();
     year_begin_schema["minimum"] = serde_json::json!(FUTURE_START_YEAR);
-    year_begin_schema["maximum"] = serde_json::json!(FUTURE_END_YEAR);
+    // The latest start that still fits the shortest window.
+    year_begin_schema["maximum"] = serde_json::json!(FUTURE_END_YEAR + 1 - MIN_YEAR_RANGE);
     year_begin_schema["default"] = serde_json::json!(default_year_begin().0);
 
     let mut reference_year_begin_schema = generator.root_schema_for::<Year>().to_value();
     reference_year_begin_schema["minimum"] = serde_json::json!(HISTORICAL_START_YEAR);
-    reference_year_begin_schema["maximum"] = serde_json::json!(HISTORICAL_END_YEAR);
+    reference_year_begin_schema["maximum"] =
+        serde_json::json!(HISTORICAL_END_YEAR + 1 - REFERENCE_YEARS);
     reference_year_begin_schema["default"] = serde_json::json!(default_reference_year_begin().0);
 
     HashMap::from([
@@ -220,7 +208,7 @@ fn build_inputs(generator: &mut schemars::SchemaGenerator) -> HashMap<String, In
                 description_type: DescriptionType {
                     title: Some("Reference period start".to_string()),
                     description: Some(
-                        "First year of the reference period used to compute anomalies. Uses the same range as the analysis window.".to_string(),
+                        "First year of the reference period used to compute anomalies. The reference period spans 30 years (a WMO climate normal), independent of the analysis window.".to_string(),
                     ),
                     ..Default::default()
                 },
@@ -263,8 +251,8 @@ fn build_outputs(generator: &mut schemars::SchemaGenerator) -> HashMap<String, O
     // The registry is the single source of truth for which scenarios can be produced: advertising a
     // scenario no registered model supports would leave the client sending an output that is then
     // dropped (see `resolve_requests`), i.e. a control that silently does nothing.
-    let registry: Vec<ClimateModelProperties> = MODEL_REGISTRY.values().cloned().collect();
-    let available_scenarios = resolve_available_scenarios(&registry);
+    let models: Vec<ClimateModelProperties> = registry().values().cloned().collect();
+    let available_scenarios = resolve_available_scenarios(&models);
     let mut outputs = HashMap::from([
         (
             "inputs".to_string(),
@@ -347,7 +335,7 @@ impl Processor for ClimateRiskProcess {
                 description: DescriptionType {
                     title: Some("Climate risk indicators".to_string()),
                     description: Some(
-                        "This process derives climate-risk indicators such as heat days from NEX-GDDP-CMIP6 climate data for a point location and a time window. The workflow builds a daily threshold mask, aggregates it over the requested years and returns summary statistics for the selected climate variable. An anomaly relative to a historical reference period (same length) is reported as the difference of the multi-year means. If no models are specified, all available models are used. If no scenario outputs are requested, all future scenarios are computed."
+                        "This process derives climate-risk indicators such as heat days from NEX-GDDP-CMIP6 climate data for a point location and a time window. It reads precomputed yearly counts of days above or below a threshold (one value per model and year) over the requested years and returns summary statistics for the selected climate variable. The occurrence probability follows the 10-year-event approach of IPCC AR6 WG I (Figure SPM.6, https://www.ipcc.ch/report/ar6/wg1/figures/summary-for-policymakers/figure-spm-6/): it is the annual probability of a year with more event days than the reference period's 1-in-10-year level, determined per model. The risk ratio states how many times more often that event occurs than in the reference period. An anomaly relative to a 30-year historical reference period is reported as the difference of the multi-year means over the models available in both periods. If no models are specified, all available models are used. If no scenario outputs are requested, all future scenarios are computed."
                             .to_string(),
                     ),
                     ..Default::default()
@@ -400,7 +388,7 @@ impl Processor for ClimateRiskProcess {
                     "; none of the requested models ({}) are available",
                     dropped_models.join(", ")
                 )
-            } else if let Some(problem) = registry_problem() {
+            } else if let Err(problem) = &*MODEL_REGISTRY {
                 format!("; {problem}")
             } else {
                 "; the model registry is empty".to_string()
@@ -423,19 +411,6 @@ impl Processor for ClimateRiskProcess {
             resolve_requests(&output_keys, &available_scenarios)?;
 
         let variables = resolve_variables(&inputs.variables);
-        let requests: Vec<_> = selected_scenarios
-            .into_iter()
-            .flat_map(|scenario| {
-                variables
-                    .iter()
-                    .map(move |v| (ClimateVariableRequest::new(*v), scenario))
-            })
-            .collect();
-
-        let request_props: Vec<(ClimateVariableRequest, ClimateScenarioProperties)> = requests
-            .into_iter()
-            .map(|(v, s)| (v, s.properties()))
-            .collect();
 
         let configuration = CONFIG.geoengine.api_config(CONTEXT.session_token().ok());
         let (mut outputs, computation_ids) = compute_climate(
@@ -446,7 +421,8 @@ impl Processor for ClimateRiskProcess {
                 range: inputs.year_range,
                 reference_start: inputs.reference_year_begin,
             },
-            &request_props,
+            &variables,
+            &selected_scenarios,
             &model_props,
         )
         .await?;
@@ -485,22 +461,21 @@ fn validate_inputs(
     YearRange(range): YearRange,
     Year(reference_year): Year,
 ) -> Result<()> {
-    if !(5..=30).contains(&range) {
-        anyhow::bail!("Year range must be between 5 and 30 years");
+    if !(MIN_YEAR_RANGE..=MAX_YEAR_RANGE).contains(&range) {
+        anyhow::bail!("Year range must be between {MIN_YEAR_RANGE} and {MAX_YEAR_RANGE} years");
     }
     if start_year < FUTURE_START_YEAR {
         anyhow::bail!("Start year must be at least {FUTURE_START_YEAR}");
     }
-    if start_year + range > FUTURE_END_YEAR {
-        anyhow::bail!("Start year plus range must not exceed {FUTURE_END_YEAR}");
+    // The window covers `start..start + range`, so its last year is `start + range - 1`.
+    if start_year + range - 1 > FUTURE_END_YEAR {
+        anyhow::bail!("The analysis period must end by {FUTURE_END_YEAR}");
     }
     if reference_year < HISTORICAL_START_YEAR {
         anyhow::bail!("Reference period start year must be at least {HISTORICAL_START_YEAR}");
     }
-    if reference_year + range > HISTORICAL_END_YEAR {
-        anyhow::bail!(
-            "Reference period start year plus range must not exceed {HISTORICAL_END_YEAR}"
-        );
+    if reference_year + REFERENCE_YEARS - 1 > HISTORICAL_END_YEAR {
+        anyhow::bail!("The reference period must end by {HISTORICAL_END_YEAR}");
     }
     Ok(())
 }
@@ -511,7 +486,7 @@ fn resolve_models(
     specified_models: &[String],
 ) -> (Vec<String>, Vec<ClimateModelProperties>, Vec<String>) {
     if specified_models.is_empty() {
-        let (models, props): (Vec<_>, Vec<_>) = MODEL_REGISTRY
+        let (models, props): (Vec<_>, Vec<_>) = registry()
             .iter()
             .map(|(id, props)| (id.clone(), props.clone()))
             .unzip();
@@ -521,7 +496,7 @@ fn resolve_models(
         let mut props = Vec::new();
         let mut dropped = Vec::new();
         for model_id in specified_models {
-            if let Some(model_props) = MODEL_REGISTRY.get(model_id) {
+            if let Some(model_props) = registry().get(model_id) {
                 models.push(model_id.clone());
                 props.push(model_props.clone());
             } else {
@@ -610,7 +585,6 @@ fn resolve_requests(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use geoengine_api_client::models::RasterOperator;
     use ogcapi::types::processes::Input;
     use serde_json::json;
 
@@ -714,7 +688,7 @@ mod tests {
 
         // Declared scenario outputs track the registry, so no registered scenario is left out and no
         // unavailable one is offered.
-        let registry: Vec<ClimateModelProperties> = MODEL_REGISTRY.values().cloned().collect();
+        let models: Vec<ClimateModelProperties> = registry().values().cloned().collect();
         let scenario_keys: Vec<String> = ClimateScenario::FUTURE
             .iter()
             .map(|scenario| scenario.name().to_string())
@@ -725,7 +699,7 @@ mod tests {
             .filter(|key| scenario_keys.contains(key))
             .cloned()
             .collect();
-        let expected: std::collections::BTreeSet<String> = resolve_available_scenarios(&registry)
+        let expected: std::collections::BTreeSet<String> = resolve_available_scenarios(&models)
             .iter()
             .map(|props| props.scenario.name().to_string())
             .collect();
@@ -759,8 +733,13 @@ mod tests {
             (Year(2014), YearRange(20), Year(1981), false), // analysis start < 2015
             (Year(2050), YearRange(20), Year(1981), true), // valid
             (Year(2050), YearRange(20), Year(2015), false), // reference end > 2014
+            (Year(2050), YearRange(5), Year(1986), false), // a short window keeps the 30-year reference
             (Year(2050), YearRange(5), Year(1981), true),  // valid, min range
             (Year(2050), YearRange(30), Year(1981), true), // valid, max range
+            (Year(2081), YearRange(20), Year(1985), true), // both windows end on the last data year
+            (Year(2071), YearRange(30), Year(1985), true), // same with the max range
+            (Year(2072), YearRange(30), Year(1981), false), // analysis ends in 2101
+            (Year(2050), YearRange(30), Year(1986), false), // reference ends in 2015
         ];
         for &(start, range, reference, expected_ok) in cases {
             let ok = validate_inputs(start, range, reference).is_ok();
@@ -769,28 +748,6 @@ mod tests {
                 "validate_inputs({start:?}, {range:?}, {reference:?})"
             );
         }
-    }
-
-    #[test]
-    fn it_names_dataset_raster_sources() {
-        let scenario = ClimateScenario::Ssp245.properties();
-        let model = ClimateModelProperties {
-            id: "ACCESS-CM2".to_string(),
-            variant: "r1i1p1f1".to_string(),
-            grid: "gn".to_string(),
-            scenarios: vec![ClimateScenario::Historical, ClimateScenario::Ssp245],
-        };
-        let var = ClimateVariable::HeatDays.properties();
-
-        let result = ClimateRiskProcess::dataset_raster_source(&var, &model, &scenario);
-
-        assert!(matches!(result, RasterOperator::MdGdalSource(_)));
-
-        let value = serde_json::to_value(&result).unwrap();
-        assert_eq!(
-            value["params"]["data"],
-            "nexgddp_cmip6_ACCESS-CM2_ssp245_tasmax"
-        );
     }
 
     #[test]
@@ -810,7 +767,7 @@ mod tests {
 
     #[test]
     fn it_resolves_available_scenarios() {
-        let model_props: Vec<ClimateModelProperties> = MODEL_REGISTRY.values().cloned().collect();
+        let model_props: Vec<ClimateModelProperties> = registry().values().cloned().collect();
         let scenarios = resolve_available_scenarios(&model_props);
         assert!(!scenarios.is_empty());
         assert!(resolve_available_scenarios(&[]).is_empty());
@@ -841,13 +798,49 @@ mod tests {
         let schema = models_schema(&mut generator);
         let items = schema["items"].as_object().unwrap();
         let values = items["enum"].as_array().unwrap();
-        assert_eq!(values.len(), MODEL_REGISTRY.len());
-        for id in MODEL_REGISTRY.keys() {
+        assert_eq!(values.len(), registry().len());
+        for id in registry().keys() {
             assert!(
                 values.contains(&serde_json::Value::String(id.clone())),
                 "{id} missing from models enum"
             );
         }
+    }
+
+    #[test]
+    fn it_loads_the_model_registry_and_skips_unknown_scenarios() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(
+            file.path(),
+            r#"
+                [[model]]
+                id = "B-MODEL"
+                variant = "r1i1p1f1"
+                grid = "gn"
+                scenarios = ["historical", "ssp245", "ssp126"]
+
+                [[model]]
+                id = "A-MODEL"
+                variant = "r1i1p1f1"
+                grid = "gr"
+                scenarios = ["ssp585"]
+            "#,
+        )
+        .unwrap();
+
+        let registry = load_model_registry(file.path().to_str().unwrap()).unwrap();
+        // Sorted by id, so the `models` dropdown has a stable order.
+        assert_eq!(
+            registry.keys().collect::<Vec<_>>(),
+            vec!["A-MODEL", "B-MODEL"]
+        );
+        assert_eq!(
+            registry["B-MODEL"].scenarios,
+            vec![ClimateScenario::Historical, ClimateScenario::Ssp245]
+        );
+
+        let error = load_model_registry("does/not/exist.toml").unwrap_err();
+        assert!(error.contains("could not be read"), "{error}");
     }
 
     #[test]
