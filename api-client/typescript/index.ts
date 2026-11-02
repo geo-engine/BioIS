@@ -21,5 +21,6 @@ export {
   PromiseContactApi as ContactApi,
   PromiseDefaultApi as DefaultApi,
   PromiseProcessesApi as ProcessesApi,
+  PromiseProfilesApi as ProfilesApi,
   PromiseUserApi as UserApi,
 } from "./types/PromiseAPI";

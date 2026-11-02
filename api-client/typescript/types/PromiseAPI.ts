@@ -8,6 +8,8 @@ import {
 import { AuthCodeResponse } from "../models/AuthCodeResponse";
 import { BiodiversitySensitiveAreasProcessOutputs } from "../models/BiodiversitySensitiveAreasProcessOutputs";
 import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversitySensitiveAreasProcessParams";
+import { ClimateRiskProcessParams } from "../models/ClimateRiskProcessParams";
+import { ClimateRiskProcessResponses } from "../models/ClimateRiskProcessResponses";
 import { Conformance } from "../models/Conformance";
 import { ContactRequest } from "../models/ContactRequest";
 import { Execute } from "../models/Execute";
@@ -286,6 +288,36 @@ export class PromiseProcessesApi {
   }
 
   /**
+   * @param climateRiskProcessParams
+   */
+  public executeClimateRiskWithHttpInfo(
+    climateRiskProcessParams: ClimateRiskProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<ClimateRiskProcessResponses>> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeClimateRiskWithHttpInfo(
+      climateRiskProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
+
+  /**
+   * @param climateRiskProcessParams
+   */
+  public executeClimateRisk(
+    climateRiskProcessParams: ClimateRiskProcessParams,
+    _options?: PromiseConfigurationOptions,
+  ): Promise<ClimateRiskProcessResponses> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.executeClimateRisk(
+      climateRiskProcessParams,
+      observableOptions,
+    );
+    return result.toPromise();
+  }
+
+  /**
    * @param habitatDistanceProcessParams
    */
   public executeHabitatDistanceWithHttpInfo(
@@ -545,6 +577,51 @@ export class PromiseProcessesApi {
   ): Promise<StatusInfo> {
     const observableOptions = wrapOptions(_options);
     const result = this.api.status(jobId, observableOptions);
+    return result.toPromise();
+  }
+}
+
+import { ObservableProfilesApi } from "./ObservableAPI";
+
+import {
+  ProfilesApiRequestFactory,
+  ProfilesApiResponseProcessor,
+} from "../apis/ProfilesApi";
+export class PromiseProfilesApi {
+  private api: ObservableProfilesApi;
+
+  public constructor(
+    configuration: Configuration,
+    requestFactory?: ProfilesApiRequestFactory,
+    responseProcessor?: ProfilesApiResponseProcessor,
+  ) {
+    this.api = new ObservableProfilesApi(
+      configuration,
+      requestFactory,
+      responseProcessor,
+    );
+  }
+
+  /**
+   * The profile of the `schema.biois` extension: a Table Schema extension that declares per-column display metadata for `BioIS` result tables.
+   */
+  public climateRiskTableSchemaProfileWithHttpInfo(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<HttpInfo<string>> {
+    const observableOptions = wrapOptions(_options);
+    const result =
+      this.api.climateRiskTableSchemaProfileWithHttpInfo(observableOptions);
+    return result.toPromise();
+  }
+
+  /**
+   * The profile of the `schema.biois` extension: a Table Schema extension that declares per-column display metadata for `BioIS` result tables.
+   */
+  public climateRiskTableSchemaProfile(
+    _options?: PromiseConfigurationOptions,
+  ): Promise<string> {
+    const observableOptions = wrapOptions(_options);
+    const result = this.api.climateRiskTableSchemaProfile(observableOptions);
     return result.toPromise();
   }
 }

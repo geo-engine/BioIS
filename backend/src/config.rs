@@ -16,7 +16,17 @@ pub struct Config {
     pub data_ids: DataIdsConfig,
     pub credits: CreditsConfig,
     pub contact: ContactConfig,
+    pub nexgddp_cmip6: NexGddpCmip6Config,
     pub logging: Logging,
+}
+
+/// Configuration of the climate-risk process, which derives its indicators from
+/// NEX-GDDP-CMIP6 climate projections ingested as Geo Engine datasets.
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct NexGddpCmip6Config {
+    /// The model registry, listing the models and scenarios that have ingested datasets.
+    /// Models are added by editing this file, without recompiling.
+    pub model_registry_path: String,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]

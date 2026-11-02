@@ -10,6 +10,10 @@ export * from "../models/BiodiversitySiteProperties";
 export * from "../models/BiodiversitySiteSpecification";
 export * from "../models/BooleanField";
 export * from "../models/BoundingBox";
+export * from "../models/ClimateRiskInputs";
+export * from "../models/ClimateRiskProcessParams";
+export * from "../models/ClimateRiskProcessResponses";
+export * from "../models/ClimateVariable";
 export * from "../models/Conformance";
 export * from "../models/Constraints";
 export * from "../models/Constraints1";
@@ -141,6 +145,9 @@ import { BiodiversitySensitiveAreasProcessParams } from "../models/BiodiversityS
 import { BiodiversitySiteProperties } from "../models/BiodiversitySiteProperties";
 import { BooleanField } from "../models/BooleanField";
 import { BoundingBox } from "../models/BoundingBox";
+import { ClimateRiskInputs } from "../models/ClimateRiskInputs";
+import { ClimateRiskProcessParams } from "../models/ClimateRiskProcessParams";
+import { ClimateRiskProcessResponses } from "../models/ClimateRiskProcessResponses";
 import { Conformance } from "../models/Conformance";
 import { Constraints } from "../models/Constraints";
 import { Constraints1 } from "../models/Constraints1";
@@ -268,6 +275,7 @@ let enumsMap: Set<string> = new Set<string>([
   "BiodiversitySiteSpecification",
   "BooleanFieldTypeEnum",
   "BooleanFieldFormatEnum",
+  "ClimateVariable",
   "ContactRole",
   "DateFieldTypeEnum",
   "DateTimeFieldTypeEnum",
@@ -333,6 +341,9 @@ let typeMap: { [index: string]: any } = {
   BiodiversitySiteProperties: BiodiversitySiteProperties,
   BooleanField: BooleanField,
   BoundingBox: BoundingBox,
+  ClimateRiskInputs: ClimateRiskInputs,
+  ClimateRiskProcessParams: ClimateRiskProcessParams,
+  ClimateRiskProcessResponses: ClimateRiskProcessResponses,
   Conformance: Conformance,
   Constraints: Constraints,
   Constraints1: Constraints1,

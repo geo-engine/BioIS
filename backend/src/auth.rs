@@ -4,8 +4,8 @@ use crate::{
     config::CONFIG,
     const_concat,
     processes::{
-        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, LandUseSealedAreaProcess,
-        NDVIProcess,
+        BiodiversitySensitiveAreasProcess, ClimateRiskProcess, HabitatDistanceProcess,
+        LandUseSealedAreaProcess, NDVIProcess,
     },
     state::{CONTEXT, TaskContext},
     util::{Secret, error_response},
@@ -68,7 +68,9 @@ pub struct UserSession {
 impl From<geoengine_api_client::models::UserSession> for UserSession {
     fn from(value: geoengine_api_client::models::UserSession) -> Self {
         Self {
-            created: value.created,
+            created: value
+                .created
+                .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
             id: value.id,
             roles: value.roles,
             user: UserInfo {
@@ -76,7 +78,9 @@ impl From<geoengine_api_client::models::UserSession> for UserSession {
                 id: value.user.id,
                 real_name: value.user.real_name.flatten(),
             },
-            valid_until: value.valid_until,
+            valid_until: value
+                .valid_until
+                .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         }
     }
 }
@@ -140,6 +144,8 @@ impl<S> GeoEngineAuthMiddleware<S> {
                     const_concat!("/processes/", BiodiversitySensitiveAreasProcess::ID),
                     const_concat!("/processes/", HabitatDistanceProcess::ID),
                     const_concat!("/processes/", LandUseSealedAreaProcess::ID),
+                    const_concat!("/processes/", ClimateRiskProcess::ID),
+                    crate::profile::CLIMATE_RISK_TABLE_SCHEMA_PROFILE,
                 ],
                 prefix: vec!["/api", "/swagger", "/auth/"],
             },
@@ -307,6 +313,18 @@ mod tests {
         assert!(middleware.path_is_whitelisted("/"));
         assert!(middleware.path_is_whitelisted("/health"));
         assert!(middleware.path_is_whitelisted("/processes/echo"));
+
+        // process descriptions
+        for path in [
+            const_concat!("/processes/", NDVIProcess::ID),
+            const_concat!("/processes/", BiodiversitySensitiveAreasProcess::ID),
+            const_concat!("/processes/", HabitatDistanceProcess::ID),
+            const_concat!("/processes/", LandUseSealedAreaProcess::ID),
+            const_concat!("/processes/", ClimateRiskProcess::ID),
+            crate::profile::CLIMATE_RISK_TABLE_SCHEMA_PROFILE,
+        ] {
+            assert!(middleware.path_is_whitelisted(path), "{path}");
+        }
 
         // prefix
         assert!(middleware.path_is_whitelisted("/api/some/resource"));

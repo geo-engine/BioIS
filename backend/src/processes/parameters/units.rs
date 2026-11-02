@@ -100,6 +100,25 @@ impl std::fmt::Display for Year {
     }
 }
 
+/// A number of (fractional) days (e.g. mean/median/min/max anomaly values).
+#[derive(
+    Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq, PartialOrd,
+)]
+#[serde(transparent)]
+pub struct Days(pub f64);
+
+impl Default for Days {
+    fn default() -> Self {
+        Days(0.0)
+    }
+}
+
+/// Length of a time window in years (e.g., 5 years).
+#[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone, PartialEq)]
+#[serde(transparent)]
+#[schemars(example = YearRange(20))]
+pub struct YearRange(#[schemars(range(min = 5, max = 30))] pub u16);
+
 #[derive(Deserialize, Serialize, Debug, JsonSchema, ToSchema, Copy, Clone)]
 #[serde(transparent)]
 #[schemars(example = Month(1))]

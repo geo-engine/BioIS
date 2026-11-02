@@ -288,6 +288,11 @@ run-pod: build-backend-container build-frontend-container
     podman play kube \
         --network=pasta:-T,3030:3030 `# Map local Geo Engine at port 3030 into pod` \
         --replace -
+    # `podman play kube` returns before the containers serve, so wait for the backend;
+    # otherwise the first requests fail with a 502/504 from the frontend's reverse proxy.
+    timeout 120 sh -c 'until curl -fsS -o /dev/null http://localhost:4200/api/health 2>/dev/null; do sleep 1; done' \
+      && echo "BioIS is ready on http://localhost:4200" \
+      || echo "Backend did not become ready within 120s" >&2
 
 # Stop the pod in dev mode. Usage: `just down-pod`.
 [group('container')]

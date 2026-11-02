@@ -8,8 +8,8 @@ use crate::{
     handler,
     jobs::JobHandler,
     processes::{
-        BiodiversitySensitiveAreasProcess, HabitatDistanceProcess, LandUseSealedAreaProcess,
-        NDVIProcess, ProcessesOpenApiSpec,
+        BiodiversitySensitiveAreasProcess, ClimateRiskProcess, HabitatDistanceProcess,
+        LandUseSealedAreaProcess, NDVIProcess, ProcessesOpenApiSpec,
     },
     state::spawn_with_user,
 };
@@ -43,6 +43,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
         .nest("/auth", handler::auth_router())
         .nest("/credits", credits::router())
         .nest("/contact", contact::router(&CONFIG.contact)?)
+        .merge(handler::profile_router())
         .with_state(AppState {
             db: db_pool.clone(),
             api_config: CONFIG.geoengine.api_config(None),
@@ -55,6 +56,7 @@ pub async fn server() -> anyhow::Result<ogcapi_services::Service> {
     let mut processors: Vec<Arc<dyn DynProcessor>> = vec![
         Arc::new(Echo),
         Arc::new(NDVIProcess::new(db_pool.clone())),
+        Arc::new(ClimateRiskProcess::new(db_pool.clone())),
         Arc::new(LandUseSealedAreaProcess::new(db_pool.clone())),
     ];
     add_habitat_distance_process(&mut processors, db_pool.clone()).await;
