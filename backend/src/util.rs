@@ -34,6 +34,7 @@ pub fn to_api_raster_process(operator: &RasterOperator) -> ProcessingGraph {
 /// `serde_json`'s map serializer, so this posts the normalized value instead of the typed
 /// graph. Has the same signature and error handling as the generated
 /// `register_processing_graph_handler`, minus the duplication.
+// shortcut: copies the generated handler; delete once the generated client stops writing `type` twice
 pub async fn register_processing_graph(
     configuration: &geoengine_api_client::apis::configuration::Configuration,
     processing_graph: &geoengine_api_client::models::ProcessingGraph,
@@ -279,6 +280,19 @@ where
 mod tests {
 
     use super::*;
+
+    #[test]
+    fn it_folds_the_duplicate_aggregation_type_key() {
+        use geoengine_api_client::models::{Aggregation, AggregationFirst};
+
+        let aggregation =
+            Aggregation::First(Box::new(AggregationFirst::new(Default::default(), true)));
+        // the generated client writes `type` twice; `register_processing_graph` sends it once
+        let typed = serde_json::to_string(&aggregation).unwrap();
+        let normalized = serde_json::to_value(&aggregation).unwrap().to_string();
+        assert_eq!(typed.matches("\"type\"").count(), 2, "{typed}");
+        assert_eq!(normalized.matches("\"type\"").count(), 1, "{normalized}");
+    }
     use geoengine_api_client::models::{
         ColumnNames, Default as ColumnNamesDefault, FeatureAggregationMethod, GdalSource,
         GdalSourceParameters, RasterOperator, RasterVectorJoin, RasterVectorJoinParameters,
