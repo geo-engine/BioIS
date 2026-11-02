@@ -1467,9 +1467,10 @@ dependencies = [
 
 [[package]]
 name = "geoengine-api-client"
-version = "0.9.4"
-source = "git+https://github.com/geo-engine/geoengine?rev=5e08895c1bd5aec18e00ed636f387ddd2d56de06#5e08895c1bd5aec18e00ed636f387ddd2d56de06"
+version = "0.10.0"
+source = "git+https://github.com/geo-engine/geoengine?rev=2e194aea30a18c475d096d400161a2753621c77a#2e194aea30a18c475d096d400161a2753621c77a"
 dependencies = [
+ "chrono",
  "reqwest",
  "serde",
  "serde_json",
@@ -5541,7 +5542,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
