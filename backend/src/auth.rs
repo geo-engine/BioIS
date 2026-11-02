@@ -68,7 +68,9 @@ pub struct UserSession {
 impl From<geoengine_api_client::models::UserSession> for UserSession {
     fn from(value: geoengine_api_client::models::UserSession) -> Self {
         Self {
-            created: value.created,
+            created: value
+                .created
+                .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
             id: value.id,
             roles: value.roles,
             user: UserInfo {
@@ -76,7 +78,9 @@ impl From<geoengine_api_client::models::UserSession> for UserSession {
                 id: value.user.id,
                 real_name: value.user.real_name.flatten(),
             },
-            valid_until: value.valid_until,
+            valid_until: value
+                .valid_until
+                .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         }
     }
 }

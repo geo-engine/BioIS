@@ -1,6 +1,9 @@
 use anyhow::Result;
 use geoengine_api_client::{
-    apis::{configuration::Configuration, ogcwfs_api::wfs_handler, uploads_api::upload_handler},
+    apis::{
+        configuration::Configuration, ogcwfs_api::wfs_handler,
+        processing_graphs_api::register_processing_graph_handler, uploads_api::upload_handler,
+    },
     models::{
         Aggregation, AggregationFirst, BandFilter, BandFilterParameters, BandsByNameOrIndex,
         ColumnNames, ContinuousMeasurement, Coordinate2D, Default as ColumnNamesDefault,
@@ -42,7 +45,7 @@ use crate::{
     db::{DbHandle, model::ComputationId},
     processes::parameters::{Month, PointGeoJsonInput, Year},
     state::{CONTEXT, TaskLocalContext},
-    util::{error_response, register_processing_graph, to_api_vector_process},
+    util::{error_response, to_api_vector_process},
 };
 
 /// Calculates the Normalized Difference Vegetation Index (NDVI) and the corrected NDVI (kNDVI) from satellite imagery.
@@ -446,13 +449,19 @@ async fn compute_ndvi(
         .into(),
     ));
 
-    let workflow_id = match register_processing_graph(configuration, &workflow).await {
-        Ok(id) => id,
-        Err(e) => {
-            let workflow_json = serde_json::to_string_pretty(&workflow)
-                .unwrap_or_else(|_| "<failed to serialize workflow>".to_string());
-            if let Some(error) = error_response(&e) {
-                anyhow::bail!("Failed to register workflow `{workflow_json}`: {error:?}");
+    let processing_graph_id =
+        match register_processing_graph_handler(configuration, processing_graph.clone()).await {
+            Ok(id) => id,
+            Err(e) => {
+                let processing_graph_json = serde_json::to_string_pretty(&processing_graph)
+                    .unwrap_or_else(|_| "<failed to serialize processing graph>".to_string());
+                if let Some(error) = error_response(&e) {
+                    anyhow::bail!(
+                        "Failed to register processing graph `{processing_graph_json}`: {error:?}"
+                    );
+                }
+
+                anyhow::bail!("Failed to register processing graph `{processing_graph_json}`: {e}");
             }
         };
 
@@ -555,12 +564,15 @@ fn vector_reprojection_source(coordinate: &PointType) -> VectorOperator {
             r#type: Default::default(),
             params: MockPointSourceParameters {
                 points: vec![Coordinate2D::new(coordinate[0], coordinate[1])],
-                spatial_bounds: Some(Box::new(SpatialBoundsDerive::None(
-                    SpatialBoundsDeriveNone {
-                        r#type: Default::default(),
-                    }
+                spatial_bounds: Some(
+                    SpatialBoundsDerive::None(
+                        SpatialBoundsDeriveNone {
+                            r#type: Default::default(),
+                        }
+                        .into(),
+                    )
                     .into(),
-                ))),
+                ),
             }
             .into(),
         }
@@ -903,7 +915,7 @@ mod tests {
         // Start httptest server and mock the external Geo Engine endpoints
         let server = Server::run();
 
-        // Mock workflow registration (POST /processingGraphs -> { id: "..." })
+        // Mock processing graph registration (POST /processingGraphs -> { id: "..." })
         server.expect(
             Expectation::matching(request::method("POST")).respond_with(json_encoded(
                 json!({ "id": "00000000-0000-0000-0000-000000000003" }),

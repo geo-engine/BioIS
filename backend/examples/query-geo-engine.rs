@@ -7,8 +7,7 @@ use geoengine_api_client::{
     },
     models::{
         Coordinate2D, OgrSource, OgrSourceParameters, ProcessingGraph, SpatialPartition2D,
-        TypedVectorOperator, VectorOperator, WfsRequest, WfsService,
-        typed_vector_operator::Type as VectorType,
+        TypedVectorOperator, VectorOperator, WfsRequest, WfsService, typed_vector_operator::Type,
     },
 };
 
@@ -23,20 +22,15 @@ async fn main() {
     eprintln!("{session:#?}");
     configuration.bearer_access_token = Some(session.id.to_string());
 
-    let workflow = ProcessingGraph::TypedVectorOperator(Box::new(TypedVectorOperator {
-        operator: Box::new(VectorOperator::OgrSource(Box::new(OgrSource {
-            r#type: Default::default(),
-            params: OgrSourceParameters {
-                data: "ne_10m_ports".into(),
-                attribute_projection: None,
-                attribute_filters: None,
-            }
-            .into(),
-        }))),
-        r#type: VectorType::Vector,
+    let processing_graph = ProcessingGraph::TypedVectorOperator(Box::new(TypedVectorOperator {
+        operator: Box::new(VectorOperator::OgrSource(Box::new(OgrSource::new(
+            Default::default(),
+            OgrSourceParameters::new("ne_10m_ports".into()),
+        )))),
+        r#type: Type::Vector,
     }));
 
-    let workflow_id = register_processing_graph_handler(&configuration, workflow)
+    let processing_graph_id = register_processing_graph_handler(&configuration, processing_graph)
         .await
         .unwrap();
 

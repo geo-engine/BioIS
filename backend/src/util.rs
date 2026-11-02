@@ -11,9 +11,7 @@ use tracing_subscriber::{
 };
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI processing graph.
-pub fn to_api_vector_process(
-    operator: &VectorOperator,
-) -> geoengine_api_client::models::ProcessingGraph {
+pub fn to_api_vector_process(operator: &VectorOperator) -> ProcessingGraph {
     ProcessingGraph::TypedVectorOperator(Box::new(TypedVectorOperator {
         operator: Box::new(operator.clone()),
         r#type: VectorType::Vector,
@@ -21,9 +19,7 @@ pub fn to_api_vector_process(
 }
 
 /// Converts a Geo Engine operator to an Geo Engine OpenAPI processing graph.
-pub fn to_api_raster_process(
-    operator: &RasterOperator,
-) -> geoengine_api_client::models::ProcessingGraph {
+pub fn to_api_raster_process(operator: &RasterOperator) -> ProcessingGraph {
     ProcessingGraph::TypedRasterOperator(Box::new(TypedRasterOperator {
         operator: Box::new(operator.clone()),
         r#type: RasterType::Raster,
