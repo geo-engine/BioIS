@@ -72,7 +72,7 @@ config = "0.15"
 futures = "0.3"
 geo-types = "0.7"
 # shortcut: pinned to feat/md-gdal-source until the client is released
-geoengine-api-client = { git = "https://github.com/geo-engine/geoengine", rev = "2e194aea30a18c475d096d400161a2753621c77a" }
+geoengine-api-client = { git = "https://github.com/geo-engine/geoengine", rev = "dcc99e84b4ebd67034db355c74b072babf0e1b57" }
 geojson = "1.0"
 indoc = "2.0"
 lettre = { version = "0.11", default-features = false, features = [
