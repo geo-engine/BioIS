@@ -187,6 +187,37 @@ describe('InputsFormComponent', () => {
   });
 });
 
+describe('InputsFormComponent with a boolean input', () => {
+  it('renders a toggle that writes a boolean', async () => {
+    await TestBed.configureTestingModule({
+      imports: [InputsFormComponent],
+    }).compileComponents();
+
+    const inputs: InputDescription[] = [
+      retrieveInputDescription('flag', { title: 'Flag', schema: { type: 'boolean' } }),
+    ];
+    const formModel = signal<Record<string, unknown>>({ flag: false });
+    const inputForm: Record<
+      string,
+      MaybeFieldTree<unknown, string>
+    > = TestBed.runInInjectionContext(() => form(formModel));
+
+    const fixture = TestBed.createComponent(InputsFormComponent, {
+      bindings: [inputBinding('inputs', () => inputs), inputBinding('form', () => inputForm)],
+    });
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('input[type="text"]')).toBeNull();
+    const toggle = root.querySelector<HTMLButtonElement>('mat-slide-toggle button');
+    expect(toggle).not.toBeNull();
+
+    toggle?.click();
+    await fixture.whenStable();
+    expect(formModel()['flag']).toBe(true);
+  });
+});
+
 const testInputs: {
   sites: ApiInputDescription;
   locationNameField: ApiInputDescription;

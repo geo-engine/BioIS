@@ -810,6 +810,7 @@ fn site_row_into_output(
     Ok(DataResource {
         name: "biodiversity-sensitive-areas".try_into()?,
         title: Some("Biodiversity-sensitive Areas".to_string()),
+        description: None,
         data: site_rows
             .into_iter()
             .map(|row| SiteRowOutput {
@@ -887,6 +888,7 @@ fn site_row_into_output(
                 },
             ],
             primary_key: vec!["location".to_string()].into(),
+            ..Default::default()
         },
     })
 }

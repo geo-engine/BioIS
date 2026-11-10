@@ -26,6 +26,59 @@ pub fn to_api_raster_process(operator: &RasterOperator) -> ProcessingGraph {
     }))
 }
 
+/// Registers a processing graph with Geo Engine.
+///
+/// The generated client serializes `Aggregation` with a duplicated `type` discriminator
+/// (`#[serde(tag = "type")]` on the enum plus the inner structs' own `type` field), which
+/// the server rejects. Serializing through a `Value` first folds the duplicate key in
+/// `serde_json`'s map serializer, so this posts the normalized value instead of the typed
+/// graph. Has the same signature and error handling as the generated
+/// `register_processing_graph_handler`, minus the duplication.
+// shortcut: copies the generated handler; delete once the generated client stops writing `type` twice
+pub async fn register_processing_graph(
+    configuration: &geoengine_api_client::apis::configuration::Configuration,
+    processing_graph: &geoengine_api_client::models::ProcessingGraph,
+) -> Result<
+    geoengine_api_client::models::IdResponse,
+    geoengine_api_client::apis::Error<
+        geoengine_api_client::apis::processing_graphs_api::RegisterProcessingGraphHandlerError,
+    >,
+> {
+    let normalized = serde_json::to_value(processing_graph).expect("processing graph serializes");
+    let uri = format!("{}/processingGraphs", configuration.base_path);
+
+    let request_builder = configuration.client.post(&uri);
+    let request_builder = match &configuration.bearer_access_token {
+        Some(token) => request_builder.bearer_auth(token),
+        None => request_builder,
+    };
+
+    let response = request_builder
+        .json(&normalized)
+        .send()
+        .await
+        .map_err(geoengine_api_client::apis::Error::Reqwest)?;
+
+    let status = response.status();
+    let content = response
+        .text()
+        .await
+        .map_err(geoengine_api_client::apis::Error::Reqwest)?;
+
+    if status.is_client_error() || status.is_server_error() {
+        let entity = serde_json::from_str(&content).ok();
+        Err(geoengine_api_client::apis::Error::ResponseError(
+            geoengine_api_client::apis::ResponseContent {
+                status,
+                content,
+                entity,
+            },
+        ))
+    } else {
+        serde_json::from_str(&content).map_err(geoengine_api_client::apis::Error::Serde)
+    }
+}
+
 pub fn error_response<T>(
     error: &geoengine_api_client::apis::Error<T>,
 ) -> Option<geoengine_api_client::models::ErrorResponse> {
@@ -227,6 +280,19 @@ where
 mod tests {
 
     use super::*;
+
+    #[test]
+    fn it_folds_the_duplicate_aggregation_type_key() {
+        use geoengine_api_client::models::{Aggregation, AggregationFirst};
+
+        let aggregation =
+            Aggregation::First(Box::new(AggregationFirst::new(Default::default(), true)));
+        // the generated client writes `type` twice; `register_processing_graph` sends it once
+        let typed = serde_json::to_string(&aggregation).unwrap();
+        let normalized = serde_json::to_value(&aggregation).unwrap().to_string();
+        assert_eq!(typed.matches("\"type\"").count(), 2, "{typed}");
+        assert_eq!(normalized.matches("\"type\"").count(), 1, "{normalized}");
+    }
     use geoengine_api_client::models::{
         ColumnNames, Default as ColumnNamesDefault, FeatureAggregationMethod, GdalSource,
         GdalSourceParameters, RasterOperator, RasterVectorJoin, RasterVectorJoinParameters,

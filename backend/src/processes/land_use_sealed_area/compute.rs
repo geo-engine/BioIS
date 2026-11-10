@@ -1102,10 +1102,10 @@ mod tests {
                                         measurement: Box::new(Measurement::Unitless(Box::default()))
                                     })
                                 ].into_iter().collect(),
-                                bbox: Some(Box::new(BoundingBox2D {
+                                bbox: Some(Some(Box::new(BoundingBox2D {
                                     lower_left_coordinate: Coordinate2D::new(8.770, 50.813).into(),
                                     upper_right_coordinate: Coordinate2D::new(8.774, 50.814).into()
-                                })),
+                                }))),
                                 time: None,
                             })
                         )

@@ -55,6 +55,13 @@ mat-card-content {
     }
   }
 
+  .table-note {
+    margin: 0.75rem 0 0;
+    text-align: left;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
   mat-list-item {
     text-align: left;
 

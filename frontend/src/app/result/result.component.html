@@ -55,6 +55,9 @@
                 [columns]="columns(result.value)"
                 [rows]="asJsonTableRows(result.value)"
               ></app-data-resource-table>
+              @if (result.description) {
+                <p class="table-note">{{ result.description }}</p>
+              }
             }
             @case (ResultType.String)
             @case (ResultType.Boolean)

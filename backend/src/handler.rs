@@ -25,6 +25,10 @@ pub fn auth_router() -> OpenApiRouter<AppState> {
         .routes(routes!(auth_request_url_handler))
 }
 
+pub fn profile_router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new().routes(routes!(crate::profile::climate_risk_table_schema_profile))
+}
+
 #[utoipa::path(get, path = "/health", responses((status = NO_CONTENT)))]
 pub async fn health_handler() -> StatusCode {
     StatusCode::NO_CONTENT

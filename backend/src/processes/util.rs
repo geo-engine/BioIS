@@ -46,7 +46,7 @@ impl TryFrom<&TypedVectorResultDescriptor> for BoundingBox {
     type Error = anyhow::Error;
 
     fn try_from(value: &TypedVectorResultDescriptor) -> Result<Self, Self::Error> {
-        let Some(bbox) = &value.bbox else {
+        let Some(Some(bbox)) = &value.bbox else {
             return Err(anyhow::anyhow!(
                 "Expected bounding box in result descriptor, but it was None",
             ));
@@ -242,7 +242,7 @@ mod tests {
             }),
         };
         let descriptor = TypedVectorResultDescriptor {
-            bbox: Some(Box::new(bbox)),
+            bbox: Some(Some(Box::new(bbox))),
             spatial_reference: "EPSG:4326".to_string(),
             ..Default::default()
         };
